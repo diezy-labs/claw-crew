@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// UnaryServerInterceptor menyediakan logging, metrics, dan clean error translation untuk Unary RPC
+// UnaryServerInterceptor provides logging, metrics, and error translation for unary RPCs
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -44,7 +44,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 
 			metrics.GRPCRequestsTotal.WithLabelValues(info.FullMethod, statusCode.String()).Inc()
 
-			log.ErrorContext(ctx, "grpc unary error",
+			log.ErrorContext(ctx, "grpc unary request failed",
 				slog.String("method", info.FullMethod),
 				slog.Float64("duration_sec", duration),
 				slog.String("status_code", statusCode.String()),
@@ -55,7 +55,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 
 		metrics.GRPCRequestsTotal.WithLabelValues(info.FullMethod, codes.OK.String()).Inc()
 
-		log.DebugContext(ctx, "grpc unary success",
+		log.DebugContext(ctx, "grpc unary request completed",
 			slog.String("method", info.FullMethod),
 			slog.Float64("duration_sec", duration),
 			slog.String("status_code", codes.OK.String()),
@@ -65,7 +65,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
-// StreamServerInterceptor menyediakan logging, metrics, dan clean error translation untuk Streaming RPC
+// StreamServerInterceptor provides logging, metrics, and error translation for streaming RPCs
 func StreamServerInterceptor() grpc.StreamServerInterceptor {
 	return func(
 		srv any,

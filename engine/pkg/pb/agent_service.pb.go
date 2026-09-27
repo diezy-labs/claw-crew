@@ -222,7 +222,7 @@ func (x *HealthCheckResponse) GetStatus() HealthCheckResponse_ServingStatus {
 type TurnRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"` // merujuk ke konfig agent TOML
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"` // References agent TOML configuration
 	Prompt        string                 `protobuf:"bytes,3,opt,name=prompt,proto3" json:"prompt,omitempty"`
 	ContextWindow []byte                 `protobuf:"bytes,4,opt,name=context_window,json=contextWindow,proto3" json:"context_window,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -290,9 +290,9 @@ func (x *TurnRequest) GetContextWindow() []byte {
 type TurnResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Type          TurnResponse_EventType `protobuf:"varint,1,opt,name=type,proto3,enum=clawcrew.agent.TurnResponse_EventType" json:"type,omitempty"`
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`                               // Potongan text atau JSON
-	SubagentId    string                 `protobuf:"bytes,3,opt,name=subagent_id,json=subagentId,proto3" json:"subagent_id,omitempty"`       // Jika event berasal dari sub-agent
-	ErrorMessage  string                 `protobuf:"bytes,4,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"` // Detail error jika type == ERROR
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`                               // Chunk text or JSON payload
+	SubagentId    string                 `protobuf:"bytes,3,opt,name=subagent_id,json=subagentId,proto3" json:"subagent_id,omitempty"`       // Populated when event originates from a sub-agent
+	ErrorMessage  string                 `protobuf:"bytes,4,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"` // Error details when type == ERROR
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

@@ -11,11 +11,11 @@ import (
 )
 
 type service struct {
-	mu            sync.RWMutex
-	activeTurns   map[string]context.CancelFunc
+	mu          sync.RWMutex
+	activeTurns map[string]context.CancelFunc
 }
 
-// NewService membuat instance baru dari crew.Orchestrator
+// NewService creates a new crew.Orchestrator instance
 func NewService() Orchestrator {
 	return &service{
 		activeTurns: make(map[string]context.CancelFunc),
@@ -62,7 +62,7 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 		return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
 	case eventCh <- &TurnEvent{
 		Type:    EventThoughtChunk,
-		Content: fmt.Sprintf("Menganalisa prompt dari user untuk agent '%s'...", agentID),
+		Content: fmt.Sprintf("Analyzing user prompt for agent '%s'...", agentID),
 	}:
 	}
 
@@ -72,7 +72,7 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 		return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
 	case eventCh <- &TurnEvent{
 		Type:    EventTextChunk,
-		Content: fmt.Sprintf("Halo! Go 1.27 Agent Engine menerima pesan: \"%s\".", req.Prompt),
+		Content: fmt.Sprintf("Go 1.27 Agent Engine received prompt: \"%s\".", req.Prompt),
 	}:
 	}
 
@@ -82,7 +82,7 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 		return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
 	case eventCh <- &TurnEvent{
 		Type:    EventTurnCompleted,
-		Content: "Turn selesai dengan sukses.",
+		Content: "Turn completed successfully.",
 	}:
 	}
 

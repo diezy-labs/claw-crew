@@ -8,25 +8,25 @@ import (
 	"google.golang.org/grpc"
 )
 
-// GRPCHandler mengimplementasikan pb.AgentEngineServer
+// GRPCHandler implements pb.AgentEngineServer
 type GRPCHandler struct {
 	pb.UnimplementedAgentEngineServer
 	orchestrator Orchestrator
 }
 
-// NewGRPCHandler membuat instance baru GRPCHandler
+// NewGRPCHandler constructs a new GRPCHandler instance
 func NewGRPCHandler(orchestrator Orchestrator) *GRPCHandler {
 	return &GRPCHandler{
 		orchestrator: orchestrator,
 	}
 }
 
-// RegisterService mendaftarkan handler ini ke grpc.Server
+// RegisterService registers this handler with the grpc.Server
 func (h *GRPCHandler) RegisterService(server *grpc.Server) {
 	pb.RegisterAgentEngineServer(server, h)
 }
 
-// StartTurn menangani streaming permintaan turn dari Rust Gateway
+// StartTurn handles streaming turn requests initiated from the Rust gateway
 func (h *GRPCHandler) StartTurn(req *pb.TurnRequest, stream pb.AgentEngine_StartTurnServer) error {
 	ctx := stream.Context()
 
@@ -79,14 +79,14 @@ func (h *GRPCHandler) StartTurn(req *pb.TurnRequest, stream pb.AgentEngine_Start
 	return <-errCh
 }
 
-// QuickQuery mengeksekusi quick query (misal vector search sederhana)
+// QuickQuery executes lightweight stateless queries (e.g. vector search lookups)
 func (h *GRPCHandler) QuickQuery(ctx context.Context, req *pb.QueryRequest) (*pb.QueryResponse, error) {
 	return &pb.QueryResponse{
 		Matches: []*pb.QueryMatch{},
 	}, nil
 }
 
-// HealthCheck mengecek ketersediaan AgentEngine gRPC server
+// HealthCheck verifies availability of the AgentEngine gRPC service
 func (h *GRPCHandler) HealthCheck(ctx context.Context, req *pb.HealthCheckRequest) (*pb.HealthCheckResponse, error) {
 	return &pb.HealthCheckResponse{
 		Status: pb.HealthCheckResponse_SERVING,

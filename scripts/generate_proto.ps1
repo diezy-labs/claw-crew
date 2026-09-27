@@ -1,4 +1,4 @@
-# Script untuk men-generate Protobuf ke Go dan Rust
+# Script to generate Protobuf code for Go and Rust
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -6,23 +6,23 @@ Set-Location $root
 
 Write-Host "==> Generating Protobuf Code..." -ForegroundColor Cyan
 
-# 1. Cari protoc
+# 1. Locate protoc compiler
 $protocCmd = Get-Command "protoc" -ErrorAction SilentlyContinue
 if (-not $protocCmd) {
-    # Check winget packages
+    # Check WinGet package directory
     $wingetProtoc = Get-ChildItem -Path "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Recurse -Filter "protoc.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($wingetProtoc) {
         $protocDir = Split-Path -Parent $wingetProtoc.FullName
         $env:PATH = "$protocDir;$env:PATH"
     } else {
-        # Refresh from registry
+        # Refresh PATH from system registry
         $machinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
         $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
         $env:PATH = "$userPath;$machinePath;$env:PATH"
     }
 }
 
-# 2. Pastikan go/bin ada di PATH
+# 2. Ensure go/bin is in PATH
 $goBin = Join-Path $env:USERPROFILE "go\bin"
 if ($env:PATH -notlike "*$goBin*") {
     $env:PATH = "$goBin;$env:PATH"

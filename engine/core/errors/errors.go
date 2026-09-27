@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Layer mengidentifikasi di mana error pertama kali terjadi
+// Layer identifies where an error originated in the architecture
 type Layer string
 
 const (
@@ -19,20 +19,20 @@ const (
 	LayerInternal   Layer = "INTERNAL"
 )
 
-// Code mendefinisikan kode error standar aplikasi
+// Code defines standard application error codes
 type Code string
 
 const (
-	CodeNotFound       Code = "NOT_FOUND"
+	CodeNotFound        Code = "NOT_FOUND"
 	CodeInvalidArgument Code = "INVALID_ARGUMENT"
-	CodeInternal       Code = "INTERNAL_SERVER_ERROR"
-	CodeTimeout        Code = "TIMEOUT"
-	CodeUnauthorized   Code = "UNAUTHORIZED"
-	CodeToolFailed     Code = "TOOL_EXECUTION_FAILED"
-	CodeLLMStreamError Code = "LLM_STREAM_ERROR"
+	CodeInternal        Code = "INTERNAL_SERVER_ERROR"
+	CodeTimeout         Code = "TIMEOUT"
+	CodeUnauthorized    Code = "UNAUTHORIZED"
+	CodeToolFailed      Code = "TOOL_EXECUTION_FAILED"
+	CodeLLMStreamError  Code = "LLM_STREAM_ERROR"
 )
 
-// AppError merepresentasikan structured error sesuai Clean Architecture
+// AppError represents a structured error conforming to Clean Architecture
 type AppError struct {
 	Code    Code   `json:"code"`
 	Message string `json:"message"`
@@ -47,12 +47,12 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("[%s][%s] %s", e.Layer, e.Code, e.Message)
 }
 
-// Unwrap mendukung errors.Is dan errors.As
+// Unwrap supports errors.Is and errors.As inspection
 func (e *AppError) Unwrap() error {
 	return e.Err
 }
 
-// New membuat AppError baru tanpa underlying error
+// New creates an AppError without an underlying root error
 func New(code Code, message string, layer Layer) *AppError {
 	return &AppError{
 		Code:    code,
@@ -61,7 +61,7 @@ func New(code Code, message string, layer Layer) *AppError {
 	}
 }
 
-// Wrap membungkus existing error dengan konteks Clean Architecture
+// Wrap wraps an existing error with Clean Architecture context
 func Wrap(err error, code Code, message string, layer Layer) *AppError {
 	if err == nil {
 		return nil
@@ -74,7 +74,7 @@ func Wrap(err error, code Code, message string, layer Layer) *AppError {
 	}
 }
 
-// ToGRPCStatus memetakan AppError ke gRPC status error
+// ToGRPCStatus maps AppError to standard gRPC status error
 func ToGRPCStatus(err error) error {
 	if err == nil {
 		return nil

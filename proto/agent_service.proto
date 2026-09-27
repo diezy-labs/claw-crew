@@ -4,29 +4,29 @@ package clawcrew.agent;
 
 option go_package = "github.com/diezy-labs/claw-crew/engine/pkg/pb;pb";
 
-// Service yang dihosting oleh Go (AI Brain) dan dipanggil oleh Rust (UI/Gateway)
+// Service hosted by Go (AI Brain) and invoked by Rust (UI/Gateway)
 service AgentEngine {
-    // Memulai Turn/Tugas baru untuk Agent. Mengembalikan stream respon.
+    // Starts a new turn/task for an Agent, returning a stream of responses
     rpc StartTurn(TurnRequest) returns (stream TurnResponse);
     
-    // Mengeksekusi instruksi khusus tanpa state penuh (misal RAG query cepat)
+    // Executes a quick query without full state persistence (e.g., RAG vector search)
     rpc QuickQuery(QueryRequest) returns (QueryResponse);
     
-    // Health check gRPC
+    // gRPC health check
     rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
-// Service yang dihosting oleh Rust (Native System) dan dipanggil oleh Go (saat Agent butuh alat OS)
+// Service hosted by Rust (Native System) and invoked by Go (when Agent requires OS tools)
 service SystemGateway {
-    // Meminta Rust mengeksekusi tool bawaan (terminal, akses disk)
+    // Requests Rust to execute a native platform tool (terminal, disk access)
     rpc ExecuteNativeTool(ToolCallRequest) returns (ToolCallResponse);
     
-    // Meminta kredensial tersandi dari Secret Vault Rust
+    // Requests a decrypted credential from Rust Secret Vault
     rpc GetDecryptedSecret(SecretRequest) returns (SecretResponse);
 }
 
 // ======================================
-// Pesan (Messages)
+// Messages
 // ======================================
 
 message HealthCheckRequest {
@@ -44,7 +44,7 @@ message HealthCheckResponse {
 
 message TurnRequest {
     string session_id = 1;
-    string agent_id = 2; // merujuk ke konfig agent TOML
+    string agent_id = 2; // References agent TOML configuration
     string prompt = 3;
     bytes context_window = 4;
 }
@@ -61,9 +61,9 @@ message TurnResponse {
     }
     
     EventType type = 1;
-    string content = 2;      // Potongan text atau JSON
-    string subagent_id = 3;  // Jika event berasal dari sub-agent
-    string error_message = 4;// Detail error jika type == ERROR
+    string content = 2;      // Chunk text or JSON payload
+    string subagent_id = 3;  // Populated when event originates from a sub-agent
+    string error_message = 4;// Error details when type == ERROR
 }
 
 message QueryRequest {

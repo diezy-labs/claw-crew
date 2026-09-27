@@ -28,13 +28,13 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Service yang dihosting oleh Go (AI Brain) dan dipanggil oleh Rust (UI/Gateway)
+// Service hosted by Go (AI Brain) and invoked by Rust (UI/Gateway)
 type AgentEngineClient interface {
-	// Memulai Turn/Tugas baru untuk Agent. Mengembalikan stream respon.
+	// Starts a new turn/task for an Agent, returning a stream of responses
 	StartTurn(ctx context.Context, in *TurnRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TurnResponse], error)
-	// Mengeksekusi instruksi khusus tanpa state penuh (misal RAG query cepat)
+	// Executes a quick query without full state persistence (e.g., RAG vector search)
 	QuickQuery(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
-	// Health check gRPC
+	// gRPC health check
 	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
@@ -89,13 +89,13 @@ func (c *agentEngineClient) HealthCheck(ctx context.Context, in *HealthCheckRequ
 // All implementations must embed UnimplementedAgentEngineServer
 // for forward compatibility.
 //
-// Service yang dihosting oleh Go (AI Brain) dan dipanggil oleh Rust (UI/Gateway)
+// Service hosted by Go (AI Brain) and invoked by Rust (UI/Gateway)
 type AgentEngineServer interface {
-	// Memulai Turn/Tugas baru untuk Agent. Mengembalikan stream respon.
+	// Starts a new turn/task for an Agent, returning a stream of responses
 	StartTurn(*TurnRequest, grpc.ServerStreamingServer[TurnResponse]) error
-	// Mengeksekusi instruksi khusus tanpa state penuh (misal RAG query cepat)
+	// Executes a quick query without full state persistence (e.g., RAG vector search)
 	QuickQuery(context.Context, *QueryRequest) (*QueryResponse, error)
-	// Health check gRPC
+	// gRPC health check
 	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedAgentEngineServer()
 }
@@ -219,11 +219,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Service yang dihosting oleh Rust (Native System) dan dipanggil oleh Go (saat Agent butuh alat OS)
+// Service hosted by Rust (Native System) and invoked by Go (when Agent requires OS tools)
 type SystemGatewayClient interface {
-	// Meminta Rust mengeksekusi tool bawaan (terminal, akses disk)
+	// Requests Rust to execute a native platform tool (terminal, disk access)
 	ExecuteNativeTool(ctx context.Context, in *ToolCallRequest, opts ...grpc.CallOption) (*ToolCallResponse, error)
-	// Meminta kredensial tersandi dari Secret Vault Rust
+	// Requests a decrypted credential from Rust Secret Vault
 	GetDecryptedSecret(ctx context.Context, in *SecretRequest, opts ...grpc.CallOption) (*SecretResponse, error)
 }
 
@@ -259,11 +259,11 @@ func (c *systemGatewayClient) GetDecryptedSecret(ctx context.Context, in *Secret
 // All implementations must embed UnimplementedSystemGatewayServer
 // for forward compatibility.
 //
-// Service yang dihosting oleh Rust (Native System) dan dipanggil oleh Go (saat Agent butuh alat OS)
+// Service hosted by Rust (Native System) and invoked by Go (when Agent requires OS tools)
 type SystemGatewayServer interface {
-	// Meminta Rust mengeksekusi tool bawaan (terminal, akses disk)
+	// Requests Rust to execute a native platform tool (terminal, disk access)
 	ExecuteNativeTool(context.Context, *ToolCallRequest) (*ToolCallResponse, error)
-	// Meminta kredensial tersandi dari Secret Vault Rust
+	// Requests a decrypted credential from Rust Secret Vault
 	GetDecryptedSecret(context.Context, *SecretRequest) (*SecretResponse, error)
 	mustEmbedUnimplementedSystemGatewayServer()
 }

@@ -16,18 +16,18 @@ var (
 	once          sync.Once
 )
 
-// Config mendefinisikan opsi konfigurasi logging
+// Config defines logging options
 type Config struct {
-	Level      string `json:"level"`       // "debug", "info", "warn", "error"
-	LogPath    string `json:"log_path"`    // Path ke file log, jika kosong gunakan default
-	MaxSizeMB  int    `json:"max_size_mb"` // Max ukuran file sebelum rotasi (MB)
-	MaxBackups int    `json:"max_backups"` // Jumlah file backup rotasi
-	MaxAgeDays int    `json:"max_age_days"`// Lama penyimpanan backup (hari)
-	Compress   bool   `json:"compress"`    // Kompresi backup (.gz)
-	ConsoleOut bool   `json:"console_out"` // Tampilkan juga di stdout
+	Level      string `json:"level"`        // "debug", "info", "warn", "error"
+	LogPath    string `json:"log_path"`     // Path to log file; uses default if empty
+	MaxSizeMB  int    `json:"max_size_mb"`  // Max file size before rotation in megabytes
+	MaxBackups int    `json:"max_backups"`  // Retained backup file count
+	MaxAgeDays int    `json:"max_age_days"` // Max days to retain old log files
+	Compress   bool   `json:"compress"`     // Compress rotated files with gzip
+	ConsoleOut bool   `json:"console_out"`  // Also output logs to stdout
 }
 
-// DefaultLogPath menghasilkan path log standar sesuai OS
+// DefaultLogPath returns standard OS-specific log file location
 func DefaultLogPath() string {
 	if runtime.GOOS == "windows" {
 		appData := os.Getenv("APPDATA")
@@ -44,7 +44,7 @@ func DefaultLogPath() string {
 	return filepath.Join(".", "logs", "agent.log")
 }
 
-// Init menginisialisasi logger global tersentralisasi
+// Init initializes the centralized global logger
 func Init(cfg Config) (*slog.Logger, error) {
 	var initErr error
 	once.Do(func() {
@@ -53,7 +53,7 @@ func Init(cfg Config) (*slog.Logger, error) {
 			logPath = DefaultLogPath()
 		}
 
-		// Pastikan direktori log ada
+		// Ensure parent directory exists
 		dir := filepath.Dir(logPath)
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			initErr = err
@@ -86,7 +86,7 @@ func Init(cfg Config) (*slog.Logger, error) {
 			writers = io.MultiWriter(os.Stdout, fileWriter)
 		}
 
-		// Tentukan level log
+		// Determine log level
 		var level slog.Level
 		switch cfg.Level {
 		case "debug":
@@ -104,7 +104,7 @@ func Init(cfg Config) (*slog.Logger, error) {
 			AddSource: true,
 		}
 
-		// Menggunakan JSON handler agar mudah diparsing oleh UI / Dashboard
+		// Use JSON handler for easy parsing by UI and dashboard
 		handler := slog.NewJSONHandler(writers, opts)
 		defaultLogger = slog.New(handler)
 		slog.SetDefault(defaultLogger)
@@ -116,7 +116,7 @@ func Init(cfg Config) (*slog.Logger, error) {
 	return defaultLogger, nil
 }
 
-// Get mengembalikan logger default
+// Get returns the default centralized logger
 func Get() *slog.Logger {
 	if defaultLogger == nil {
 		return slog.Default()

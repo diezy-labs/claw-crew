@@ -8,22 +8,22 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/core/logger"
 )
 
-// AppConfig menampung semua konfigurasi daemon Go Engine
+// AppConfig holds all configurations for Go Agent Engine daemon
 type AppConfig struct {
 	GRPCPort     int           `json:"grpc_port"`
 	MetricsPort  int           `json:"metrics_port"`
-	SystemGRPC   string        `json:"system_grpc"` // Alamat gRPC gateway Rust
+	SystemGRPC   string        `json:"system_grpc"` // gRPC gateway address of Rust core
 	LoggerConfig logger.Config `json:"logger"`
 }
 
-// LoadConfig memuat konfigurasi dari CLI flag dan Environment variables
+// LoadConfig loads configurations from CLI flags and environment variables
 func LoadConfig() *AppConfig {
-	grpcPort := flag.Int("grpc-port", 50051, "Port gRPC server untuk Agent Engine")
-	metricsPort := flag.Int("metrics-port", 9090, "Port HTTP server untuk Prometheus metrics")
-	systemGRPC := flag.String("system-grpc", "localhost:50052", "Alamat gRPC Rust SystemGateway")
-	logPath := flag.String("log-path", "", "Path ke file log (default: OS app data)")
-	logLevel := flag.String("log-level", "info", "Level logging (debug, info, warn, error)")
-	consoleOut := flag.Bool("console-out", true, "Output log ke console juga")
+	grpcPort := flag.Int("grpc-port", 50051, "gRPC server port for Agent Engine")
+	metricsPort := flag.Int("metrics-port", 9090, "HTTP server port for Prometheus metrics")
+	systemGRPC := flag.String("system-grpc", "localhost:50052", "gRPC address of Rust SystemGateway")
+	logPath := flag.String("log-path", "", "Path to log file (default: OS app data)")
+	logLevel := flag.String("log-level", "info", "Logging level (debug, info, warn, error)")
+	consoleOut := flag.Bool("console-out", true, "Also emit log output to console")
 
 	flag.Parse()
 
@@ -42,7 +42,7 @@ func LoadConfig() *AppConfig {
 		},
 	}
 
-	// Override dari environment jika ada
+	// Environment variable overrides
 	if envPort := os.Getenv("CLAWCREW_ENGINE_GRPC_PORT"); envPort != "" {
 		if p, err := strconv.Atoi(envPort); err == nil {
 			cfg.GRPCPort = p

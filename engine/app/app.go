@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// App merepresentasikan root runtime container untuk Go Engine
+// App represents the root runtime container for the Go Agent Engine
 type App struct {
 	Cfg           *config.AppConfig
 	GRPCServer    *grpc.Server
@@ -26,7 +26,7 @@ type App struct {
 	CrewHandler   *crew.GRPCHandler
 }
 
-// NewGRPCServer membuat instance grpc.Server dengan interceptors terpasang
+// NewGRPCServer creates a grpc.Server instance with interceptors configured
 func NewGRPCServer() *grpc.Server {
 	return grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.UnaryServerInterceptor()),
@@ -34,19 +34,18 @@ func NewGRPCServer() *grpc.Server {
 	)
 }
 
-// ProvideMetricsServer provider untuk Wire menginisialisasi Metrics Server
+// ProvideMetricsServer provider for Wire to instantiate Metrics Server
 func ProvideMetricsServer(cfg *config.AppConfig) *metrics.Server {
 	return metrics.NewServer(cfg.MetricsPort)
 }
 
-// NewApp membuat instance container App
+// NewApp constructs a new App container instance
 func NewApp(
 	cfg *config.AppConfig,
 	grpcServer *grpc.Server,
 	metricsServer *metrics.Server,
 	crewHandler *crew.GRPCHandler,
 ) *App {
-	// Daftarkan gRPC handlers
 	crewHandler.RegisterService(grpcServer)
 
 	return &App{
@@ -57,37 +56,37 @@ func NewApp(
 	}
 }
 
-// Run menjalankan server gRPC dan Metrics secara konkuren dengan graceful shutdown
+// Run executes the gRPC and Metrics servers concurrently with graceful shutdown handling
 func (a *App) Run() error {
 	log := logger.Get()
 
-	// 1. Jalankan Prometheus Metrics HTTP Server
+	// 1. Start Prometheus Metrics HTTP Server
 	go func() {
-		log.Info("memulai Prometheus metrics server", slog.Int("port", a.MetricsServer.Port()))
+		log.Info("starting Prometheus metrics server", slog.Int("port", a.MetricsServer.Port()))
 		if err := a.MetricsServer.Start(); err != nil {
-			log.Error("gagal menjalankan metrics server", slog.String("error", err.Error()))
+			log.Error("failed to start metrics server", slog.String("error", err.Error()))
 		}
 	}()
 
-	// 2. Jalankan gRPC Server
+	// 2. Start gRPC Server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", a.Cfg.GRPCPort))
 	if err != nil {
 		return fmt.Errorf("failed to listen on port %d: %w", a.Cfg.GRPCPort, err)
 	}
 
 	go func() {
-		log.Info("memulai gRPC Agent Engine server", slog.Int("port", a.Cfg.GRPCPort))
+		log.Info("starting gRPC Agent Engine server", slog.Int("port", a.Cfg.GRPCPort))
 		if err := a.GRPCServer.Serve(lis); err != nil {
-			log.Error("gRPC server berhenti dengan error", slog.String("error", err.Error()))
+			log.Error("gRPC server stopped with error", slog.String("error", err.Error()))
 		}
 	}()
 
-	// 3. Tangani OS Signal untuk graceful shutdown
+	// 3. Handle OS termination signals for graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
 
-	log.Info("menerima sinyal termination, memulai graceful shutdown...", slog.String("signal", sig.String()))
+	log.Info("received termination signal, initiating graceful shutdown...", slog.String("signal", sig.String()))
 
 	// Graceful stop gRPC
 	stopped := make(chan struct{})
@@ -105,12 +104,12 @@ func (a *App) Run() error {
 
 	select {
 	case <-stopped:
-		log.Info("gRPC server berhasil dihentikan secara aman.")
+		log.Info("gRPC server stopped successfully")
 	case <-time.After(5 * time.Second):
-		log.Warn("graceful stop timed out, menghentikan gRPC server secara paksa.")
+		log.Warn("graceful stop timed out, forcing gRPC server termination")
 		a.GRPCServer.Stop()
 	}
 
-	log.Info("Agent Engine shutdown selesai.")
+	log.Info("Agent Engine shutdown completed")
 	return nil
 }

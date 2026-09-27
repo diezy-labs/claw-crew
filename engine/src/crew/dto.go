@@ -1,6 +1,6 @@
 package crew
 
-// TurnRequest data transfer object untuk memulai turn agent
+// TurnRequest represents the input data required to initiate an agent turn
 type TurnRequest struct {
 	SessionID     string `json:"session_id"`
 	AgentID       string `json:"agent_id"`
@@ -8,7 +8,7 @@ type TurnRequest struct {
 	ContextWindow []byte `json:"context_window"`
 }
 
-// TurnEventType jenis event yang dikirimkan selama streaming turn
+// TurnEventType indicates the category of event streamed during an active turn
 type TurnEventType string
 
 const (
@@ -21,7 +21,7 @@ const (
 	EventError            TurnEventType = "ERROR"
 )
 
-// TurnEvent merepresentasikan satu payload event streaming ke client
+// TurnEvent represents a single streamed event payload sent to the caller
 type TurnEvent struct {
 	Type         TurnEventType `json:"type"`
 	Content      string        `json:"content"`

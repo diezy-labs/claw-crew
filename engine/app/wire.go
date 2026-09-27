@@ -9,7 +9,7 @@ import (
 	"github.com/google/wire"
 )
 
-// InitializeApp membangun dependency graph menggunakan Google Wire
+// InitializeApp builds the dependency injection graph via Google Wire
 func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	wire.Build(
 		NewGRPCServer,

@@ -11,32 +11,32 @@ import (
 )
 
 func main() {
-	// 1. Muat konfigurasi dari Flag & Env
+	// 1. Load configuration from flags and environment variables
 	cfg := config.LoadConfig()
 
-	// 2. Inisialisasi centralized logger
+	// 2. Initialize centralized logger
 	log, err := logger.Init(cfg.LoggerConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "FATAL: gagal menginisialisasi logger: %v\n", err)
+		fmt.Fprintf(os.Stderr, "FATAL: failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
 
-	log.Info("ClawCrew Go 1.27 Agent Engine sedang memulai...",
+	log.Info("ClawCrew Go 1.27 Agent Engine starting...",
 		slog.Int("grpc_port", cfg.GRPCPort),
 		slog.Int("metrics_port", cfg.MetricsPort),
 		slog.String("log_path", cfg.LoggerConfig.LogPath),
 	)
 
-	// 3. Bangun Dependency Graph dengan Google Wire
+	// 3. Build dependency injection graph with Google Wire
 	appInstance, err := app.InitializeApp(cfg)
 	if err != nil {
-		log.Error("gagal membangun dependency graph via Wire", slog.String("error", err.Error()))
+		log.Error("failed to construct dependency graph via Wire", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 
-	// 4. Jalankan aplikasi (gRPC & Metrics Server)
+	// 4. Run application (gRPC and Metrics server)
 	if err := appInstance.Run(); err != nil {
-		log.Error("aplikasi berhenti karena fatal error", slog.String("error", err.Error()))
+		log.Error("application stopped due to fatal error", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 }

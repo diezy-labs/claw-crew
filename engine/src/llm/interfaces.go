@@ -4,44 +4,44 @@ import (
 	"context"
 )
 
-// Provider mendefinisikan antarmuka komunikasi ke Model AI
+// Provider defines the communication contract with an upstream AI model
 type Provider interface {
 	Name() string
 	StreamChat(ctx context.Context, req *ChatRequest, chunkCh chan<- *ChatChunk) error
 }
 
-// ChatRequest memuat data prompt dan tools untuk LLM
+// ChatRequest holds prompt, message history, and tool definitions for the LLM
 type ChatRequest struct {
-	Model       string         `json:"model"`
-	System      string         `json:"system,omitempty"`
-	Messages    []Message      `json:"messages"`
+	Model       string           `json:"model"`
+	System      string           `json:"system,omitempty"`
+	Messages    []Message        `json:"messages"`
 	Tools       []ToolDefinition `json:"tools,omitempty"`
-	Temperature float32        `json:"temperature,omitempty"`
+	Temperature float32          `json:"temperature,omitempty"`
 }
 
-// Message merepresentasikan pesan chat tunggal
+// Message represents an individual conversational message
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-// ToolDefinition merepresentasikan skema tool yang dapat dipanggil LLM
+// ToolDefinition represents a function schema callable by the model
 type ToolDefinition struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Parameters  any    `json:"parameters"`
 }
 
-// ChatChunk mewakili satu potongan respon LLM
+// ChatChunk represents a streaming chunk from an LLM response
 type ChatChunk struct {
-	ThoughtChunk string      `json:"thought_chunk,omitempty"`
-	ContentChunk string      `json:"content_chunk,omitempty"`
-	ToolCalls    []ToolCall  `json:"tool_calls,omitempty"`
-	IsDone       bool        `json:"is_done"`
-	Error        error       `json:"-"`
+	ThoughtChunk string     `json:"thought_chunk,omitempty"`
+	ContentChunk string     `json:"content_chunk,omitempty"`
+	ToolCalls    []ToolCall `json:"tool_calls,omitempty"`
+	IsDone       bool       `json:"is_done"`
+	Error        error      `json:"-"`
 }
 
-// ToolCall merepresentasikan instruksi pemanggilan tool oleh LLM
+// ToolCall represents a structured tool call instruction returned by the LLM
 type ToolCall struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`

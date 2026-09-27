@@ -14,58 +14,58 @@ import (
 var (
 	once sync.Once
 
-	// ActiveAgents menghitung jumlah agen/goroutine yang sedang aktif
+	// ActiveAgents counts the number of agents and sub-agents currently processing tasks
 	ActiveAgents = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "clawcrew",
 		Subsystem: "engine",
 		Name:      "active_agents",
-		Help:      "Jumlah agen atau sub-agent yang sedang aktif memproses task",
+		Help:      "Total number of agents or sub-agents currently processing tasks",
 	})
 
-	// AgentTurnDuration mengukur durasi penyelesaian turn
+	// AgentTurnDuration tracks agent turn execution duration in seconds
 	AgentTurnDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "clawcrew",
 		Subsystem: "engine",
 		Name:      "agent_turn_duration_seconds",
-		Help:      "Histogram durasi eksekusi turn agent dalam detik",
+		Help:      "Histogram of agent turn execution duration in seconds",
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"agent_id", "status"})
 
-	// LLMTokenUsage menghitung total token yang dikonsumsi model
+	// LLMTokenUsage counts input and output tokens consumed across LLM providers
 	LLMTokenUsage = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "clawcrew",
 		Subsystem: "engine",
 		Name:      "llm_token_usage_total",
-		Help:      "Total token input dan output yang diproses oleh provider LLM",
+		Help:      "Total input and output tokens processed by LLM providers",
 	}, []string{"provider", "model", "type"}) // type: prompt | completion
 
-	// GRPCRequestsTotal menghitung total request gRPC yang masuk
+	// GRPCRequestsTotal counts total inbound gRPC requests
 	GRPCRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "clawcrew",
 		Subsystem: "engine",
 		Name:      "grpc_requests_total",
-		Help:      "Total permintaan gRPC yang diterima engine",
+		Help:      "Total gRPC requests received by the engine",
 	}, []string{"method", "status"})
 
-	// GRPCRequestDuration mengukur latensi eksekusi endpoint gRPC
+	// GRPCRequestDuration measures gRPC execution latency in seconds
 	GRPCRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "clawcrew",
 		Subsystem: "engine",
 		Name:      "grpc_request_duration_seconds",
-		Help:      "Durasi pemrosesan permintaan gRPC dalam detik",
+		Help:      "Duration of gRPC request processing in seconds",
 		Buckets:   []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10},
 	}, []string{"method"})
 
-	// ErrorsTotal menghitung total error berdasarkan layer dan code
+	// ErrorsTotal counts structured errors categorized by architectural layer and code
 	ErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "clawcrew",
 		Subsystem: "engine",
 		Name:      "errors_total",
-		Help:      "Total error terstruktur yang terjadi di setiap layer Clean Architecture",
+		Help:      "Total structured errors occurring in each Clean Architecture layer",
 	}, []string{"layer", "code"})
 )
 
-// RegisterMetrics mendaftarkan seluruh metrik Prometheus
+// RegisterMetrics registers all Prometheus metrics with the default registry
 func RegisterMetrics() {
 	once.Do(func() {
 		prometheus.MustRegister(
@@ -79,13 +79,13 @@ func RegisterMetrics() {
 	})
 }
 
-// Server merepresentasikan HTTP server untuk Prometheus metrics
+// Server represents an HTTP server for Prometheus metrics
 type Server struct {
 	httpServer *http.Server
 	port       int
 }
 
-// NewServer membuat instance Server metrics
+// NewServer constructs a new Prometheus metrics Server instance
 func NewServer(port int) *Server {
 	RegisterMetrics()
 
@@ -106,7 +106,7 @@ func NewServer(port int) *Server {
 	}
 }
 
-// Start menjalankan HTTP server metrics secara blocking (jalankan di goroutine)
+// Start runs the HTTP metrics server (should be executed in a goroutine)
 func (s *Server) Start() error {
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
@@ -114,12 +114,12 @@ func (s *Server) Start() error {
 	return nil
 }
 
-// Stop menghentikan HTTP server metrics dengan graceful shutdown
+// Stop gracefully shuts down the HTTP metrics server
 func (s *Server) Stop(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
 
-// Port mengembalikan port yang digunakan server
+// Port returns the server's listening port
 func (s *Server) Port() int {
 	return s.port
 }
