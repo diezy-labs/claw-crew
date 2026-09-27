@@ -41,9 +41,9 @@ Implementasi logika *multi-agent* dan *streaming LLM* pada Go.
 ### Phase 5: Rilis & Pengujian Akhir (Tersulit)
 Pengujian dan penyatuan seluruh infrastruktur.
 
-- [ ] **TASK-5.1**: Lakukan kompilasi *end-to-end* (Tauri Desktop App) membundel `agent-engine` executable sebagai *Sidecar*.
-- [ ] **TASK-5.2**: Pengujian *stress test* memori untuk puluhan agen berjalan paralel, pastikan *channels* dan *goroutines* tidak mengalami *deadlock/leak*.
-- [ ] **TASK-5.3**: Verifikasi ketahanan file *logs* (rotasi) dan pengiriman metrik Prometheus di bawah beban tinggi (ribuan RPS lokal).
+- [x] **TASK-5.1**: Lakukan kompilasi *end-to-end* (Tauri Desktop App) membundel `agent-engine` executable sebagai *Sidecar*.
+- [x] **TASK-5.2**: Pengujian *stress test* memori untuk puluhan agen berjalan paralel, pastikan *channels* dan *goroutines* tidak mengalami *deadlock/leak*.
+- [x] **TASK-5.3**: Verifikasi ketahanan file *logs* (rotasi) dan pengiriman metrik Prometheus di bawah beban tinggi (ribuan RPS lokal).
 
 ---
 
