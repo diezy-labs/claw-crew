@@ -33,10 +33,10 @@ Pekerjaan di area perbatasan Rust (Desktop) dan Go (Daemon).
 ### Phase 4: Core Go Engine & LLM Integration (Sulit)
 Implementasi logika *multi-agent* dan *streaming LLM* pada Go.
 
-- [ ] **TASK-4.1**: Buat domain `src/llm` (memanfaatkan `encoding/json/v2`) untuk pemanggilan OpenAI/Gemini/Anthropic API secara *streaming*.
-- [ ] **TASK-4.2**: Buat domain `src/crew` (Delivery, Service, Interfaces). Implementasi infrastruktur `Goroutines` & `Channels` untuk manajemen agen paralel.
-- [ ] **TASK-4.3**: Implementasikan *dispatcher* dalam *Service* layer untuk memisahkan dan mem-parsing hasil *streaming text* murni dengan *tool calls*.
-- [ ] **TASK-4.4**: Integrasi `SystemGateway` gRPC (Go memanggil Rust) agar LLM Go dapat mengeksekusi alat bawaan mesin yang diamankan Rust (OS bash, read_file).
+- [x] **TASK-4.1**: Buat domain `src/llm` (memanfaatkan `encoding/json/v2`) untuk pemanggilan OpenAI/Gemini/Anthropic API secara *streaming*.
+- [x] **TASK-4.2**: Buat domain `src/crew` (Delivery, Service, Interfaces). Implementasi infrastruktur `Goroutines` & `Channels` untuk manajemen agen paralel.
+- [x] **TASK-4.3**: Implementasikan *dispatcher* dalam *Service* layer untuk memisahkan dan mem-parsing hasil *streaming text* murni dengan *tool calls*.
+- [x] **TASK-4.4**: Integrasi `SystemGateway` gRPC (Go memanggil Rust) agar LLM Go dapat mengeksekusi alat bawaan mesin yang diamankan Rust (OS bash, read_file).
 
 ### Phase 5: Rilis & Pengujian Akhir (Tersulit)
 Pengujian dan penyatuan seluruh infrastruktur.

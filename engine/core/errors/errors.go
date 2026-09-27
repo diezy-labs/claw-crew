@@ -30,6 +30,7 @@ const (
 	CodeUnauthorized    Code = "UNAUTHORIZED"
 	CodeToolFailed      Code = "TOOL_EXECUTION_FAILED"
 	CodeLLMStreamError  Code = "LLM_STREAM_ERROR"
+	CodeUnavailable     Code = "SERVICE_UNAVAILABLE"
 )
 
 // AppError represents a structured error conforming to Clean Architecture
@@ -95,6 +96,8 @@ func ToGRPCStatus(err error) error {
 		case CodeToolFailed:
 			grpcCode = codes.FailedPrecondition
 		case CodeLLMStreamError:
+			grpcCode = codes.Unavailable
+		case CodeUnavailable:
 			grpcCode = codes.Unavailable
 		default:
 			grpcCode = codes.Internal
