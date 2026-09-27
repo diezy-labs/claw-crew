@@ -162,6 +162,90 @@ pub fn stop_daemon(child: &mut Child) -> std::io::Result<()> {
     terminate_supervisor_tree(child)
 }
 
+/// Filename of the Go Agent Engine binary on the current platform.
+fn agent_engine_exe_name() -> &'static str {
+    if cfg!(windows) {
+        "agent-engine.exe"
+    } else {
+        "agent-engine"
+    }
+}
+
+/// Find the `agent-engine` binary. Checks sibling directory, engine/bin, and PATH.
+pub fn find_agent_engine_binary() -> Option<PathBuf> {
+    let exe_name = agent_engine_exe_name();
+
+    // 1. Check directory next to current executable
+    if let Ok(exe) = std::env::current_exe() {
+        let sibling = exe.with_file_name(exe_name);
+        if sibling.is_file() {
+            return Some(sibling);
+        }
+    }
+
+    // 2. Check engine/bin relative to workspace root
+    for rel in ["engine/bin", "../engine/bin", "../../engine/bin"] {
+        let candidate = Path::new(rel).join(exe_name);
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+    }
+
+    // 3. Any directory on PATH
+    if let Some(path) = std::env::var_os("PATH") {
+        for dir in std::env::split_paths(&path) {
+            let candidate = dir.join(exe_name);
+            if candidate.is_file() {
+                return Some(candidate);
+            }
+        }
+    }
+
+    None
+}
+
+/// Spawn the Go Agent Engine child process with specified ports.
+pub fn spawn_agent_engine(
+    binary: &Path,
+    grpc_port: u16,
+    metrics_port: u16,
+) -> std::io::Result<Child> {
+    let mut cmd = Command::new(binary);
+    cmd.arg(format!("--grpc-port={grpc_port}"))
+        .arg(format!("--metrics-port={metrics_port}"))
+        .arg("--console-out=false")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // CREATE_NO_WINDOW
+        cmd.creation_flags(0x0800_0000);
+    }
+
+    cmd.spawn()
+}
+
+/// Stop the Go Agent Engine process.
+pub fn stop_agent_engine(child: &mut Child) -> std::io::Result<()> {
+    #[cfg(unix)]
+    {
+        let pid = child.id() as i32;
+        unsafe { kill(pid, SIGTERM) };
+        let deadline = Instant::now() + Duration::from_secs(3);
+        while Instant::now() < deadline {
+            if let Ok(Some(_)) = child.try_wait() {
+                return Ok(());
+            }
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    }
+    child.kill()?;
+    child.wait().map(|_| ())
+}
+
 fn validate_readiness_frame<F>(
     frame: std::io::Result<Option<String>>,
     status_probe: F,

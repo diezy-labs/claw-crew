@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, ChevronDown, ChevronUp, Pause, Play, Plus, RefreshCw, X } from 'lucide-react';
+import { Activity, ChevronDown, ChevronUp, Pause, Play, Plus, RefreshCw, Terminal, X } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import type { LogEvent, LogsQueryParams, LogsResponse } from '@/lib/api';
 import { usePolling } from '@/hooks/usePolling';
 import { Badge, Button, PageHeader } from '@/components/ui';
 import { t } from '@/lib/i18n';
+import { getEngineLogs } from '@/lib/tauri';
 
 const DEFAULT_SEVERITY_MIN = 9;
 const PAGE_LIMIT = 200;
@@ -150,10 +151,33 @@ function fetchLogs(params: LogsQueryParams): Promise<LogsResponse> {
 }
 
 export default function Logs() {
+  const [logSource, setLogSource] = useState<'gateway' | 'engine'>('gateway');
+  const [engineLogs, setEngineLogs] = useState<string[]>([]);
+  const [loadingEngineLogs, setLoadingEngineLogs] = useState(false);
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [daemonStartedAt, setDaemonStartedAt] = useState('');
   const [attributionKeys, setAttributionKeys] = useState<string[]>([]);
+
+  const fetchEngineLogs = useCallback(async () => {
+    setLoadingEngineLogs(true);
+    try {
+      const lines = await getEngineLogs(250);
+      setEngineLogs(lines);
+    } catch {
+      setEngineLogs(['Failed to load engine logs from disk.']);
+    } finally {
+      setLoadingEngineLogs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (logSource === 'engine') {
+      void fetchEngineLogs();
+      const interval = setInterval(() => void fetchEngineLogs(), 3000);
+      return () => clearInterval(interval);
+    }
+  }, [logSource, fetchEngineLogs]);
   // Prefer the segment-aware cursor returned by `next_segment_cursor`
   // (identifies both the segment file and the byte offset within it), which
   // allows `loadOlder` to paginate across rotated archive files. Fall back to
@@ -434,6 +458,26 @@ export default function Logs() {
                 <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
                 {t('common.refresh')}
               </Button>
+              <div className="flex items-center gap-1 border border-pc-border rounded-[var(--radius-md)] p-0.5 bg-pc-input ml-2">
+                <button
+                  type="button"
+                  onClick={() => setLogSource('gateway')}
+                  className={`px-2 py-0.5 text-xs rounded transition-colors ${
+                    logSource === 'gateway' ? 'bg-pc-accent text-white font-medium' : 'text-pc-text-muted hover:text-pc-text'
+                  }`}
+                >
+                  Gateway
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLogSource('engine')}
+                  className={`px-2 py-0.5 text-xs rounded transition-colors ${
+                    logSource === 'engine' ? 'bg-pc-accent text-white font-medium' : 'text-pc-text-muted hover:text-pc-text'
+                  }`}
+                >
+                  Go Engine
+                </button>
+              </div>
             </>
           }
         />
@@ -602,35 +646,62 @@ export default function Logs() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 min-h-0">
-        {events.length === 0 && !loading ? (
-          <div className="flex flex-col items-center justify-center h-full text-pc-text-muted">
-            <Activity className="h-10 w-10 mb-3 text-pc-text-faint" />
-            <p className="text-sm">{t('logs.no_events')}</p>
+      {logSource === 'engine' ? (
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col space-y-2 min-h-0 bg-pc-elevated/20">
+          <div className="flex items-center justify-between px-2">
+            <span className="text-xs text-pc-text-muted flex items-center gap-1.5 font-mono">
+              <Terminal className="h-3.5 w-3.5 text-pc-accent" />
+              Central Log: <code>%APPDATA%/clawcrew/logs/agent.log</code>
+            </span>
+            <span className="text-xs text-pc-text-muted">
+              {engineLogs.length} lines loaded
+            </span>
           </div>
-        ) : (
-          events.map((event) => (
-            <LogRow
-              key={event.id}
-              event={event}
-              onFilterAction={setActionFilter}
-              onFilterField={setFieldEq}
-            />
-          ))
-        )}
-        {!atEnd && events.length > 0 && (
-          <div className="flex justify-center pt-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => void loadOlder()}
-              disabled={loadingOlder || (cursorOlderOffset === null && cursorOlderLegacy === null)}
-            >
-              {loadingOlder ? t('common.loading') : t('logs.load_older')}
-            </Button>
+          <div className="flex-1 overflow-y-auto bg-pc-input p-3 rounded-[var(--radius-md)] border border-pc-border font-mono text-[11px] leading-relaxed text-pc-text-secondary select-text">
+            {loadingEngineLogs && engineLogs.length === 0 ? (
+              <div className="text-pc-text-muted">Loading Go engine logs…</div>
+            ) : engineLogs.length === 0 ? (
+              <div className="text-pc-text-muted">No logs recorded yet.</div>
+            ) : (
+              engineLogs.map((line, idx) => (
+                <div key={idx} className="hover:bg-pc-elevated/40 px-1 py-0.5 rounded whitespace-pre-wrap break-all">
+                  {line}
+                </div>
+              ))
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4 space-y-1 min-h-0">
+          {events.length === 0 && !loading ? (
+            <div className="flex flex-col items-center justify-center h-full text-pc-text-muted">
+              <Activity className="h-10 w-10 mb-3 text-pc-text-faint" />
+              <p className="text-sm">{t('logs.no_events')}</p>
+            </div>
+          ) : (
+            events.map((event) => (
+              <LogRow
+                key={event.id}
+                event={event}
+                onFilterAction={setActionFilter}
+                onFilterField={setFieldEq}
+              />
+            ))
+          )}
+          {!atEnd && events.length > 0 && (
+            <div className="flex justify-center pt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void loadOlder()}
+                disabled={loadingOlder || (cursorOlderOffset === null && cursorOlderLegacy === null)}
+              >
+                {loadingOlder ? t('common.loading') : t('logs.load_older')}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

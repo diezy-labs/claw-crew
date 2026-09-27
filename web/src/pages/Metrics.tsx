@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Activity, CheckCircle2, Loader2, RefreshCw, XCircle } from 'lucide-react';
 import {
   getAgentMetrics,
   getTaskStats,
@@ -10,12 +10,15 @@ import {
 import { usePolling } from '@/hooks/usePolling';
 import { formatTokens, formatLatency, formatCostUsd } from './metrics.logic';
 import { Badge, Button, Card, PageHeader, StatCard } from '@/components/ui';
+import { getEngineMetrics, getEngineHealth } from '@/lib/tauri';
 
 type SortKey = 'agent' | 'total_tasks' | 'total_tokens' | 'total_cost_usd' | 'avg_latency_ms' | 'fallback_count';
 
 export default function Metrics() {
   const [metrics, setMetrics] = useState<AgentMetrics[]>([]);
   const [stats, setStats] = useState<TaskAgentStat[]>([]);
+  const [engineHealthy, setEngineHealthy] = useState<boolean | null>(null);
+  const [enginePrometheus, setEnginePrometheus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>('total_cost_usd');
@@ -23,13 +26,17 @@ export default function Metrics() {
 
   const fetchMetrics = useCallback(async (isStale: () => boolean) => {
     try {
-      const [metricsResult, statsResult] = await Promise.all([
+      const [metricsResult, statsResult, healthStatus, promText] = await Promise.all([
         getAgentMetrics().catch(() => ({ agents: [] as AgentMetrics[] })),
         getTaskStats().catch(() => ({ agents: [] as TaskAgentStat[] })),
+        getEngineHealth().catch(() => false),
+        getEngineMetrics().catch(() => ''),
       ]);
       if (!isStale()) {
         setMetrics(metricsResult.agents);
         setStats(statsResult.agents);
+        setEngineHealthy(healthStatus);
+        setEnginePrometheus(promText);
         setError(null);
       }
     } catch (cause) {
@@ -205,6 +212,34 @@ export default function Metrics() {
               </table>
             </Card>
           )}
+
+          <Card className="overflow-hidden p-0 border-pc-border">
+            <div className="border-b border-pc-border px-4 py-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-pc-accent" aria-hidden />
+                <h2 className="text-sm font-semibold text-pc-text">Go 1.27 Agent Engine Observability</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {engineHealthy ? (
+                  <Badge variant="success" className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Engine Active (:9090)
+                  </Badge>
+                ) : (
+                  <Badge variant="neutral" className="flex items-center gap-1">
+                    <XCircle className="h-3 w-3" /> Standby / Offline
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <div className="p-4 bg-pc-elevated/30">
+              <p className="text-xs text-pc-text-muted mb-2">
+                Live Prometheus metrics scraped from local sidecar daemon at <code>http://127.0.0.1:9090/metrics</code>:
+              </p>
+              <pre className="text-[11px] font-mono bg-pc-input p-3 rounded-[var(--radius-md)] border border-pc-border overflow-x-auto max-h-48 text-pc-text-secondary leading-relaxed">
+                {enginePrometheus || 'No metrics returned from Go engine yet.'}
+              </pre>
+            </div>
+          </Card>
         </>
       )}
     </div>

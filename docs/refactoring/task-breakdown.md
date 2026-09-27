@@ -26,9 +26,9 @@ Pemasangan pustaka pendukung untuk Dependency Injection dan Metrics.
 ### Phase 3: Rust Tauri Sidecar Wiring (Menengah)
 Pekerjaan di area perbatasan Rust (Desktop) dan Go (Daemon).
 
-- [ ] **TASK-3.1**: Modifikasi `clawcrew-runtime/daemon/mod.rs` untuk *spawn* binary `agent-engine` saat *startup* Tauri, serta membunuhnya secara bersih (*graceful shutdown*) jika Tauri ditutup.
-- [ ] **TASK-3.2**: Sambungkan gRPC client `tonic` di Rust Gateway API untuk rute frontend `POST /api/chat/turn`.
-- [ ] **TASK-3.3**: Tambahkan fungsionalitas UI Dashboard/React untuk menarik metrik dari HTTP `:9090` Go dan me-render *log viewer* dari file `agent.log`.
+- [x] **TASK-3.1**: Modifikasi `clawcrew-runtime/daemon/mod.rs` untuk *spawn* binary `agent-engine` saat *startup* Tauri, serta membunuhnya secara bersih (*graceful shutdown*) jika Tauri ditutup.
+- [x] **TASK-3.2**: Sambungkan gRPC client `tonic` di Rust Gateway API untuk rute frontend `POST /api/chat/turn`.
+- [x] **TASK-3.3**: Tambahkan fungsionalitas UI Dashboard/React untuk menarik metrik dari HTTP `:9090` Go dan me-render *log viewer* dari file `agent.log`.
 
 ### Phase 4: Core Go Engine & LLM Integration (Sulit)
 Implementasi logika *multi-agent* dan *streaming LLM* pada Go.
