@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package clawcrew.agent;
+
+option go_package = "github.com/diezy-labs/claw-crew/engine/pkg/pb;pb";
+
+// Service hosted by Go (AI Brain) and invoked by Rust (UI/Gateway)
+service AgentEngine {
+    // Starts a new turn/task for an Agent, returning a stream of responses
+    rpc StartTurn(TurnRequest) returns (stream TurnResponse);
+    
+    // Executes a quick query without full state persistence (e.g., RAG vector search)
+    rpc QuickQuery(QueryRequest) returns (QueryResponse);
+    
+    // gRPC health check
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Service hosted by Rust (Native System) and invoked by Go (when Agent requires OS tools)
+service SystemGateway {
+    // Requests Rust to execute a native platform tool (terminal, disk access)
+    rpc ExecuteNativeTool(ToolCallRequest) returns (ToolCallResponse);
+    
+    // Requests a decrypted credential from Rust Secret Vault
+    rpc GetDecryptedSecret(SecretRequest) returns (SecretResponse);
+}
+
+// ======================================
+// Messages
+// ======================================
+
+message HealthCheckRequest {
+    string service = 1;
+}
+
+message HealthCheckResponse {
+    enum ServingStatus {
+        UNKNOWN = 0;
+        SERVING = 1;
+        NOT_SERVING = 2;
+    }
+    ServingStatus status = 1;
+}
+
+message TurnRequest {
+    string session_id = 1;
+    string agent_id = 2; // References agent TOML configuration
+    string prompt = 3;
+    bytes context_window = 4;
+}
+
+message TurnResponse {
+    enum EventType {
+        THOUGHT_CHUNK = 0;
+        TEXT_CHUNK = 1;
+        TOOL_CALL_STARTED = 2;
+        TOOL_CALL_FINISHED = 3;
+        SUBAGENT_SPAWNED = 4;
+        TURN_COMPLETED = 5;
+        ERROR = 6;
+    }
+    
+    EventType type = 1;
+    string content = 2;      // Chunk text or JSON payload
+    string subagent_id = 3;  // Populated when event originates from a sub-agent
+    string error_message = 4;// Error details when type == ERROR
+}
+
+message QueryRequest {
+    string query = 1;
+    string collection = 2;
+    int32 top_k = 3;
+}
+
+message QueryResponse {
+    repeated QueryMatch matches = 1;
+}
+
+message QueryMatch {
+    string id = 1;
+    float score = 2;
+    string content = 3;
+    map<string, string> metadata = 4;
+}
+
+message ToolCallRequest {
+    string tool_name = 1; // e.g. "bash", "write_to_file", "read_file"
+    string arguments_json = 2;
+}
+
+message ToolCallResponse {
+    bool success = 1;
+    string output = 2;
+    string error = 3;
+}
+
+message SecretRequest {
+    string key_name = 1;
+}
+
+message SecretResponse {
+    bool found = 1;
+    string value = 2;
+}

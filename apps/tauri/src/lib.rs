@@ -115,6 +115,18 @@ async fn ensure_daemon_locked<R: tauri::Runtime>(
             );
         }
     }
+
+    // Ensure the Go Agent Engine sidecar is running
+    if let Some(agent_bin) = daemon::find_agent_engine_binary() {
+        let (grpc_port, metrics_port) = {
+            let s = state.read().await;
+            (s.agent_engine_grpc_port, s.agent_engine_metrics_port)
+        };
+        if let Ok(child) = daemon::spawn_agent_engine(&agent_bin, grpc_port, metrics_port) {
+            let current = state.write().await;
+            *current.owned_agent_engine.lock().unwrap_or_else(|e| e.into_inner()) = Some(child);
+        }
+    }
 }
 
 pub(crate) async fn toggle_service<R: tauri::Runtime>(
@@ -127,7 +139,7 @@ pub(crate) async fn toggle_service<R: tauri::Runtime>(
     let spawn_lock = state.read().await.daemon_spawn_lock.clone();
     let _guard = spawn_lock.lock().await;
 
-    let (service_enabled, daemon_to_stop) = {
+    let (service_enabled, daemon_to_stop, agent_to_stop) = {
         let mut current = state.write().await;
         current.service_enabled = !current.service_enabled;
         let daemon_to_stop = if current.service_enabled {
@@ -139,11 +151,23 @@ pub(crate) async fn toggle_service<R: tauri::Runtime>(
                 .unwrap_or_else(|e| e.into_inner())
                 .take()
         };
-        (current.service_enabled, daemon_to_stop)
+        let agent_to_stop = if current.service_enabled {
+            None
+        } else {
+            current
+                .owned_agent_engine
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .take()
+        };
+        (current.service_enabled, daemon_to_stop, agent_to_stop)
     };
 
     if let Some(mut child) = daemon_to_stop {
         let _ = daemon::stop_daemon(&mut child);
+    }
+    if let Some(mut child) = agent_to_stop {
+        let _ = daemon::stop_agent_engine(&mut child);
     }
     if service_enabled {
         ensure_daemon_locked(app, state).await;
@@ -295,6 +319,11 @@ pub fn run() {
             commands::pairing::initiate_pairing,
             commands::pairing::get_devices,
             commands::agent::send_message,
+            commands::engine::get_engine_metrics,
+            commands::engine::get_engine_logs,
+            commands::engine::get_engine_health,
+            commands::engine::start_agent_turn,
+            commands::engine::query_agent_memory,
             open_dashboard,
             get_service_status,
             toggle_service_command,

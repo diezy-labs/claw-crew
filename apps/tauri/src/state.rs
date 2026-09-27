@@ -46,6 +46,9 @@ pub struct AppState {
     pub agent_status: AgentStatus,
     pub service_enabled: bool,
     pub owned_daemon: Arc<Mutex<Option<Child>>>,
+    pub owned_agent_engine: Arc<Mutex<Option<Child>>>,
+    pub agent_engine_grpc_port: u16,
+    pub agent_engine_metrics_port: u16,
     pub daemon_spawn_lock: Arc<tokio::sync::Mutex<()>>,
 }
 
@@ -58,6 +61,9 @@ impl Default for AppState {
             agent_status: AgentStatus::Idle,
             service_enabled: true,
             owned_daemon: Arc::new(Mutex::new(None)),
+            owned_agent_engine: Arc::new(Mutex::new(None)),
+            agent_engine_grpc_port: 50051,
+            agent_engine_metrics_port: 9090,
             daemon_spawn_lock: Arc::new(tokio::sync::Mutex::new(())),
         }
     }
