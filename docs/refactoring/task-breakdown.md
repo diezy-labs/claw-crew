@@ -18,10 +18,10 @@ Pekerjaan *setup* dan konfigurasi kerangka dasar proyek.
 ### Phase 2: Observability & DI Wiring (Menengah - Mudah)
 Pemasangan pustaka pendukung untuk Dependency Injection dan Metrics.
 
-- [ ] **TASK-2.1**: Setup **Google Wire** (buat `wire.go`) untuk injeksi dependensi awal di tingkat `app`.
-- [ ] **TASK-2.2**: Ekspos HTTP server tambahan di port `:9090/metrics` untuk metrik **Prometheus**.
-- [ ] **TASK-2.3**: Buat *entrypoint* `engine/cmd/agent-engine/main.go` yang me-*load* dependency via Wire dan mendengarkan port gRPC lokal.
-- [ ] **TASK-2.4**: Implementasikan interseptor gRPC untuk *logging error* tersentral dan pencatatan metrik *request duration* (Prometheus).
+- [x] **TASK-2.1**: Setup **Google Wire** (buat `wire.go`) untuk injeksi dependensi awal di tingkat `app`.
+- [x] **TASK-2.2**: Ekspos HTTP server tambahan di port `:9090/metrics` untuk metrik **Prometheus**.
+- [x] **TASK-2.3**: Buat *entrypoint* `engine/cmd/agent-engine/main.go` yang me-*load* dependency via Wire dan mendengarkan port gRPC lokal.
+- [x] **TASK-2.4**: Implementasikan interseptor gRPC untuk *logging error* tersentral dan pencatatan metrik *request duration* (Prometheus).
 
 ### Phase 3: Rust Tauri Sidecar Wiring (Menengah)
 Pekerjaan di area perbatasan Rust (Desktop) dan Go (Daemon).

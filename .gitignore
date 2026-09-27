@@ -1,5 +1,6 @@
 /target
 /target-*/
+/engine/bin/
 
 # Desktop installer build artifacts
 *.dmg
