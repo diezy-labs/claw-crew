@@ -61,3 +61,34 @@ export const getEngineHealth = async (): Promise<boolean> => {
     return false;
   }
 };
+
+/** Dispatches an agent turn to the Go Agent Engine. */
+export const startAgentTurn = async (sessionId: string, prompt: string, agentId?: string): Promise<{ status: string; raw_stream: string }> => {
+  if (isTauri()) {
+    return invokeDesktop<{ status: string; raw_stream: string }>('start_agent_turn', {
+      sessionId,
+      agentId,
+      prompt,
+    });
+  }
+  const res = await fetch('http://127.0.0.1:9090/api/turn', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, agent_id: agentId, prompt }),
+  });
+  const text = await res.text();
+  return { status: 'success', raw_stream: text };
+};
+
+/** Queries local in-memory vector store on the Go Agent Engine. */
+export const queryAgentMemory = async (query: string, topK = 5): Promise<any[]> => {
+  if (isTauri()) {
+    return invokeDesktop<any[]>('query_agent_memory', { query, topK });
+  }
+  const res = await fetch('http://127.0.0.1:9090/api/query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, top_k: topK }),
+  });
+  return res.json();
+};

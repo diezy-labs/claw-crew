@@ -47,6 +47,7 @@ func NewApp(
 	crewHandler *crew.GRPCHandler,
 ) *App {
 	crewHandler.RegisterService(grpcServer)
+	crewHandler.RegisterHTTP(metricsServer)
 
 	return &App{
 		Cfg:           cfg,

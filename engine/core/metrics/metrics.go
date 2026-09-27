@@ -79,9 +79,10 @@ func RegisterMetrics() {
 	})
 }
 
-// Server represents an HTTP server for Prometheus metrics
+// Server represents an HTTP server for Prometheus metrics and engine endpoints
 type Server struct {
 	httpServer *http.Server
+	mux        *http.ServeMux
 	port       int
 }
 
@@ -98,12 +99,23 @@ func NewServer(port int) *Server {
 
 	return &Server{
 		port: port,
+		mux:  mux,
 		httpServer: &http.Server{
 			Addr:              fmt.Sprintf(":%d", port),
 			Handler:           mux,
 			ReadHeaderTimeout: 5 * time.Second,
 		},
 	}
+}
+
+// RegisterRoute adds a custom HTTP handler to the server mux
+func (s *Server) RegisterRoute(pattern string, handler http.Handler) {
+	s.mux.Handle(pattern, handler)
+}
+
+// RegisterRouteFunc adds a custom HTTP handler function to the server mux
+func (s *Server) RegisterRouteFunc(pattern string, handlerFunc http.HandlerFunc) {
+	s.mux.HandleFunc(pattern, handlerFunc)
 }
 
 // Start runs the HTTP metrics server (should be executed in a goroutine)

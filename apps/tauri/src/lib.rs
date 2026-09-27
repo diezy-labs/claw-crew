@@ -322,6 +322,8 @@ pub fn run() {
             commands::engine::get_engine_metrics,
             commands::engine::get_engine_logs,
             commands::engine::get_engine_health,
+            commands::engine::start_agent_turn,
+            commands::engine::query_agent_memory,
             open_dashboard,
             get_service_status,
             toggle_service_command,

@@ -74,6 +74,87 @@ pub async fn get_engine_health(state: State<'_, SharedState>) -> Result<bool, St
     }
 }
 
+/// Trigger an agent turn on the Go Agent Engine and return the streamed turn response.
+#[tauri::command]
+pub async fn start_agent_turn(
+    state: State<'_, SharedState>,
+    session_id: String,
+    agent_id: Option<String>,
+    prompt: String,
+) -> Result<serde_json::Value, String> {
+    let port = {
+        let s = state.read().await;
+        s.agent_engine_metrics_port
+    };
+    let url = format!("http://127.0.0.1:{port}/api/turn");
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(60))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+
+    let payload = serde_json::json!({
+        "session_id": session_id,
+        "agent_id": agent_id.unwrap_or_else(|| "primary_agent".to_string()),
+        "prompt": prompt,
+    });
+
+    let resp = client
+        .post(&url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to execute agent turn at {url}: {e}"))?;
+
+    let text = resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read turn response: {e}"))?;
+
+    Ok(serde_json::json!({
+        "status": "success",
+        "raw_stream": text,
+    }))
+}
+
+/// Query local in-memory vector store on the Go Agent Engine.
+#[tauri::command]
+pub async fn query_agent_memory(
+    state: State<'_, SharedState>,
+    query: String,
+    top_k: Option<i32>,
+) -> Result<serde_json::Value, String> {
+    let port = {
+        let s = state.read().await;
+        s.agent_engine_metrics_port
+    };
+    let url = format!("http://127.0.0.1:{port}/api/query");
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
+
+    let payload = serde_json::json!({
+        "query": query,
+        "top_k": top_k.unwrap_or(5),
+    });
+
+    let resp = client
+        .post(&url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to query agent memory at {url}: {e}"))?;
+
+    let results: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse query memory JSON response: {e}"))?;
+
+    Ok(results)
+}
+
 /// Resolve the expected platform-specific location of agent.log.
 fn resolve_agent_log_path() -> PathBuf {
     #[cfg(windows)]
