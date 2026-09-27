@@ -11,6 +11,7 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/llm"
+	"github.com/diezy-labs/claw-crew/engine/src/memory"
 )
 
 // Injectors from wire.go:
@@ -26,7 +27,8 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	provider := llm.NewProvider(cfg, systemGatewayClient)
 	toolDispatcher := llm.NewToolDispatcher(systemGatewayClient)
 	orchestrator := crew.NewService(provider, toolDispatcher, systemGatewayClient)
-	grpcHandler := crew.NewGRPCHandler(orchestrator)
+	vectorStore := memory.NewVectorStore()
+	grpcHandler := crew.NewGRPCHandler(orchestrator, vectorStore)
 	app := NewApp(cfg, server, metricsServer, grpcHandler)
 	return app, nil
 }

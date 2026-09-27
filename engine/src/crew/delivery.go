@@ -5,6 +5,7 @@ import (
 
 	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
 	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
+	"github.com/diezy-labs/claw-crew/engine/src/memory"
 	"google.golang.org/grpc"
 )
 
@@ -12,12 +13,14 @@ import (
 type GRPCHandler struct {
 	pb.UnimplementedAgentEngineServer
 	orchestrator Orchestrator
+	vectorStore  memory.VectorStore
 }
 
 // NewGRPCHandler constructs a new GRPCHandler instance
-func NewGRPCHandler(orchestrator Orchestrator) *GRPCHandler {
+func NewGRPCHandler(orchestrator Orchestrator, vectorStore memory.VectorStore) *GRPCHandler {
 	return &GRPCHandler{
 		orchestrator: orchestrator,
+		vectorStore:  vectorStore,
 	}
 }
 
@@ -81,8 +84,34 @@ func (h *GRPCHandler) StartTurn(req *pb.TurnRequest, stream pb.AgentEngine_Start
 
 // QuickQuery executes lightweight stateless queries (e.g. vector search lookups)
 func (h *GRPCHandler) QuickQuery(ctx context.Context, req *pb.QueryRequest) (*pb.QueryResponse, error) {
+	if req.GetQuery() == "" {
+		return &pb.QueryResponse{
+			Matches: []*pb.QueryMatch{},
+		}, nil
+	}
+
+	topK := int(req.GetTopK())
+	if topK <= 0 {
+		topK = 5
+	}
+
+	results, err := h.vectorStore.SearchByText(ctx, req.GetQuery(), topK)
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to execute vector similarity search", appErrors.LayerDelivery)
+	}
+
+	matches := make([]*pb.QueryMatch, 0, len(results))
+	for _, r := range results {
+		matches = append(matches, &pb.QueryMatch{
+			Id:       r.Document.ID,
+			Content:  r.Document.Content,
+			Score:    r.Score,
+			Metadata: r.Document.Metadata,
+		})
+	}
+
 	return &pb.QueryResponse{
-		Matches: []*pb.QueryMatch{},
+		Matches: matches,
 	}, nil
 }
 

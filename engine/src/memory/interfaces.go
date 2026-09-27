@@ -6,6 +6,7 @@ import "context"
 type VectorStore interface {
 	Store(ctx context.Context, doc *Document) error
 	Search(ctx context.Context, queryEmbedding []float32, topK int) ([]*SearchResult, error)
+	SearchByText(ctx context.Context, text string, topK int) ([]*SearchResult, error)
 }
 
 // Document contains a text chunk and its dense vector embedding

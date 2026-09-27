@@ -8,6 +8,7 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/llm"
+	"github.com/diezy-labs/claw-crew/engine/src/memory"
 	"github.com/google/wire"
 )
 
@@ -18,6 +19,7 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 		ProvideMetricsServer,
 		client.Set,
 		llm.Set,
+		memory.Set,
 		crew.Set,
 		NewApp,
 	)
