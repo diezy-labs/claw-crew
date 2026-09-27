@@ -8,12 +8,12 @@ Dokumen ini berisi daftar pekerjaan (tasks) yang diurutkan dari yang **termudah*
 ### Phase 1: Scaffolding, Protobuf & Core Infrastructure (Termudah)
 Pekerjaan *setup* dan konfigurasi kerangka dasar proyek.
 
-- [ ] **TASK-1.1**: Buat direktori `engine/` untuk proyek Go dan inisialisasi `go.mod` (Go 1.27).
-- [ ] **TASK-1.2**: Implementasi *Clean Architecture Modular* (buat kerangka direktori `src/`, `core/`).
-- [ ] **TASK-1.3**: Buat package `core/errors` untuk standardisasi *error response* per layer.
-- [ ] **TASK-1.4**: Setup `core/logger` dengan rotasi file (lumberjack) yang terintegrasi dengan config direktori `%APPDATA%` / `~/.clawcrew/logs`.
-- [ ] **TASK-1.5**: Buat file kontrak `proto/agent_service.proto` berdasarkan *API Spec*.
-- [ ] **TASK-1.6**: Konfigurasi skrip auto-generate Protobuf untuk Rust (`tonic-build`) dan Go (`protoc-gen-go`).
+- [x] **TASK-1.1**: Buat direktori `engine/` untuk proyek Go dan inisialisasi `go.mod` (Go 1.27).
+- [x] **TASK-1.2**: Implementasi *Clean Architecture Modular* (buat kerangka direktori `src/`, `core/`).
+- [x] **TASK-1.3**: Buat package `core/errors` untuk standardisasi *error response* per layer.
+- [x] **TASK-1.4**: Setup `core/logger` dengan rotasi file (lumberjack) yang terintegrasi dengan config direktori `%APPDATA%` / `~/.clawcrew/logs`.
+- [x] **TASK-1.5**: Buat file kontrak `proto/agent_service.proto` berdasarkan *API Spec*.
+- [x] **TASK-1.6**: Konfigurasi skrip auto-generate Protobuf untuk Rust (`tonic-build`) dan Go (`protoc-gen-go`).
 
 ### Phase 2: Observability & DI Wiring (Menengah - Mudah)
 Pemasangan pustaka pendukung untuk Dependency Injection dan Metrics.
