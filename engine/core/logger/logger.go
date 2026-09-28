@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strings"
 	"sync"
 
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -100,8 +102,9 @@ func Init(cfg Config) (*slog.Logger, error) {
 		}
 
 		opts := &slog.HandlerOptions{
-			Level:     level,
-			AddSource: true,
+			Level:       level,
+			AddSource:   true,
+			ReplaceAttr: RedactAttr,
 		}
 
 		// Use JSON handler for easy parsing by UI and dashboard
@@ -114,6 +117,47 @@ func Init(cfg Config) (*slog.Logger, error) {
 		return nil, initErr
 	}
 	return defaultLogger, nil
+}
+
+var (
+	apiKeyRegex  = regexp.MustCompile(`sk-[a-zA-Z0-9_\-]{16,}`)
+	bearerRegex  = regexp.MustCompile(`(?i)bearer\s+[a-zA-Z0-9_\-\.]+`)
+	ghTokenRegex = regexp.MustCompile(`gh[pousr]_[a-zA-Z0-9]{20,}`)
+	privKeyRegex = regexp.MustCompile(`(?s)-----BEGIN[ A-Z0-9_-]+PRIVATE KEY-----.*?-----END[ A-Z0-9_-]+PRIVATE KEY-----`)
+)
+
+// RedactString sanitizes known credentials, API keys, tokens, and private keys from raw strings
+func RedactString(s string) string {
+	if s == "" {
+		return s
+	}
+	s = apiKeyRegex.ReplaceAllString(s, "sk-...[REDACTED]")
+	s = bearerRegex.ReplaceAllString(s, "Bearer [REDACTED]")
+	s = ghTokenRegex.ReplaceAllString(s, "gh_...[REDACTED]")
+	s = privKeyRegex.ReplaceAllString(s, "[REDACTED PRIVATE KEY]")
+	return s
+}
+
+// RedactAttr redacts sensitive fields automatically in structured log records
+func RedactAttr(groups []string, a slog.Attr) slog.Attr {
+	key := strings.ToLower(a.Key)
+	if strings.Contains(key, "token") ||
+		strings.Contains(key, "secret") ||
+		strings.Contains(key, "password") ||
+		strings.Contains(key, "api_key") ||
+		strings.Contains(key, "authorization") ||
+		strings.Contains(key, "credential") ||
+		strings.Contains(key, "private_key") {
+		return slog.String(a.Key, "[REDACTED]")
+	}
+	if a.Value.Kind() == slog.KindString {
+		val := a.Value.String()
+		redacted := RedactString(val)
+		if redacted != val {
+			return slog.String(a.Key, redacted)
+		}
+	}
+	return a
 }
 
 // Get returns the default centralized logger

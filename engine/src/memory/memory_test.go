@@ -83,3 +83,81 @@ func TestVectorStoreValidation(t *testing.T) {
 		t.Errorf("expected error for empty search vector")
 	}
 }
+
+func TestSessionMemory(t *testing.T) {
+	sm := memory.NewSessionMemory()
+	ctx := context.Background()
+
+	// Append messages
+	err := sm.Append(ctx, "session-1", &memory.Message{
+		Role:    "user",
+		Content: "What is ClawCrew?",
+	})
+	if err != nil {
+		t.Fatalf("failed to append message: %v", err)
+	}
+
+	err = sm.Append(ctx, "session-1", &memory.Message{
+		Role:    "assistant",
+		Content: "ClawCrew is an AI agent orchestration framework.",
+	})
+	if err != nil {
+		t.Fatalf("failed to append message: %v", err)
+	}
+
+	history, err := sm.GetHistory(ctx, "session-1")
+	if err != nil {
+		t.Fatalf("failed to get history: %v", err)
+	}
+	if len(history) != 2 {
+		t.Fatalf("expected 2 messages, got %d", len(history))
+	}
+	if history[0].Role != "user" || history[1].Role != "assistant" {
+		t.Errorf("unexpected message roles: %v, %v", history[0].Role, history[1].Role)
+	}
+
+	// Clear session
+	if err := sm.Clear(ctx, "session-1"); err != nil {
+		t.Fatalf("failed to clear session: %v", err)
+	}
+	historyAfter, _ := sm.GetHistory(ctx, "session-1")
+	if len(historyAfter) != 0 {
+		t.Errorf("expected 0 messages after clear, got %d", len(historyAfter))
+	}
+}
+
+func TestContextPacker(t *testing.T) {
+	packer := memory.NewContextPacker()
+	results := []*memory.SearchResult{
+		{
+			Document: &memory.Document{
+				ID:      "d1",
+				Content: "First document content for testing context packing with reasonable length.",
+			},
+			Score: 0.95,
+		},
+		{
+			Document: &memory.Document{
+				ID:      "d2",
+				Content: "Second document content that expands on architectural patterns.",
+			},
+			Score: 0.88,
+		},
+	}
+
+	// Pack with high token budget
+	packed, tokens := packer.Pack(results, 500)
+	if packed == "" || tokens <= 0 {
+		t.Errorf("expected non-empty packed context, got empty")
+	}
+
+	// Pack with very tight budget (should truncate or fit only first)
+	tightPacked, tightTokens := packer.Pack(results, 25)
+	if tightTokens > 30 {
+		t.Errorf("expected tight packed tokens <= 30, got %d", tightTokens)
+	}
+	if len(tightPacked) >= len(packed) {
+		t.Errorf("expected tight packed context to be shorter")
+	}
+}
+

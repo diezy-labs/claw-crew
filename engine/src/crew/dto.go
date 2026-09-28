@@ -28,3 +28,38 @@ type TurnEvent struct {
 	SubagentID   string        `json:"subagent_id,omitempty"`
 	ErrorMessage string        `json:"error_message,omitempty"`
 }
+
+// AgentStatus represents the state machine status of an agent
+type AgentStatus string
+
+const (
+	AgentStatusIdle            AgentStatus = "idle"
+	AgentStatusThinking        AgentStatus = "thinking"
+	AgentStatusExecutingTool   AgentStatus = "executing_tool"
+	AgentStatusWaitingApproval AgentStatus = "waiting_approval"
+	AgentStatusCompleted       AgentStatus = "completed"
+	AgentStatusError           AgentStatus = "error"
+)
+
+// AgentDefinition describes an agent's identity, role, and capabilities
+type AgentDefinition struct {
+	ID           string      `json:"id"`
+	Name         string      `json:"name"`
+	Role         string      `json:"role"`
+	Status       AgentStatus `json:"status"`
+	Capabilities []string    `json:"capabilities"`
+}
+
+// CrewDefinition represents a team of specialized agents
+type CrewDefinition struct {
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	AgentCount  int                `json:"agent_count"`
+	Agents      []*AgentDefinition `json:"agents"`
+}
+
+// ListCrewsResponse payload for GET /api/v1/crews
+type ListCrewsResponse struct {
+	Items []*CrewDefinition `json:"items"`
+}

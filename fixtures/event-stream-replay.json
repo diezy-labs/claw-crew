@@ -1,0 +1,36 @@
+[
+  {
+    "event_id": "evt_01h87b92mkq100000000000010",
+    "run_id": "run_01h87b92mkq100000000000001",
+    "sequence": 1,
+    "type": "run.started",
+    "timestamp": "2026-09-28T05:00:01Z",
+    "payload": {
+      "run_id": "run_01h87b92mkq100000000000001",
+      "status": "running"
+    }
+  },
+  {
+    "event_id": "evt_01h87b92mkq100000000000011",
+    "run_id": "run_01h87b92mkq100000000000001",
+    "sequence": 2,
+    "type": "task.started",
+    "timestamp": "2026-09-28T05:00:02Z",
+    "payload": {
+      "task_id": "task_01h87b92mkq100000000000002",
+      "status": "running"
+    }
+  },
+  {
+    "event_id": "evt_01h87b92mkq100000000000012",
+    "run_id": "run_01h87b92mkq100000000000001",
+    "sequence": 3,
+    "type": "tool.approval_requested",
+    "timestamp": "2026-09-28T05:00:03Z",
+    "payload": {
+      "execution_id": "appr_01h87b92mkq100000000000003",
+      "tool": "write_file",
+      "risk_tier": "write"
+    }
+  }
+]

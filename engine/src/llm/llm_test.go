@@ -118,3 +118,65 @@ func TestToolDispatcher(t *testing.T) {
 		t.Errorf("expected non-empty output from native tool mock")
 	}
 }
+
+func TestMockProvider(t *testing.T) {
+	mock := llm.NewMockProvider("test-mock")
+	ctx := context.Background()
+
+	chunkCh := make(chan *llm.ChatChunk, 16)
+	errCh := make(chan error, 1)
+
+	go func() {
+		defer close(chunkCh)
+		errCh <- mock.StreamChat(ctx, &llm.ChatRequest{
+			Messages: []llm.Message{{Role: "user", Content: "Hello"}},
+		}, chunkCh)
+	}()
+
+	var hasThoughtSummary bool
+	var hasUsage bool
+	for chunk := range chunkCh {
+		if chunk.ThoughtSummary != "" {
+			hasThoughtSummary = true
+		}
+		if chunk.Usage != nil {
+			hasUsage = true
+			if chunk.Usage.TotalTokens <= 0 {
+				t.Errorf("expected positive total tokens, got %d", chunk.Usage.TotalTokens)
+			}
+		}
+	}
+
+	if err := <-errCh; err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !hasThoughtSummary {
+		t.Error("expected thought summary to be emitted")
+	}
+	if !hasUsage {
+		t.Error("expected token usage to be emitted")
+	}
+}
+
+func TestMultiProvider(t *testing.T) {
+	mp := llm.NewMultiProvider("mock")
+	p, err := mp.GetProvider("mock")
+	if err != nil {
+		t.Fatalf("failed to get mock provider: %v", err)
+	}
+	if p.Name() != "mock" {
+		t.Fatalf("expected provider name mock, got %s", p.Name())
+	}
+
+	ctx := context.Background()
+	chunkCh := make(chan *llm.ChatChunk, 16)
+	go func() {
+		defer close(chunkCh)
+		_ = mp.StreamWithRetry(ctx, "mock", &llm.ChatRequest{
+			Messages: []llm.Message{{Role: "user", Content: "Test"}},
+		}, chunkCh)
+	}()
+
+	for range chunkCh {
+	}
+}

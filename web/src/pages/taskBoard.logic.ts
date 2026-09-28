@@ -5,7 +5,9 @@
 // assuming it only ever receives each event once.
 
 export interface TaskEvent {
-  id: number;
+  id: number | string;
+  event_id?: string;
+  sequence?: number;
   event_type: string;
   payload: unknown;
   timestamp: string;
@@ -15,18 +17,32 @@ export interface TaskEvent {
 export const MAX_TASK_EVENTS = 100;
 
 /**
- * Merge incoming events into the existing feed: drop duplicates by id, sort by
- * id ascending, and keep only the most recent `cap` events.
+ * Merge incoming events into the existing feed: drop duplicates by event_id or id,
+ * sort by sequence or id ascending, and keep only the most recent `cap` events.
  */
 export function mergeTaskEvents(
   prev: TaskEvent[],
   incoming: TaskEvent[],
   cap: number = MAX_TASK_EVENTS,
 ): TaskEvent[] {
-  const byId = new Map<number, TaskEvent>();
-  for (const event of prev) byId.set(event.id, event);
-  for (const event of incoming) byId.set(event.id, event);
-  const merged = [...byId.values()].sort((a, b) => a.id - b.id);
+  const byKey = new Map<string, TaskEvent>();
+  const getKey = (e: TaskEvent) => (e.event_id && e.event_id !== "" ? e.event_id : String(e.id));
+
+  for (const event of prev) byKey.set(getKey(event), event);
+  for (const event of incoming) byKey.set(getKey(event), event);
+
+  const merged = [...byKey.values()].sort((a, b) => {
+    if (a.sequence !== undefined && b.sequence !== undefined) {
+      return a.sequence - b.sequence;
+    }
+    const numA = typeof a.id === "number" ? a.id : Number(a.id);
+    const numB = typeof b.id === "number" ? b.id : Number(b.id);
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA - numB;
+    }
+    return String(a.id).localeCompare(String(b.id));
+  });
+
   return merged.length > cap ? merged.slice(merged.length - cap) : merged;
 }
 

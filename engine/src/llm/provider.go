@@ -225,7 +225,9 @@ func (p *provider) simulateStream(ctx context.Context, req *ChatRequest, chunkCh
 	case chunkCh <- &ChatChunk{ThoughtChunk: thought}:
 	}
 
-	time.Sleep(30 * time.Millisecond)
+	if !sleepWithContext(ctx, 30*time.Millisecond) {
+		return ctx.Err()
+	}
 
 	// 2. Check if prompt requests file reading or execution
 	lowerPrompt := strings.ToLower(lastPrompt)
@@ -243,7 +245,9 @@ func (p *provider) simulateStream(ctx context.Context, req *ChatRequest, chunkCh
 			},
 		}:
 		}
-		time.Sleep(30 * time.Millisecond)
+		if !sleepWithContext(ctx, 30*time.Millisecond) {
+			return ctx.Err()
+		}
 	} else if strings.Contains(lowerPrompt, "subagent") || strings.Contains(lowerPrompt, "crew") || strings.Contains(lowerPrompt, "delegate") {
 		select {
 		case <-ctx.Done():
@@ -258,7 +262,9 @@ func (p *provider) simulateStream(ctx context.Context, req *ChatRequest, chunkCh
 			},
 		}:
 		}
-		time.Sleep(30 * time.Millisecond)
+		if !sleepWithContext(ctx, 30*time.Millisecond) {
+			return ctx.Err()
+		}
 	}
 
 	// 3. Emit streaming text chunks
@@ -273,7 +279,9 @@ func (p *provider) simulateStream(ctx context.Context, req *ChatRequest, chunkCh
 			return ctx.Err()
 		case chunkCh <- &ChatChunk{ContentChunk: word + " "}:
 		}
-		time.Sleep(15 * time.Millisecond)
+		if !sleepWithContext(ctx, 15*time.Millisecond) {
+			return ctx.Err()
+		}
 	}
 
 	// 4. Emit completion chunk
@@ -284,4 +292,13 @@ func (p *provider) simulateStream(ctx context.Context, req *ChatRequest, chunkCh
 	}
 
 	return nil
+}
+
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	case <-time.After(d):
+		return true
+	}
 }

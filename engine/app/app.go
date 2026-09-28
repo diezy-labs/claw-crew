@@ -14,16 +14,26 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/core/interceptors"
 	"github.com/diezy-labs/claw-crew/engine/core/logger"
 	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
+	"github.com/diezy-labs/claw-crew/engine/src/run"
+	"github.com/diezy-labs/claw-crew/engine/src/task"
+	"github.com/diezy-labs/claw-crew/engine/src/tool"
+	"github.com/diezy-labs/claw-crew/engine/src/workflow"
 	"google.golang.org/grpc"
 )
 
 // App represents the root runtime container for the Go Agent Engine
 type App struct {
-	Cfg           *config.AppConfig
-	GRPCServer    *grpc.Server
-	MetricsServer *metrics.Server
-	CrewHandler   *crew.GRPCHandler
+	Cfg             *config.AppConfig
+	GRPCServer      *grpc.Server
+	MetricsServer   *metrics.Server
+	CrewHandler     *crew.GRPCHandler
+	RunHandler      *run.HTTPHandler
+	TaskHandler     *task.HTTPHandler
+	ToolHandler     *tool.HTTPHandler
+	ArtifactHandler *artifact.HTTPHandler
+	WorkflowHandler *workflow.HTTPHandler
 }
 
 // NewGRPCServer creates a grpc.Server instance with interceptors configured
@@ -45,15 +55,30 @@ func NewApp(
 	grpcServer *grpc.Server,
 	metricsServer *metrics.Server,
 	crewHandler *crew.GRPCHandler,
+	runHandler *run.HTTPHandler,
+	taskHandler *task.HTTPHandler,
+	toolHandler *tool.HTTPHandler,
+	artifactHandler *artifact.HTTPHandler,
+	workflowHandler *workflow.HTTPHandler,
 ) *App {
 	crewHandler.RegisterService(grpcServer)
 	crewHandler.RegisterHTTP(metricsServer)
+	runHandler.RegisterHTTP(metricsServer)
+	taskHandler.RegisterHTTP(metricsServer)
+	toolHandler.RegisterHTTP(metricsServer)
+	artifactHandler.RegisterHTTP(metricsServer)
+	workflowHandler.RegisterHTTP(metricsServer)
 
 	return &App{
-		Cfg:           cfg,
-		GRPCServer:    grpcServer,
-		MetricsServer: metricsServer,
-		CrewHandler:   crewHandler,
+		Cfg:             cfg,
+		GRPCServer:      grpcServer,
+		MetricsServer:   metricsServer,
+		CrewHandler:     crewHandler,
+		RunHandler:      runHandler,
+		TaskHandler:     taskHandler,
+		ToolHandler:     toolHandler,
+		ArtifactHandler: artifactHandler,
+		WorkflowHandler: workflowHandler,
 	}
 }
 

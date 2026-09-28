@@ -30,14 +30,21 @@ export function usePolling(
   useEffect(() => {
     if (!enabled) return;
     let stale = false;
+    let inFlight = false;
     const isStale = () => stale;
-    const run = () => {
-      if (!document.hidden) void cbRef.current(isStale);
+    const run = async () => {
+      if (document.hidden || inFlight) return;
+      inFlight = true;
+      try {
+        await cbRef.current(isStale);
+      } finally {
+        inFlight = false;
+      }
     };
-    run(); // immediate poll (no-op when hidden)
-    const id = window.setInterval(run, intervalMs);
+    void run(); // immediate poll (no-op when hidden)
+    const id = window.setInterval(() => void run(), intervalMs);
     const onVisibility = () => {
-      if (!document.hidden) void cbRef.current(isStale);
+      void run();
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {

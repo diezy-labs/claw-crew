@@ -106,6 +106,74 @@ func NewToolDispatcher(gateway client.SystemGatewayClient) ToolDispatcher {
 				"required": []string{"role", "task"},
 			},
 		},
+		{
+			Name:        "workspace.list_files",
+			Description: "Lists files inside the authorized workspace boundary with depth limiting",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"path": map[string]any{
+						"type":        "string",
+						"description": "Relative directory path",
+					},
+					"max_depth": map[string]any{
+						"type":        "integer",
+						"description": "Maximum directory traversal depth",
+					},
+				},
+			},
+		},
+		{
+			Name:        "workspace.search_code",
+			Description: "Searches workspace code files matching query or regex pattern",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"query": map[string]any{
+						"type":        "string",
+						"description": "Search query or regex",
+					},
+					"path": map[string]any{
+						"type":        "string",
+						"description": "Relative directory path",
+					},
+				},
+				"required": []string{"query"},
+			},
+		},
+		{
+			Name:        "web.fetch",
+			Description: "Safely fetches web documentation with SSRF and script stripping guards",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"url": map[string]any{
+						"type":        "string",
+						"description": "Target HTTP/HTTPS URL",
+					},
+				},
+				"required": []string{"url"},
+			},
+		},
+		{
+			Name:        "code.run_linter",
+			Description: "Runs a code linter in an isolated, environment-scrubbed workspace process",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"linter": map[string]any{
+						"type":        "string",
+						"description": "Linter executable (e.g. golangci-lint, cargo clippy, gofmt)",
+					},
+					"args": map[string]any{
+						"type":        "array",
+						"items":       map[string]any{"type": "string"},
+						"description": "CLI flags or target packages",
+					},
+				},
+				"required": []string{"linter"},
+			},
+		},
 	}
 
 	return &toolDispatcher{

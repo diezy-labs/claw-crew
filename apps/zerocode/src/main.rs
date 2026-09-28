@@ -18,6 +18,7 @@ use clap::Parser;
 
 mod acp;
 mod agent_sidebar;
+mod api;
 mod app;
 mod attachment;
 mod chat;
@@ -44,6 +45,7 @@ mod mouse;
 mod osc_status;
 mod quickstart_pane;
 mod relay_proto;
+pub mod run_workspace;
 mod sop_pane;
 mod terminal_backend;
 #[cfg(test)]

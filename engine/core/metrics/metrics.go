@@ -75,6 +75,10 @@ func RegisterMetrics() {
 			GRPCRequestsTotal,
 			GRPCRequestDuration,
 			ErrorsTotal,
+			ToolRequestsTotal,
+			ToolExecutionDuration,
+			ToolPolicyDenialsTotal,
+			ToolApprovalsTotal,
 		)
 	})
 }
@@ -134,4 +138,9 @@ func (s *Server) Stop(ctx context.Context) error {
 // Port returns the server's listening port
 func (s *Server) Port() int {
 	return s.port
+}
+
+// ServeHTTP delegates to internal mux, useful for testing HTTP handlers
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.mux.ServeHTTP(w, r)
 }

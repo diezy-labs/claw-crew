@@ -1,0 +1,12 @@
+{
+  "id": "task_01h87b92mkq100000000000002",
+  "run_id": "run_01h87b92mkq100000000000001",
+  "title": "Apply source code patch to tool services",
+  "description": "Writes patched contents to engine/src/tool/services.go",
+  "status": "waiting_for_approval",
+  "assigned_agent": "patch_agent",
+  "required_tool": "write_file",
+  "approval_id": "appr_01h87b92mkq100000000000003",
+  "created_at": "2026-09-28T05:00:02Z",
+  "updated_at": "2026-09-28T05:00:03Z"
+}

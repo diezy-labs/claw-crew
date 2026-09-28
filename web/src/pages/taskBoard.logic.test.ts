@@ -29,6 +29,52 @@ test("mergeTaskEvents dedupes replayed events by id (reconnect resync)", () => {
   );
 });
 
+test("mergeTaskEvents dedupes by event_id and sorts by sequence", () => {
+  const e1: TaskEvent = {
+    id: "uuid-1",
+    event_id: "evt_001",
+    sequence: 1,
+    event_type: "run.started",
+    payload: {},
+    timestamp: "2026-01-01T00:00:00Z",
+  };
+  const e2: TaskEvent = {
+    id: "uuid-2",
+    event_id: "evt_002",
+    sequence: 2,
+    event_type: "task.started",
+    payload: {},
+    timestamp: "2026-01-01T00:00:01Z",
+  };
+  const e2Duplicate: TaskEvent = {
+    id: "uuid-2-dupe",
+    event_id: "evt_002",
+    sequence: 2,
+    event_type: "task.started",
+    payload: { replayed: true },
+    timestamp: "2026-01-01T00:00:01Z",
+  };
+  const e3: TaskEvent = {
+    id: "uuid-3",
+    event_id: "evt_003",
+    sequence: 3,
+    event_type: "task.completed",
+    payload: {},
+    timestamp: "2026-01-01T00:00:02Z",
+  };
+
+  const merged = mergeTaskEvents([e1, e2], [e2Duplicate, e3]);
+  assert.equal(merged.length, 3);
+  assert.deepEqual(
+    merged.map((e) => e.event_id),
+    ["evt_001", "evt_002", "evt_003"],
+  );
+  assert.deepEqual(
+    merged.map((e) => e.sequence),
+    [1, 2, 3],
+  );
+});
+
 test("mergeTaskEvents keeps only the most recent cap events", () => {
   const prev = Array.from({ length: MAX_TASK_EVENTS }, (_, i) => event(i));
   const merged = mergeTaskEvents(prev, [event(MAX_TASK_EVENTS + 5)]);

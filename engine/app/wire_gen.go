@@ -9,9 +9,14 @@ package app
 import (
 	"github.com/diezy-labs/claw-crew/engine/core/config"
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
+	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/llm"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	"github.com/diezy-labs/claw-crew/engine/src/run"
+	"github.com/diezy-labs/claw-crew/engine/src/task"
+	"github.com/diezy-labs/claw-crew/engine/src/tool"
+	"github.com/diezy-labs/claw-crew/engine/src/workflow"
 )
 
 // Injectors from wire.go:
@@ -28,7 +33,26 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	toolDispatcher := llm.NewToolDispatcher(systemGatewayClient)
 	orchestrator := crew.NewService(provider, toolDispatcher, systemGatewayClient)
 	vectorStore := memory.NewVectorStore()
-	grpcHandler := crew.NewGRPCHandler(orchestrator, vectorStore)
-	app := NewApp(cfg, server, metricsServer, grpcHandler)
+	crewRegistry := crew.NewRegistry()
+	grpcHandler := crew.NewGRPCHandler(orchestrator, vectorStore, crewRegistry)
+	memoryStore := run.NewMemoryStore()
+	memoryEventHub := run.NewEventHub()
+	runService := run.NewService(memoryStore, memoryEventHub)
+	runHTTPHandler := run.NewHTTPHandler(runService)
+	taskStore := task.NewMemoryTaskStore()
+	taskScheduler := task.NewScheduler()
+	taskService := task.NewService(taskStore, taskScheduler, runService)
+	taskHTTPHandler := task.NewHTTPHandler(taskService)
+	toolRegistry := tool.NewRegistry()
+	toolGate := tool.NewApprovalGate(runService)
+	toolService := tool.NewService(toolRegistry, toolGate, runService)
+	toolHTTPHandler := tool.NewHTTPHandler(toolService)
+	artifactRepo := artifact.NewMemoryRepository()
+	artifactService := artifact.NewService(artifactRepo, runService)
+	artifactHTTPHandler := artifact.NewHTTPHandler(artifactService)
+	workflowRegistry := workflow.NewRegistry()
+	workflowService := workflow.NewService(workflowRegistry, taskService)
+	workflowHTTPHandler := workflow.NewHTTPHandler(workflowService)
+	app := NewApp(cfg, server, metricsServer, grpcHandler, runHTTPHandler, taskHTTPHandler, toolHTTPHandler, artifactHTTPHandler, workflowHTTPHandler)
 	return app, nil
 }
