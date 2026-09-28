@@ -1,0 +1,13 @@
+{
+  "error": {
+    "code": "FAILED_PRECONDITION",
+    "message": "cannot transition run from cancelled to running: terminal states are immutable",
+    "request_id": "req_01h874xkm90000000000001",
+    "retryable": false,
+    "details": {
+      "layer": "service",
+      "current_status": "cancelled",
+      "target_status": "running"
+    }
+  }
+}

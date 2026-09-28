@@ -1,0 +1,35 @@
+name: Engine CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'engine/**'
+      - '.github/workflows/engine-ci.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'engine/**'
+      - '.github/workflows/engine-ci.yml'
+
+jobs:
+  engine-test:
+    name: Go Engine Test & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: engine/go.sum
+
+      - name: Verify Go dependencies
+        working-directory: engine
+        run: go mod verify
+
+      - name: Run Go Tests with Race Detector
+        working-directory: engine
+        run: go test -v -race ./...

@@ -51,11 +51,13 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 	s.activeTurns[req.SessionID] = cancel
 	s.mu.Unlock()
 
+	var subagentWg sync.WaitGroup
 	defer func() {
 		s.mu.Lock()
 		delete(s.activeTurns, req.SessionID)
 		s.mu.Unlock()
 		cancel()
+		subagentWg.Wait() // Ensure all subagents wind down before eventCh can be closed by caller (BUG-001)
 	}()
 
 	metrics.ActiveAgents.Inc()
@@ -93,8 +95,6 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 		defer close(chunkCh)
 		llmErrCh <- s.llmProvider.StreamChat(turnCtx, chatReq, chunkCh)
 	}()
-
-	var subagentWg sync.WaitGroup
 
 	// 3. Process incoming streaming chunks from LLM
 	for chunk := range chunkCh {
@@ -260,4 +260,95 @@ func (s *service) CancelTurn(ctx context.Context, sessionID string) error {
 	cancel()
 	delete(s.activeTurns, sessionID)
 	return nil
+}
+
+// MemoryRegistry provides persistent storage for crews and agents
+type MemoryRegistry struct {
+	mu    sync.RWMutex
+	crews map[string]*CrewDefinition
+}
+
+// NewRegistry creates a new Registry preloaded with standard default crews
+func NewRegistry() Registry {
+	r := &MemoryRegistry{
+		crews: make(map[string]*CrewDefinition),
+	}
+
+	// Register default Research & Engineering Crew
+	defaultCrew := &CrewDefinition{
+		ID:          "crew_research_dev",
+		Name:        "Research & Engineering Crew",
+		Description: "Multi-agent crew for code analysis, planning, implementation, and review.",
+		AgentCount:  3,
+		Agents: []*AgentDefinition{
+			{
+				ID:           "planner",
+				Name:         "Planner Agent",
+				Role:         "Decompose high-level tasks into DAG task graph.",
+				Status:       AgentStatusIdle,
+				Capabilities: []string{"planning", "task_breakdown"},
+			},
+			{
+				ID:           "coder",
+				Name:         "Code Specialist",
+				Role:         "Implements code, refactors, and edits files.",
+				Status:       AgentStatusIdle,
+				Capabilities: []string{"write_file", "edit_file", "read_file"},
+			},
+			{
+				ID:           "reviewer",
+				Name:         "Code Reviewer",
+				Role:         "Validates code changes, generates git diffs, runs test suites.",
+				Status:       AgentStatusIdle,
+				Capabilities: []string{"run_tests", "generate_diff"},
+			},
+		},
+	}
+
+	r.crews[defaultCrew.ID] = defaultCrew
+	return r
+}
+
+func (r *MemoryRegistry) ListCrews(ctx context.Context) ([]*CrewDefinition, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	list := make([]*CrewDefinition, 0, len(r.crews))
+	for _, c := range r.crews {
+		list = append(list, c)
+	}
+	return list, nil
+}
+
+func (r *MemoryRegistry) GetCrew(ctx context.Context, id string) (*CrewDefinition, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	c, ok := r.crews[id]
+	if !ok {
+		return nil, appErrors.New(appErrors.CodeNotFound, fmt.Sprintf("crew not found: %s", id), appErrors.LayerService)
+	}
+	return c, nil
+}
+
+func (r *MemoryRegistry) RegisterCrew(ctx context.Context, crew *CrewDefinition) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	crew.AgentCount = len(crew.Agents)
+	r.crews[crew.ID] = crew
+	return nil
+}
+
+func (r *MemoryRegistry) UpdateAgentStatus(ctx context.Context, crewID, agentID string, status AgentStatus) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	c, ok := r.crews[crewID]
+	if !ok {
+		return appErrors.New(appErrors.CodeNotFound, fmt.Sprintf("crew not found: %s", crewID), appErrors.LayerService)
+	}
+	for _, a := range c.Agents {
+		if a.ID == agentID {
+			a.Status = status
+			return nil
+		}
+	}
+	return appErrors.New(appErrors.CodeNotFound, fmt.Sprintf("agent %s not found in crew %s", agentID, crewID), appErrors.LayerService)
 }

@@ -273,6 +273,42 @@ fn is_false(b: &bool) -> bool {
     !*b
 }
 
+/// The `[engine]` section: external Go agent engine integration.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) struct EngineSection {
+    /// Whether the Go Agent Engine is enabled as the canonical orchestrator.
+    #[serde(default = "default_engine_disabled")]
+    pub enabled: bool,
+    /// Base URL of the Go Agent Engine REST/SSE API (default: http://localhost:9090).
+    #[serde(default = "default_engine_endpoint")]
+    pub endpoint: String,
+    /// gRPC IPC endpoint (default: localhost:50051).
+    #[serde(default = "default_engine_grpc_endpoint")]
+    pub grpc_endpoint: String,
+}
+
+impl Default for EngineSection {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            endpoint: default_engine_endpoint(),
+            grpc_endpoint: default_engine_grpc_endpoint(),
+        }
+    }
+}
+
+fn default_engine_disabled() -> bool {
+    false
+}
+
+fn default_engine_endpoint() -> String {
+    "http://localhost:9090".to_string()
+}
+
+fn default_engine_grpc_endpoint() -> String {
+    "localhost:50051".to_string()
+}
+
 /// The `[sidebar]` section: the shell-level agent sidebar.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct SidebarSection {
@@ -465,6 +501,8 @@ pub(crate) struct ZerocodeConfig {
     keybindings: HashMap<String, ChordSpec>,
     #[serde(default)]
     pub todotracker: TodoTrackerSection,
+    #[serde(default)]
+    pub engine: EngineSection,
 }
 
 impl Default for ZerocodeConfig {
@@ -476,6 +514,7 @@ impl Default for ZerocodeConfig {
             sidebar: SidebarSection::default(),
             keybindings: HashMap::new(),
             todotracker: TodoTrackerSection::default(),
+            engine: EngineSection::default(),
         }
     }
 }

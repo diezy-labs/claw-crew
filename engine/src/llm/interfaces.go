@@ -32,13 +32,23 @@ type ToolDefinition struct {
 	Parameters  any    `json:"parameters"`
 }
 
+// TokenUsage tracks prompt and completion tokens and estimated cost
+type TokenUsage struct {
+	PromptTokens     int     `json:"prompt_tokens"`
+	CompletionTokens int     `json:"completion_tokens"`
+	TotalTokens      int     `json:"total_tokens"`
+	EstimatedCostUSD float64 `json:"estimated_cost_usd"`
+}
+
 // ChatChunk represents a streaming chunk from an LLM response
 type ChatChunk struct {
-	ThoughtChunk string     `json:"thought_chunk,omitempty"`
-	ContentChunk string     `json:"content_chunk,omitempty"`
-	ToolCalls    []ToolCall `json:"tool_calls,omitempty"`
-	IsDone       bool       `json:"is_done"`
-	Error        error      `json:"-"`
+	ThoughtChunk   string      `json:"thought_chunk,omitempty"`
+	ThoughtSummary string      `json:"thought_summary,omitempty"`
+	ContentChunk   string      `json:"content_chunk,omitempty"`
+	ToolCalls      []ToolCall  `json:"tool_calls,omitempty"`
+	Usage          *TokenUsage `json:"usage,omitempty"`
+	IsDone         bool        `json:"is_done"`
+	Error          error       `json:"-"`
 }
 
 // ToolCall represents a structured tool call instruction returned by the LLM
@@ -46,4 +56,10 @@ type ToolCall struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	Arguments string `json:"arguments"`
+}
+
+// MultiProvider allows dynamic model/provider selection and fallback policies
+type MultiProvider interface {
+	GetProvider(name string) (Provider, error)
+	StreamWithRetry(ctx context.Context, providerName string, req *ChatRequest, chunkCh chan<- *ChatChunk) error
 }

@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 type inMemoryVectorStore struct {
 	mu        sync.RWMutex
+	dimension int
 	documents map[string]*Document
 }
 
@@ -29,6 +31,9 @@ func (s *inMemoryVectorStore) Store(ctx context.Context, doc *Document) error {
 	if doc.ID == "" {
 		return appErrors.New(appErrors.CodeInvalidArgument, "document ID cannot be empty", appErrors.LayerRepository)
 	}
+	if len(doc.Embedding) == 0 {
+		return appErrors.New(appErrors.CodeInvalidArgument, "embedding cannot be empty", appErrors.LayerRepository)
+	}
 
 	select {
 	case <-ctx.Done():
@@ -39,27 +44,31 @@ func (s *inMemoryVectorStore) Store(ctx context.Context, doc *Document) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Clone document to avoid race conditions on caller mutations
-	copiedDoc := &Document{
-		ID:        doc.ID,
-		Content:   doc.Content,
-		Embedding: append([]float32(nil), doc.Embedding...),
-		Metadata:  make(map[string]string),
-	}
-	for k, v := range doc.Metadata {
-		copiedDoc.Metadata[k] = v
+	// Validate vector dimension consistency across stored documents
+	if s.dimension == 0 {
+		s.dimension = len(doc.Embedding)
+	} else if len(doc.Embedding) != s.dimension {
+		return appErrors.New(appErrors.CodeInvalidArgument, fmt.Sprintf("embedding dimension mismatch: expected %d, got %d", s.dimension, len(doc.Embedding)), appErrors.LayerRepository)
 	}
 
-	s.documents[doc.ID] = copiedDoc
+	// Deep clone document to avoid race conditions and aliasing on caller mutations
+	s.documents[doc.ID] = doc.Clone()
 	return nil
 }
 
 func (s *inMemoryVectorStore) Search(ctx context.Context, queryEmbedding []float32, topK int) ([]*SearchResult, error) {
+	return s.SearchWithScope(ctx, queryEmbedding, topK, nil)
+}
+
+func (s *inMemoryVectorStore) SearchWithScope(ctx context.Context, queryEmbedding []float32, topK int, scope map[string]string) ([]*SearchResult, error) {
 	if len(queryEmbedding) == 0 {
 		return nil, appErrors.New(appErrors.CodeInvalidArgument, "query embedding cannot be empty", appErrors.LayerRepository)
 	}
-	if topK <= 0 {
-		topK = 5
+	if topK < 0 {
+		return nil, appErrors.New(appErrors.CodeInvalidArgument, "topK cannot be negative", appErrors.LayerRepository)
+	}
+	if topK == 0 {
+		return []*SearchResult{}, nil
 	}
 
 	select {
@@ -71,23 +80,33 @@ func (s *inMemoryVectorStore) Search(ctx context.Context, queryEmbedding []float
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	if s.dimension > 0 && len(queryEmbedding) != s.dimension {
+		return nil, appErrors.New(appErrors.CodeInvalidArgument, fmt.Sprintf("query embedding dimension mismatch: expected %d, got %d", s.dimension, len(queryEmbedding)), appErrors.LayerRepository)
+	}
+
 	results := make([]*SearchResult, 0, len(s.documents))
 
 	for _, doc := range s.documents {
 		if len(doc.Embedding) == 0 || len(doc.Embedding) != len(queryEmbedding) {
 			continue
 		}
+		if !doc.MatchesScope(scope) {
+			continue
+		}
 
 		score := cosineSimilarity(queryEmbedding, doc.Embedding)
 		results = append(results, &SearchResult{
-			Document: doc,
+			Document: doc.Clone(), // Deep copy output to eliminate aliasing hazard
 			Score:    score,
 		})
 	}
 
-	// Sort results by score in descending order
+	// Sort results deterministically by score desc, then by document ID asc (tie-breaker)
 	sort.Slice(results, func(i, j int) bool {
-		return results[i].Score > results[j].Score
+		if results[i].Score != results[j].Score {
+			return results[i].Score > results[j].Score
+		}
+		return results[i].Document.ID < results[j].Document.ID
 	})
 
 	if len(results) > topK {
@@ -101,8 +120,11 @@ func (s *inMemoryVectorStore) SearchByText(ctx context.Context, text string, top
 	if text == "" {
 		return nil, appErrors.New(appErrors.CodeInvalidArgument, "query text cannot be empty", appErrors.LayerRepository)
 	}
-	if topK <= 0 {
-		topK = 5
+	if topK < 0 {
+		return nil, appErrors.New(appErrors.CodeInvalidArgument, "topK cannot be negative", appErrors.LayerRepository)
+	}
+	if topK == 0 {
+		return []*SearchResult{}, nil
 	}
 
 	select {
@@ -137,14 +159,18 @@ func (s *inMemoryVectorStore) SearchByText(ctx context.Context, text string, top
 
 		if score > 0 {
 			results = append(results, &SearchResult{
-				Document: doc,
+				Document: doc.Clone(),
 				Score:    score,
 			})
 		}
 	}
 
+	// Sort results deterministically by score desc, then by document ID asc
 	sort.Slice(results, func(i, j int) bool {
-		return results[i].Score > results[j].Score
+		if results[i].Score != results[j].Score {
+			return results[i].Score > results[j].Score
+		}
+		return results[i].Document.ID < results[j].Document.ID
 	})
 
 	if len(results) > topK {

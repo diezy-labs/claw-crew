@@ -10,6 +10,7 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/core/metrics"
 	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	"strings"
 	"google.golang.org/grpc"
 )
 
@@ -18,13 +19,15 @@ type GRPCHandler struct {
 	pb.UnimplementedAgentEngineServer
 	orchestrator Orchestrator
 	vectorStore  memory.VectorStore
+	registry     Registry
 }
 
 // NewGRPCHandler constructs a new GRPCHandler instance
-func NewGRPCHandler(orchestrator Orchestrator, vectorStore memory.VectorStore) *GRPCHandler {
+func NewGRPCHandler(orchestrator Orchestrator, vectorStore memory.VectorStore, registry Registry) *GRPCHandler {
 	return &GRPCHandler{
 		orchestrator: orchestrator,
 		vectorStore:  vectorStore,
+		registry:     registry,
 	}
 }
 
@@ -37,6 +40,59 @@ func (h *GRPCHandler) RegisterService(server *grpc.Server) {
 func (h *GRPCHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/turn", h.handleHTTPTurn)
 	server.RegisterRouteFunc("/api/query", h.handleHTTPQuery)
+	server.RegisterRouteFunc("/api/v1/crews", h.handleCrews)
+	server.RegisterRouteFunc("/api/v1/crews/", h.handleCrewByID)
+}
+
+func (h *GRPCHandler) handleCrews(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		crews, err := h.registry.ListCrews(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		data, _ := json.Marshal(ListCrewsResponse{Items: crews})
+		_, _ = w.Write(data)
+		return
+	}
+	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (h *GRPCHandler) handleCrewByID(w http.ResponseWriter, r *http.Request) {
+	crewID := strings.TrimPrefix(r.URL.Path, "/api/v1/crews/")
+	if crewID == "" {
+		http.NotFound(w, r)
+		return
+	}
+	if r.Method == http.MethodGet {
+		c, err := h.registry.GetCrew(r.Context(), crewID)
+		if err != nil {
+			http.Error(w, "crew not found", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		data, _ := json.Marshal(c)
+		_, _ = w.Write(data)
+		return
+	}
+	if r.Method == http.MethodPut {
+		var c CrewDefinition
+		if err := json.UnmarshalRead(r.Body, &c); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+		c.ID = crewID
+		if err := h.registry.RegisterCrew(r.Context(), &c); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		data, _ := json.Marshal(c)
+		_, _ = w.Write(data)
+		return
+	}
+	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 }
 
 func (h *GRPCHandler) handleHTTPTurn(w http.ResponseWriter, r *http.Request) {

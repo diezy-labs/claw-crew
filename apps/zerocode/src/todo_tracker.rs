@@ -1,5 +1,10 @@
 //! Read-only TodoWrite tracker widget for the Code pane.
 //!
+//! # DEPRECATION NOTICE (Phase 7 Refactoring)
+//! Canonical task graph state, DAG validation, and execution scheduling have migrated
+//! to the Go Agent Engine (`engine/src/task`). This module is preserved as a legacy
+//! presentation adapter to ensure seamless backward compatibility.
+//!
 //! Holds the last authoritative plan (whole-list replace) and owns the
 //! show/hide state machine: auto-pop once on the first plan of a
 //! session, after which the user's toggle is authoritative; a master

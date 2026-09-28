@@ -1,0 +1,13 @@
+{
+  "execution_id": "appr_01h87b92mkq100000000000003",
+  "tool_name": "write_file",
+  "risk_tier": "write",
+  "arguments": "{\"path\":\"engine/src/tool/services.go\"}",
+  "approval_status": "pending",
+  "execution_context": {
+    "actor_id": "agent_primary",
+    "run_id": "run_01h87b92mkq100000000000001",
+    "task_id": "task_01h87b92mkq100000000000002"
+  },
+  "created_at": "2026-09-28T05:00:03Z"
+}

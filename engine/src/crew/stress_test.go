@@ -3,6 +3,7 @@ package crew_test
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -24,10 +25,11 @@ func TestMultiAgentConcurrencyStress(t *testing.T) {
 	dispatcher := llm.NewToolDispatcher(gateway)
 	orchestrator := crew.NewService(provider, dispatcher, gateway)
 
-	const concurrentAgents = 25
+	const concurrentAgents = 50
 	var wg sync.WaitGroup
 	errCh := make(chan error, concurrentAgents)
 
+	initialGoroutines := runtime.NumGoroutine()
 	start := time.Now()
 
 	for i := 0; i < concurrentAgents; i++ {
@@ -81,6 +83,16 @@ func TestMultiAgentConcurrencyStress(t *testing.T) {
 		}
 	}
 
+	// Wait briefly for all finished goroutines to wind down
+	time.Sleep(50 * time.Millisecond)
+	finalGoroutines := runtime.NumGoroutine()
+
 	elapsed := time.Since(start)
-	t.Logf("Successfully executed %d concurrent agent turns in %v", concurrentAgents, elapsed)
+	t.Logf("Successfully executed %d concurrent agent turns in %v (goroutines: initial=%d, final=%d)",
+		concurrentAgents, elapsed, initialGoroutines, finalGoroutines)
+
+	// Ensure no runaway goroutine leak (allow slight delta for runtime gc/timer workers)
+	if finalGoroutines > initialGoroutines+10 {
+		t.Errorf("possible goroutine leak: initial=%d, final=%d", initialGoroutines, finalGoroutines)
+	}
 }
