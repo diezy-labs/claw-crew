@@ -69,29 +69,29 @@ type TasksSummary struct {
 
 // Canonical DTO: Run
 type Run struct {
-	ID           string           `json:"id"`
-	CrewID       string           `json:"crew_id"`
-	WorkflowID   string           `json:"workflow_id,omitempty"`
-	Status       RunStatus        `json:"status"`
-	Input        RunInput         `json:"input"`
-	Workspace    WorkspaceConfig  `json:"workspace"`
-	Options      RunOptions       `json:"options"`
-	TasksSummary TasksSummary     `json:"tasks_summary"`
-	CreatedAt    time.Time        `json:"created_at"`
-	StartedAt    *time.Time       `json:"started_at,omitempty"`
-	CompletedAt  *time.Time       `json:"completed_at,omitempty"`
-	ErrorMessage string           `json:"error_message,omitempty"`
+	ID           string          `json:"id"`
+	CrewID       string          `json:"crew_id"`
+	WorkflowID   string          `json:"workflow_id,omitempty"`
+	Status       RunStatus       `json:"status"`
+	Input        RunInput        `json:"input"`
+	Workspace    WorkspaceConfig `json:"workspace"`
+	Options      RunOptions      `json:"options"`
+	TasksSummary TasksSummary    `json:"tasks_summary"`
+	CreatedAt    time.Time       `json:"created_at"`
+	StartedAt    *time.Time      `json:"started_at,omitempty"`
+	CompletedAt  *time.Time      `json:"completed_at,omitempty"`
+	ErrorMessage string          `json:"error_message,omitempty"`
 }
 
 // Canonical DTO: RunEvent
 type RunEvent struct {
-	EventID   string      `json:"event_id"`
-	RunID     string      `json:"run_id"`
-	Sequence  int64       `json:"sequence"`
-	Type      string      `json:"type"`
-	Timestamp time.Time   `json:"timestamp"`
-	Payload   any         `json:"payload,omitempty"`
-	Error     string      `json:"error,omitempty"`
+	EventID   string    `json:"event_id"`
+	RunID     string    `json:"run_id"`
+	Sequence  int64     `json:"sequence"`
+	Type      string    `json:"type"`
+	Timestamp time.Time `json:"timestamp"`
+	Payload   any       `json:"payload,omitempty"`
+	Error     string    `json:"error,omitempty"`
 }
 
 // Canonical DTO: Agent
@@ -105,14 +105,14 @@ type Agent struct {
 
 // Canonical DTO: Task
 type Task struct {
-	ID           string    `json:"id"`
-	RunID        string    `json:"run_id"`
-	Title        string    `json:"title"`
-	Description  string    `json:"description,omitempty"`
-	AssignedTo   string    `json:"assigned_to,omitempty"`
-	Status       string    `json:"status"` // pending, ready, assigned, running, waiting_for_input, completed, failed, cancelled
-	Dependencies []string  `json:"dependencies,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           string     `json:"id"`
+	RunID        string     `json:"run_id"`
+	Title        string     `json:"title"`
+	Description  string     `json:"description,omitempty"`
+	AssignedTo   string     `json:"assigned_to,omitempty"`
+	Status       string     `json:"status"` // pending, ready, assigned, running, waiting_for_input, completed, failed, cancelled
+	Dependencies []string   `json:"dependencies,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
 	CompletedAt  *time.Time `json:"completed_at,omitempty"`
 }
 

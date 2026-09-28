@@ -13,12 +13,12 @@ type StepTemplate struct {
 
 // WorkflowTemplate represents an SOP or quickstart multi-step workflow definition
 type WorkflowTemplate struct {
-	ID          string          `json:"id"`
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Category    string          `json:"category"`
-	Version     string          `json:"version"`
-	Steps       []StepTemplate  `json:"steps"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Category    string         `json:"category"`
+	Version     string         `json:"version"`
+	Steps       []StepTemplate `json:"steps"`
 }
 
 // InstantiateWorkflowRequest contains arguments to instantiate a workflow for a run

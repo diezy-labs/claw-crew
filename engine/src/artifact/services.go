@@ -16,9 +16,9 @@ import (
 
 // MemoryRepository stores artifacts in-memory
 type MemoryRepository struct {
-	mu              sync.RWMutex
-	artifacts       map[string]*Artifact
-	artifactsByRun  map[string][]string
+	mu             sync.RWMutex
+	artifacts      map[string]*Artifact
+	artifactsByRun map[string][]string
 }
 
 // NewMemoryRepository creates an in-memory artifact repository

@@ -169,7 +169,7 @@ After the Pirate King submits the request:
 The Quartermaster performs the following behind the scenes:
 
 - [ ] Research real-world team composition for the requested domain (e.g., marketing teams typically have 5-8 specialized roles).
-- [ ] Map industry-standard roles to Claw-Crew Crew Member definitions.
+- [ ] Map industry-standard roles to Galleon Fleet Crew Member definitions.
 - [ ] Assign recommended skills, tool permissions, and model profiles per member.
 - [ ] Consider the Ship's existing policy ceiling and budget when sizing the squad.
 - [ ] Generate a structured `SquadCompositionProposal` with rationale.

@@ -10,8 +10,8 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/core/metrics"
 	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
-	"strings"
 	"google.golang.org/grpc"
+	"strings"
 )
 
 // GRPCHandler implements pb.AgentEngineServer and provides HTTP routes

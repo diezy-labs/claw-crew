@@ -14,7 +14,7 @@
            │ goals, approvals, policy decisions
            ▼
 ┌────────────────────────────────────────────────────────────┐
-│ Claw-Crew Fleet Command System                              │
+│ Galleon Fleet Fleet Command System                              │
 │                                                            │
 │ Coordinates Ships, Captains, Squads, Crew Members,         │
 │ Voyages, reports, budget, policy, and approvals.           │
@@ -42,7 +42,7 @@
 
 ```text
 ┌───────────────────────────────────────────────────────────────────────────┐
-│ Claw-Crew System                                                          │
+│ Galleon Fleet System                                                          │
 │                                                                           │
 │  ┌────────────────────────────┐                                           │
 │  │ Rust TUI / Tauri / Web UI  │                                           │
