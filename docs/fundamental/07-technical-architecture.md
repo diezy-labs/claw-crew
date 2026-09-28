@@ -1,26 +1,27 @@
 ## 17. Technical Architecture
-## 17.1 Existing repository fit
+## 17.1 Existing repository fit & Separation of Concerns
 
-The existing repository already contains substantial relevant foundations:
+Galleon maintains a strict separation of concerns across three primary technologies (Rust, Go, and React/Next.js) to maximize security, cognitive performance, and UI development speed:
 
-```text
-Rust workspace:
-- runtime, gateway, API, providers, channels, tools, plugins
-- memory, evaluation, SOP graph, relay, TLS, hardware integration
+1. **Host & Security Shield (Rust / Tauri)**
+   - Responsible for OS Sandboxing (Linux Landlock, macOS Seatbelt).
+   - Handles the native desktop application wrapper (Tauri).
+   - Manages cryptographic tool receipts and local file system access.
+   - *Why Rust?* Unmatched memory safety and low-level system access for running autonomous AI agents safely on local hardware.
 
-User surfaces:
-- Tauri desktop application
-- Web UI (dashboard, agents, runs, approvals, audit, cron, tools, integrations, logs, metrics, doctor, SOP canvas)
+2. **Cognitive Brain & Orchestration (Go Engine)**
+   - Located in ngine/src/.
+   - Runs the AI state machines (Quartermaster, Squads, Memory, LLM routing).
+   - Acts as a local background daemon/service.
+   - *Why Go?* Incredible concurrency (goroutines) for managing multiple agents simultaneously, fast compilation, and excellent cloud-native API capabilities.
 
-Deployment:
-- installer, Docker/Docker Compose, Kubernetes assets
+3. **Visual Interface (React / Next.js / Tailwind)**
+   - Responsible for the Web Dashboard and Desktop UI.
+   - Consumes the API provided by the Go Engine.
+   - Dual-compiled: Served via standard Web browser OR bundled inside the Rust Tauri webview for the desktop app.
+   - *Why React?* Rapid UI development, rich ecosystem for building complex dashboards (Mission Board, Squad Builder).
 
-Go engine:
-- crew, run, workflow, task, tool, llm, memory, artifact, persistence
-- clean architecture, Wire, metrics, tracing, interceptors
-```
-
-The product should extend these foundations rather than introduce a duplicate runtime.
+The product extends these foundations rather than introducing a duplicate runtime.
 
 ## 17.2 Architectural layers
 

@@ -33,9 +33,9 @@ Menghubungkan sistem regulasi keamanan ke mesin eksekusi *tools*.
 ## Phase 4: The Quartermaster (High Complexity)
 Membangun agen eksekutif (meta-agent) yang mengatur keseluruhan *Fleet*.
 
-- [ ] **Task 4.1:** Implementasikan `orchestrator.Service` (*Quartermaster Service*).
-- [ ] **Task 4.2:** Buat fungsi *Objective Parsing*: Quartermaster menerima *prompt* target global dan memecahnya menjadi daftar misi.
-- [ ] **Task 4.3:** Buat fitur *Squad Builder*: Quartermaster melakukan panggilan LLM untuk merancang spesialis (Crew Member) apa saja yang dibutuhkan berdasarkan misi, lalu menyimpannya sebagai *draft Squad*.
+- [x] **Task 4.1:** Implementasikan `orchestrator.Service` (*Quartermaster Service*).
+- [x] **Task 4.2:** Buat fungsi *Objective Parsing*: Quartermaster menerima *prompt* target global dan memecahnya menjadi daftar misi.
+- [x] **Task 4.3:** Buat fitur *Squad Builder*: Quartermaster melakukan panggilan LLM untuk merancang spesialis (Crew Member) apa saja yang dibutuhkan berdasarkan misi, lalu menyimpannya sebagai *draft Squad*.
 - [ ] **Task 4.4:** Buat *endpoint/fungsi* validasi di mana Pirate King menyetujui, mengedit, atau menolak rancangan Squad dari Quartermaster.
 - [ ] **Task 4.5:** Implementasikan transisi status `Quest`: dari `backlog` -> dilempar ke `Mission Board` -> dijemput oleh `Ship` -> dieksekusi oleh `Squad`.
 

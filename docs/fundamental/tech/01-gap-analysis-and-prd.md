@@ -24,7 +24,16 @@ Sistem *engine* saat ini telah mengimplementasikan komponen-komponen berat berik
     *   *Existing:* Memiliki `approval_gate.go`, `registry.go`, `sandbox.go`.
     *   *Action:* Ini luar biasa lengkap. `approval_gate` sudah ada. Kita hanya perlu menarik konfigurasi batasannya (*limits*) dari *package* `policy` baru.
 
-### B. Apa yang BELUM ADA (Harus Dibuat Baru)
+### C. Desktop (Tauri) & Web (React) Integration Gap
+Galleon beroperasi dengan prinsip *Separation of Concerns* yang ketat (Go untuk Otak/AI, Rust untuk Keamanan/Host, React untuk Wajah/UI).
+1.  **Frontend API Consumption:** 
+    *   *Gap:* React Dashboard saat ini mungkin masih menembak *endpoint* lama (misal: `/api/v1/crews`).
+    *   *Action:* UI React perlu disesuaikan untuk memanggil *endpoint* Galleon yang baru (misal: `api/v1/squads`, `api/v1/fleets`).
+2.  **Tauri (Rust) vs Go IPC:**
+    *   *Gap:* Tauri bertugas menjalankan *engine* Go sebagai *sidecar* daemon. 
+    *   *Action:* Pastikan *script build* Tauri membundel *binary* Go hasil kompilasi `engine/` dengan benar, dan aplikasi React di dalam Tauri berkomunikasi dengan *localhost port* dari Go Engine tersebut.
+
+### D. Apa yang BELUM ADA (Harus Dibuat Baru)
 Sistem saat ini sangat fokus pada "Satu Tim Agen menjalankan Satu Tugas". Belum ada konsep *Multi-Tenancy* organisasi berskala besar.
 1.  **Level Makro (Fleet & Ship):** `engine/src/fleet` dan `engine/src/ship` yang baru di-*scaffold* benar-benar entitas baru. Diperlukan untuk membungkus `Squad`.
 2.  **Quartermaster (Executive Orchestrator):** `engine/src/orchestrator` harus bertindak sebagai AI Meta-Agent (mengambil keputusan tingkat Fleet, bukan sekadar *Turn* level bawah).
