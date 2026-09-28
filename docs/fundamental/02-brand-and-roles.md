@@ -1,7 +1,7 @@
 ## 5. Brand Narrative
 ## 5.1 The Independent Fleet
 
-The product uses a pirate/exploration narrative as a product world. It is not a claim that AI should be lawless, reckless, or uncontrolled.
+Galleon Fleet uses a maritime/exploration narrative as a product world. It is not a claim that AI should be lawless, reckless, or uncontrolled.
 
 The intended meaning is:
 

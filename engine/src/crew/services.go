@@ -265,41 +265,41 @@ func (s *service) CancelTurn(ctx context.Context, sessionID string) error {
 // MemoryRegistry provides persistent storage for crews and agents
 type MemoryRegistry struct {
 	mu    sync.RWMutex
-	crews map[string]*CrewDefinition
+	crews map[string]*Squad
 }
 
 // NewRegistry creates a new Registry preloaded with standard default crews
 func NewRegistry() Registry {
 	r := &MemoryRegistry{
-		crews: make(map[string]*CrewDefinition),
+		crews: make(map[string]*Squad),
 	}
 
 	// Register default Research & Engineering Crew
-	defaultCrew := &CrewDefinition{
-		ID:          "crew_research_dev",
-		Name:        "Research & Engineering Crew",
-		Description: "Multi-agent crew for code analysis, planning, implementation, and review.",
-		AgentCount:  3,
-		Agents: []*AgentDefinition{
+	defaultCrew := &Squad{
+		ID:              "crew_research_dev",
+		Name:            "Research & Engineering Crew",
+		Description:     "Multi-agent crew for code analysis, planning, implementation, and review.",
+		CrewMemberCount: 3,
+		Agents: []*CrewMember{
 			{
 				ID:           "planner",
 				Name:         "Planner Agent",
 				Role:         "Decompose high-level tasks into DAG task graph.",
-				Status:       AgentStatusIdle,
+				Status:       CrewMemberStatusIdle,
 				Capabilities: []string{"planning", "task_breakdown"},
 			},
 			{
 				ID:           "coder",
 				Name:         "Code Specialist",
 				Role:         "Implements code, refactors, and edits files.",
-				Status:       AgentStatusIdle,
+				Status:       CrewMemberStatusIdle,
 				Capabilities: []string{"write_file", "edit_file", "read_file"},
 			},
 			{
 				ID:           "reviewer",
 				Name:         "Code Reviewer",
 				Role:         "Validates code changes, generates git diffs, runs test suites.",
-				Status:       AgentStatusIdle,
+				Status:       CrewMemberStatusIdle,
 				Capabilities: []string{"run_tests", "generate_diff"},
 			},
 		},
@@ -309,17 +309,17 @@ func NewRegistry() Registry {
 	return r
 }
 
-func (r *MemoryRegistry) ListCrews(ctx context.Context) ([]*CrewDefinition, error) {
+func (r *MemoryRegistry) ListSquads(ctx context.Context) ([]*Squad, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	list := make([]*CrewDefinition, 0, len(r.crews))
+	list := make([]*Squad, 0, len(r.crews))
 	for _, c := range r.crews {
 		list = append(list, c)
 	}
 	return list, nil
 }
 
-func (r *MemoryRegistry) GetCrew(ctx context.Context, id string) (*CrewDefinition, error) {
+func (r *MemoryRegistry) GetSquad(ctx context.Context, id string) (*Squad, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	c, ok := r.crews[id]
@@ -329,15 +329,15 @@ func (r *MemoryRegistry) GetCrew(ctx context.Context, id string) (*CrewDefinitio
 	return c, nil
 }
 
-func (r *MemoryRegistry) RegisterCrew(ctx context.Context, crew *CrewDefinition) error {
+func (r *MemoryRegistry) RegisterSquad(ctx context.Context, crew *Squad) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	crew.AgentCount = len(crew.Agents)
+	crew.CrewMemberCount = len(crew.Agents)
 	r.crews[crew.ID] = crew
 	return nil
 }
 
-func (r *MemoryRegistry) UpdateAgentStatus(ctx context.Context, crewID, agentID string, status AgentStatus) error {
+func (r *MemoryRegistry) UpdateCrewMemberStatus(ctx context.Context, crewID, agentID string, status CrewMemberStatus) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	c, ok := r.crews[crewID]

@@ -1,7 +1,7 @@
 # Fleet Product Fundamentals
 ## 1. Executive Summary
 
-This product is a **local-first, self-hosted AI organization workspace**.
+Galleon is a **local-first, self-hosted AI organization workspace**.
 
 It allows a user—represented in the product world as the **Pirate King**—to build and operate an AI Fleet using their own model providers, API keys, local models, data, infrastructure, and rules.
 
@@ -17,7 +17,7 @@ Your Fleet.
 Your rules.
 ```
 
-The product provides the operational layer:
+Galleon provides the operational layer:
 
 ```text
 Goals
@@ -41,7 +41,7 @@ The central product promise is:
 ---
 ## 2. Founder Backstory
 
-The product originated from a practical frustration, not from an abstract attempt to build another AI platform.
+Galleon originated from a practical frustration, not from an abstract attempt to build another AI platform.
 
 The founder valued the experience provided by persistent AI workspaces:
 
@@ -62,7 +62,7 @@ The founder explored alternatives:
 | Hermes | Learning loop, memory, skills, delegation | Personal agent/skill-first model rather than persistent specialist teams |
 | ZeroClaw | Rust, small footprint, portability, provider flexibility, local-first runtime | The autonomous workspace/team interaction experience desired by the founder |
 
-The product therefore combines the desired qualities:
+Galleon therefore combines the desired qualities:
 
 ```text
 Kiro-like continuity

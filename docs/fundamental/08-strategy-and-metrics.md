@@ -3,7 +3,7 @@
 
 The complete Fleet world can support Developer, Marketing, Content, Research, Operations, and many other Ship Charters. A solo founder must not build all of them simultaneously.
 
-The product core may be horizontal:
+The Galleon core may be horizontal:
 
 ```text
 Fleet + Quartermaster + Ship + Navigator + Squad + Crew
@@ -159,7 +159,7 @@ maintained Charters, collaboration, support, and operational controls—not AI t
 ---
 ## 22. Final Decisions
 
-1. The product is a **local-first, self-hosted AI organization workspace**, not merely an agent runtime or chatbot.
+1. Galleon is a **local-first, self-hosted AI organization workspace**, not merely an agent runtime or chatbot.
 2. The user is the **Pirate King / Owner** with final authority.
 3. Quartermaster is the **AI CEO / Executive Orchestrator**: broad awareness and coordination authority, limited direct execution authority.
 4. The **Fleet/Dermaga** is the organization and operations hub.

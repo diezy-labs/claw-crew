@@ -32,14 +32,14 @@ You pay your selected model provider directly.
 ```
 ## 14.4 Cost transparency
 
-The product must not reproduce the credit lock-in pain it was created to solve.
+Galleon must not reproduce the credit lock-in pain it was created to solve.
 
 ```text
 Model provider cost:
 User pays their selected provider directly.
 
 Product value:
-The product provides Fleet organization, orchestration,
+Galleon provides Fleet organization, orchestration,
 Squad experience, safety controls, artifacts, learning,
 local ownership, support, and collaboration.
 ```

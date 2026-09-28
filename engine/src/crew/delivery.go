@@ -46,13 +46,13 @@ func (h *GRPCHandler) RegisterHTTP(server *metrics.Server) {
 
 func (h *GRPCHandler) handleCrews(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		crews, err := h.registry.ListCrews(r.Context())
+		crews, err := h.registry.ListSquads(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		data, _ := json.Marshal(ListCrewsResponse{Items: crews})
+		data, _ := json.Marshal(ListSquadsResponse{Items: crews})
 		_, _ = w.Write(data)
 		return
 	}
@@ -66,7 +66,7 @@ func (h *GRPCHandler) handleCrewByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodGet {
-		c, err := h.registry.GetCrew(r.Context(), crewID)
+		c, err := h.registry.GetSquad(r.Context(), crewID)
 		if err != nil {
 			http.Error(w, "crew not found", http.StatusNotFound)
 			return
@@ -77,13 +77,13 @@ func (h *GRPCHandler) handleCrewByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodPut {
-		var c CrewDefinition
+		var c Squad
 		if err := json.UnmarshalRead(r.Body, &c); err != nil {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
 		c.ID = crewID
-		if err := h.registry.RegisterCrew(r.Context(), &c); err != nil {
+		if err := h.registry.RegisterSquad(r.Context(), &c); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
