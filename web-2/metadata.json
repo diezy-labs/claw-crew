@@ -1,0 +1,6 @@
+{
+  "name": "Fleet AI — Agent Command & Orchestration Workspace",
+  "description": "Local-first AI organization workspace where Quartermaster coordinates specialist Crew across your Ships, turning SOPs into Quests, work into Artifacts, and approved outcomes into Treasures.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

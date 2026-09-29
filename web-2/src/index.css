@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-canvas: #f7f7f5;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f2f3f4;
+    --border-subtle: #e1e3e5;
+    --text-primary: #17191c;
+    --text-secondary: #5f6872;
+    --text-muted: #8b949e;
+    --accent-sea: #087e8b;
+    --accent-treasure: #a46f00;
+    --accent-sail: #4a4a42;
+    --status-success: #18794e;
+    --status-warning: #b26a00;
+    --status-danger: #c83b3b;
+    --status-info: #286fa7;
+  }
+
+  .dark {
+    --bg-canvas: #121315;
+    --bg-surface: #191b1f;
+    --bg-elevated: #22252a;
+    --border-subtle: #2c3036;
+    --text-primary: #f3f4f1;
+    --text-secondary: #a7adb5;
+    --text-muted: #747c86;
+    --accent-sea: #66c7c5;
+    --accent-treasure: #d8a94a;
+    --accent-sail: #ede7d9;
+    --status-success: #59b38a;
+    --status-warning: #e8b65b;
+    --status-danger: #e16c68;
+    --status-info: #7ab7e8;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    overflow-x: hidden;
+  }
+
+  code, kbd, samp, pre {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 150, 160, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 150, 160, 0.45);
+}
+
+/* Smooth view transition */
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-view-fade-in {
+  animation: viewFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2.5s ease-in-out infinite;
+}
+
