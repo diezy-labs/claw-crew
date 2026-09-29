@@ -78,6 +78,7 @@ interface FleetState {
   promoteArtifactToTreasure: (id: string) => void;
   saveArtifact: (artifact: Omit<Artifact, 'id' | 'createdAt'>) => void;
   addCrewMember: (crewData: Omit<CrewMember, 'id'>) => void;
+  createShip: (shipData: Partial<Ship>) => string;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   addNotification: (notification: Omit<NotificationItem, 'id' | 'createdAt' | 'read'>) => void;
@@ -1171,6 +1172,62 @@ export const useFleetStore = create<FleetState>((set, get) => ({
         ...state.notifications
       ]
     }));
+  },
+
+  createShip: (shipData) => {
+    const id = 'ship-' + Date.now();
+    const newShip: Ship = {
+      id,
+      name: shipData.name || 'New Specialist Vessel',
+      fleetId: 'fleet-diezy',
+      tagline: shipData.tagline || 'Persistent squad container for autonomous fleet missions.',
+      homeScope: shipData.homeScope || 'engineering',
+      navigatorName: shipData.navigatorName || 'Orion Navigator',
+      status: 'active',
+      activeVoyagesCount: 0,
+      monthlySpentUSD: 0,
+      crewIds: shipData.crewIds || [],
+      charter: shipData.charter || {
+        purpose: shipData.tagline || 'Autonomous mission execution under fleet governance policy.',
+        acceptedQuestTypes: ['repository_health', 'ci_triage', 'feature_delivery', 'release_readiness'],
+        crewAuthority: 'Autonomous reading and staging. Impactful external writes require Captain’s Approval.',
+        prohibitedActions: ['Direct production deploys without Captain sign-off'],
+        budgetPerVoyageUSD: 2.00,
+        monthlyBudgetUSD: 30.00,
+        memorySharing: 'ship_scoped'
+      }
+    };
+
+    set((state) => ({
+      ships: [...state.ships, newShip],
+      logbook: [
+        {
+          id: 'log-' + Date.now(),
+          timestamp: 'Just now',
+          actorType: 'owner',
+          actorName: 'Captain',
+          action: `Commissioned Vessel: ${newShip.name}`,
+          entityType: 'ship',
+          entityId: newShip.id,
+          correlationId: 'cid-' + Date.now(),
+          severity: 'info'
+        },
+        ...state.logbook
+      ],
+      notifications: [
+        {
+          id: 'notif-' + Date.now(),
+          title: 'Ship Commissioned',
+          description: `${newShip.name} successfully commissioned into Fleet AI.`,
+          type: 'quest',
+          read: false,
+          createdAt: 'Just now',
+          actionLinkTab: 'ships'
+        },
+        ...state.notifications
+      ]
+    }));
+    return id;
   },
 
   markNotificationRead: (id) => {

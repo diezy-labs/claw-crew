@@ -17,8 +17,7 @@ import {
   OctagonAlert,
   Moon,
   Sun,
-  Settings,
-  X
+  Settings
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
@@ -204,8 +203,14 @@ export const CommandPalette: React.FC = () => {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-xl rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl overflow-hidden">
+    <div
+      onClick={() => setCommandPaletteOpen(false)}
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl overflow-hidden cursor-default"
+      >
         {/* Search header */}
         <div className="flex items-center px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 gap-3">
           <Search className="w-4 h-4 text-neutral-400 shrink-0" />
@@ -217,12 +222,6 @@ export const CommandPalette: React.FC = () => {
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-transparent text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none"
           />
-          <button
-            onClick={() => setCommandPaletteOpen(false)}
-            className="p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 rounded"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Results list */}

@@ -20,14 +20,15 @@ import {
   ShieldAlert,
   ArrowRight,
   Menu,
-  Activity,
-  X
+  Activity
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
-import { SettingsCategory } from '../../types';
+import { SettingsCategory, NavigationTab } from '../../types';
+import { SubMenuScroller } from '../common/SubMenuScroller';
 
 export const ContextBar: React.FC = () => {
   const {
+    activeTab,
     realmName,
     fleetName,
     workspaces,
@@ -46,6 +47,7 @@ export const ContextBar: React.FC = () => {
     setActiveSettingsCategory,
     toggleSidebarCollapsed,
     setMobileSidebarOpen,
+    isFleetPulseOpen,
     toggleFleetPulse
   } = useFleetStore();
 
@@ -58,6 +60,53 @@ export const ContextBar: React.FC = () => {
 
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const subMenuSections: {
+    category: string;
+    items: { id: NavigationTab; label: string }[];
+  }[] = [
+    {
+      category: 'COMMAND',
+      items: [
+        { id: 'quarterdeck', label: 'Quarterdeck' },
+        { id: 'realm', label: 'Realm' },
+        { id: 'flag-bridge', label: 'Flag Bridge' },
+        { id: 'quests', label: 'Quests' },
+        { id: 'captains-journal', label: "Captain's Journal" }
+      ]
+    },
+    {
+      category: 'FLEET',
+      items: [
+        { id: 'mission-board', label: 'Mission Board' },
+        { id: 'ships', label: 'Ships' },
+        { id: 'crew', label: 'Crew' },
+        { id: 'artifacts', label: 'Artifacts' },
+        { id: 'approvals', label: 'Approvals' }
+      ]
+    },
+    {
+      category: 'OPERATIONS',
+      items: [
+        { id: 'treasury', label: 'Treasury' },
+        { id: 'logbook', label: 'Logbook' },
+        { id: 'harbor', label: 'Harbor' }
+      ]
+    },
+    {
+      category: 'CONTROL',
+      items: [
+        { id: 'fleet-code', label: 'Fleet Code' },
+        { id: 'crows-nest', label: "Crow's Nest" },
+        { id: 'shipyard', label: 'Shipyard' },
+        { id: 'settings', label: 'Settings' }
+      ]
+    }
+  ];
+
+  const currentSection = subMenuSections.find((sec) =>
+    sec.items.some((item) => item.id === activeTab || (item.id === 'quarterdeck' && activeTab === 'quartermaster'))
+  ) || subMenuSections[0];
 
   // Close menus on click outside or escape key
   useEffect(() => {
@@ -101,8 +150,8 @@ export const ContextBar: React.FC = () => {
 
   return (
     <header className="h-14 border-b border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-[#141619]/95 backdrop-blur-md px-3 sm:px-4 flex items-center justify-between sticky top-0 z-30 select-none">
-      {/* Context breadcrumb & selectors */}
-      <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-neutral-500 dark:text-neutral-400 overflow-x-auto py-1 min-w-0 scrollbar-none">
+      {/* Left: Sidebar Toggle & Search Fleet Bar right beside it */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Sidebar Toggle Button */}
         <button
           onClick={() => {
@@ -119,58 +168,49 @@ export const ContextBar: React.FC = () => {
           <Menu className="w-4 h-4" />
         </button>
 
-        <span className="font-semibold text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
-          {realmName}
-        </span>
-        <ChevronRight className="w-3.5 h-3.5 shrink-0 text-neutral-400" />
-        <span className="text-neutral-700 dark:text-neutral-300 whitespace-nowrap font-medium">
-          {fleetName}
-        </span>
-        <ChevronRight className="w-3.5 h-3.5 shrink-0 text-neutral-400 hidden sm:inline" />
+        {/* Command palette search trigger (next to sidebar toggle, compact size) */}
+        <div className="w-52 sm:w-72 md:w-80">
+          <button
+            onClick={() => setCommandPaletteOpen(true)}
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/60 text-neutral-500 dark:text-neutral-400 text-xs hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 transition-all cursor-pointer shadow-2xs group"
+            title="Open Command Palette (⌘K)"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Search className="w-3.5 h-3.5 group-hover:text-teal-500 transition-colors shrink-0" />
+              <span className="truncate hidden sm:inline">Search Fleet...</span>
+              <span className="truncate sm:hidden">Search...</span>
+            </div>
+            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono bg-neutral-200 dark:bg-neutral-800 rounded text-neutral-600 dark:text-neutral-400 shrink-0">
+              ⌘K
+            </kbd>
+          </button>
+        </div>
+      </div>
 
-        {/* Workspace select */}
-        <select
-          value={selectedWorkspace}
-          onChange={(e) => setSelectedWorkspace(e.target.value)}
-          className="hidden sm:inline bg-neutral-100 dark:bg-neutral-800/80 text-neutral-800 dark:text-neutral-200 text-xs px-2 py-1 rounded border border-neutral-200 dark:border-neutral-700/60 focus:outline-none focus:ring-1 focus:ring-teal-500 font-medium cursor-pointer"
-        >
-          {workspaces.map((ws) => (
-            <option key={ws} value={ws}>
-              {ws}
-            </option>
-          ))}
-        </select>
-
-        <ChevronRight className="w-3.5 h-3.5 shrink-0 text-neutral-400 hidden md:inline" />
-
-        {/* Project select */}
-        <select
-          value={selectedProject}
-          onChange={(e) => setSelectedProject(e.target.value)}
-          className="hidden md:inline bg-neutral-100 dark:bg-neutral-800/80 text-neutral-800 dark:text-neutral-200 text-xs px-2 py-1 rounded border border-neutral-200 dark:border-neutral-700/60 focus:outline-none focus:ring-1 focus:ring-teal-500 font-medium cursor-pointer"
-        >
-          {projects.map((proj) => (
-            <option key={proj} value={proj}>
-              {proj}
-            </option>
-          ))}
-        </select>
+      {/* Middle: Sub-Menu Scroller with '<' and '>' arrows that auto-hide at boundaries */}
+      <div className="flex-1 max-w-xl mx-2 min-w-0 hidden md:block">
+        <SubMenuScroller className="px-1 gap-1">
+          {currentSection.items.map((item) => {
+            const isActive = activeTab === item.id || (item.id === 'quarterdeck' && activeTab === 'quartermaster');
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`px-2.5 py-1 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                  isActive
+                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 font-bold border border-teal-500/30 shadow-2xs'
+                    : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800/60'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </SubMenuScroller>
       </div>
 
       {/* Right controls */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        {/* Command palette search trigger */}
-        <button
-          onClick={() => setCommandPaletteOpen(true)}
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500 dark:text-neutral-400 text-xs hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors cursor-pointer"
-          title="Open Command Palette (⌘K)"
-        >
-          <Search className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline">Search Fleet...</span>
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-neutral-200 dark:bg-neutral-800 rounded text-neutral-600 dark:text-neutral-400">
-            ⌘K
-          </kbd>
-        </button>
 
         {/* Real-time Notifications Bell */}
         <div className="relative">
@@ -245,23 +285,23 @@ export const ContextBar: React.FC = () => {
           )}
         </div>
 
-        {/* Mobile/Tablet Fleet Pulse Drawer Trigger */}
+        {/* Fleet Pulse Tray / Sidebar Toggle */}
         <button
           onClick={toggleFleetPulse}
-          className="xl:hidden flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-600 dark:text-neutral-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer"
-          title="Toggle Fleet Pulse telemetry drawer"
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer border ${
+            isFleetPulseOpen
+              ? 'border-teal-500/50 bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold ring-1 ring-teal-500/30'
+              : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-600 dark:text-neutral-300 hover:text-teal-600 dark:hover:text-teal-400 hover:border-neutral-300 dark:hover:border-neutral-700'
+          }`}
+          title={isFleetPulseOpen ? "Hide Fleet Pulse tray" : "Show Fleet Pulse tray"}
+          aria-label="Toggle Fleet Pulse tray"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-          <span className="hidden sm:inline font-mono text-[11px]">Pulse</span>
-        </button>
-
-        {/* Dark / Light Mode Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-1.5 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-neutral-700" />}
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+          </span>
+          <Activity className="w-3.5 h-3.5" />
+          <span className="font-mono text-[11px] font-medium hidden sm:inline">Fleet Pulse</span>
         </button>
 
         <div className="h-4 w-[1px] bg-neutral-200 dark:border-neutral-800 mx-0.5" />
@@ -383,6 +423,17 @@ export const ContextBar: React.FC = () => {
                 </button>
 
                 <button
+                  onClick={toggleTheme}
+                  className="w-full px-4 py-1.5 text-left text-xs text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 flex items-center justify-between transition-colors cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-neutral-700" />}
+                    <span>Theme: {theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-neutral-400">Toggle</span>
+                </button>
+
+                <button
                   onClick={() => handleNavigateToSetting('notifications')}
                   className="w-full px-4 py-1.5 text-left text-xs text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 flex items-center justify-between transition-colors cursor-pointer"
                 >
@@ -451,8 +502,14 @@ export const ContextBar: React.FC = () => {
 
       {/* Sign Out Confirmation Modal */}
       {showSignOutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4">
+        <div
+          onClick={() => setShowSignOutModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4 cursor-default"
+          >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-lg bg-rose-500/10 text-rose-500">
                 <LogOut className="w-5 h-5" />
@@ -489,8 +546,14 @@ export const ContextBar: React.FC = () => {
 
       {/* Send Feedback Modal */}
       {showFeedbackModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4">
+        <div
+          onClick={() => setShowFeedbackModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4 cursor-default"
+          >
             <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-2">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-teal-500" />
@@ -498,12 +561,6 @@ export const ContextBar: React.FC = () => {
                   Send Fleet Feedback
                 </h3>
               </div>
-              <button
-                onClick={() => setShowFeedbackModal(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             {feedbackSent ? (

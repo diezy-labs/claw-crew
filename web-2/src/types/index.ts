@@ -2,6 +2,7 @@ export type ThemeMode = 'dark' | 'light';
 
 export type NavigationTab =
   | 'quarterdeck'
+  | 'realm'
   | 'flag-bridge'
   | 'quests'
   | 'captains-journal'

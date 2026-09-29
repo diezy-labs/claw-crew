@@ -14,7 +14,6 @@ import {
   ChevronRight,
   SlidersHorizontal,
   Workflow,
-  X,
   ShieldCheck
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
@@ -218,7 +217,7 @@ export const QuestsView: React.FC = () => {
         {/* Center Canvas */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Sub-Tabs */}
-          <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#141619]/60 flex items-center justify-between gap-2 overflow-x-auto shrink-0">
+          <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#141619]/60 flex items-center justify-between gap-2 overflow-x-auto shrink-0 scrollbar-none">
             <div className="flex items-center gap-1">
               {questTabs.map((tab) => (
                 <button
@@ -406,18 +405,18 @@ export const QuestsView: React.FC = () => {
 
       {/* New Quest Modal */}
       {isNewQuestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-5 space-y-4">
+        <div
+          onClick={() => setIsNewQuestModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-5 space-y-4 cursor-default"
+          >
             <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
               <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
                 Create a Quest — Step-by-Step
               </h3>
-              <button
-                onClick={() => setIsNewQuestModalOpen(false)}
-                className="p-1 rounded text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             <form onSubmit={handleCreateQuestSubmit} className="space-y-3.5 text-xs">

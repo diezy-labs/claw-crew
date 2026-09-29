@@ -27,10 +27,17 @@ import {
   Zap,
   Gauge,
   CornerDownLeft,
-  Check
+  Check,
+  Mic,
+  LayoutTemplate,
+  Radio
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { Artifact, NavigationTab } from '../../types';
+import { QuestBrainstormModal } from './QuestBrainstormModal';
+import { VoiceQuartermasterModal } from './VoiceQuartermasterModal';
+import { LiveCanvasPane } from './LiveCanvasPane';
+import { SubMenuScroller } from '../common/SubMenuScroller';
 
 export type AIModelOption = {
   id: string;
@@ -112,6 +119,42 @@ export const QuarterdeckView: React.FC = () => {
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const [effortLevel, setEffortLevel] = useState<EffortLevel>('high');
   const [isEffortMenuOpen, setIsEffortMenuOpen] = useState(false);
+  const [isBrainstormModalOpen, setIsBrainstormModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isCanvasOpen, setIsCanvasOpen] = useState(false);
+
+  // Modern Responsive Dot Scroll Navigation (. . . . .)
+  const DOT_NAV_ITEMS = [
+    { label: 'Top · Command Console', fraction: 0 },
+    { label: 'Decisions & Status', fraction: 0.25 },
+    { label: 'Dialogue & Missions', fraction: 0.5 },
+    { label: 'Artifacts & Review', fraction: 0.75 },
+    { label: 'Latest Dispatch', fraction: 1.0 }
+  ];
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const chatStreamRef = useRef<HTMLDivElement>(null);
+
+  const handleStreamScroll = () => {
+    if (!chatStreamRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatStreamRef.current;
+    const maxScroll = scrollHeight - clientHeight;
+    if (maxScroll > 0) {
+      setScrollProgress(scrollTop / maxScroll);
+    }
+  };
+
+  const activeDotIndex = Math.min(
+    DOT_NAV_ITEMS.length - 1,
+    Math.max(0, Math.round(scrollProgress * (DOT_NAV_ITEMS.length - 1)))
+  );
+
+  const scrollToFraction = (fraction: number) => {
+    if (!chatStreamRef.current) return;
+    const { scrollHeight, clientHeight } = chatStreamRef.current;
+    const target = (scrollHeight - clientHeight) * fraction;
+    chatStreamRef.current.scrollTo({ top: target, behavior: 'smooth' });
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const targetMenuRef = useRef<HTMLDivElement>(null);
@@ -211,7 +254,7 @@ export const QuarterdeckView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-neutral-50/50 dark:bg-[#111315] animate-view-fade-in">
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-neutral-50/50 dark:bg-[#111315] animate-view-fade-in relative">
       {/* 1. CLEAN TOP CONSOLE BAR */}
       <div className="border-b border-neutral-200/80 dark:border-neutral-800/80 bg-white/95 dark:bg-[#16181b]/95 backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shrink-0 z-20">
         <div className="flex items-center gap-2">
@@ -229,6 +272,30 @@ export const QuarterdeckView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Live Canvas A2UI Toggle */}
+          <button
+            onClick={() => setIsCanvasOpen(!isCanvasOpen)}
+            className={`text-xs font-medium flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
+              isCanvasOpen
+                ? 'border-teal-500 bg-teal-500/15 text-teal-600 dark:text-teal-400 font-semibold shadow-xs'
+                : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-teal-500/40 bg-white dark:bg-neutral-900'
+            }`}
+            title="Toggle Live Canvas (A2UI Interactive Components)"
+          >
+            <LayoutTemplate className="w-3.5 h-3.5 text-teal-500" />
+            <span className="hidden sm:inline">Live Canvas</span>
+          </button>
+
+          {/* Voice Quartermaster (Duplex Audio) Button */}
+          <button
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-teal-500/40 bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-semibold hover:bg-teal-500/20 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
+            title="Launch Voice Quartermaster (Full-Duplex Audio & Silero VAD)"
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Voice Mode</span>
+          </button>
+
           {/* Quick Handoff to Flag Bridge */}
           <button
             onClick={() => setActiveTab('flag-bridge')}
@@ -244,13 +311,46 @@ export const QuarterdeckView: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>+ New Chat</span>
+            <span>New Chat</span>
           </button>
         </div>
       </div>
 
-      {/* 2. CHAT STREAM (CLEAN & EXPANSIVE) */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 max-w-4xl mx-auto w-full">
+      {/* Main Viewport (Split with Live Canvas when open) */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chat & Floating Composer Column */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+          {/* Navigator Radar Wave Field — Originates at Toolbox Chat (Center-Bottom) and Spreads into Chat Div, Dimming as it Expands */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0">
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-0 h-0 flex items-center justify-center">
+              {/* Radar Wave Pulse 1 */}
+              <div className="absolute w-[420px] h-[420px] rounded-full border border-teal-500/35 dark:border-teal-400/30 bg-teal-500/5 animate-radar-wave-1 pointer-events-none shadow-[0_0_24px_rgba(20,184,166,0.2)]" />
+              {/* Radar Wave Pulse 2 */}
+              <div className="absolute w-[420px] h-[420px] rounded-full border border-cyan-500/30 dark:border-cyan-400/25 bg-cyan-500/5 animate-radar-wave-2 pointer-events-none shadow-[0_0_24px_rgba(56,189,248,0.15)]" />
+              {/* Radar Wave Pulse 3 */}
+              <div className="absolute w-[420px] h-[420px] rounded-full border border-teal-400/20 dark:border-teal-300/15 animate-radar-wave-3 pointer-events-none" />
+
+              {/* Navigator Radar Rotating Sweep Beam */}
+              <div className="absolute bottom-0 w-[520px] h-[520px] origin-bottom animate-radar-sweep pointer-events-none opacity-30">
+                <div
+                  className="w-full h-full bg-gradient-to-t from-teal-500/25 via-teal-500/5 to-transparent"
+                  style={{ clipPath: 'polygon(50% 100%, 35% 0%, 65% 0%)' }}
+                />
+              </div>
+
+              {/* Radar Range Calibration Distance Rings */}
+              <div className="absolute w-[220px] h-[220px] rounded-full border border-dashed border-teal-500/15 pointer-events-none" />
+              <div className="absolute w-[360px] h-[360px] rounded-full border border-dashed border-teal-500/10 pointer-events-none" />
+              <div className="absolute w-[500px] h-[500px] rounded-full border border-dashed border-teal-500/5 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* 2. CHAT STREAM (CLEAN & EXPANSIVE, SCROLLBAR REPLACED BY DOT NAV) */}
+          <div
+            ref={chatStreamRef}
+            onScroll={handleStreamScroll}
+            className="flex-1 overflow-y-auto px-4 py-6 space-y-6 max-w-4xl mx-auto w-full scrollbar-none relative"
+          >
         {/* Session Welcome / Executive Context Banner */}
         <div className="text-center py-4 space-y-1.5 border-b border-neutral-200/60 dark:border-neutral-800/60">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 text-[11px] font-mono font-medium">
@@ -440,7 +540,7 @@ export const QuarterdeckView: React.FC = () => {
                           }}
                           className="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-teal-500 hover:text-teal-600 dark:hover:text-teal-300 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
                         >
-                          <Sparkles className="w-3 h-3 text-amber-500" />
+                          <Radio className="w-3 h-3 text-teal-500 animate-pulse" />
                           <span>{action.label}</span>
                         </button>
                       ))}
@@ -462,6 +562,34 @@ export const QuarterdeckView: React.FC = () => {
           })}
           <div ref={messagesEndRef} />
         </div>
+
+      {/* Modern Responsive Dot Scroll Navigation (. . . . .) */}
+      <div className="hidden sm:flex absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex-col items-center gap-2.5 py-3 px-1.5 rounded-full bg-white/80 dark:bg-[#181a1e]/85 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800/80 shadow-md select-none">
+        {DOT_NAV_ITEMS.map((item, idx) => {
+          const isActive = activeDotIndex === idx;
+          return (
+            <button
+              key={idx}
+              onClick={() => scrollToFraction(item.fraction)}
+              className="group relative flex items-center justify-center p-1 cursor-pointer focus:outline-none"
+              title={item.label}
+              aria-label={item.label}
+            >
+              {/* Responsive Dot: enlarges when active or hovered */}
+              <span
+                className={`rounded-full transition-all duration-300 ${
+                  isActive
+                    ? 'w-2.5 h-2.5 bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.9)] ring-2 ring-teal-500/30 scale-125'
+                    : 'w-1.5 h-1.5 bg-neutral-300 dark:bg-neutral-600 group-hover:bg-teal-400 group-hover:scale-150'
+                }`}
+              />
+              {/* Tooltip on hover */}
+              <span className="hidden group-hover:block absolute right-full mr-2.5 px-2 py-0.5 rounded text-[10px] font-sans font-medium whitespace-nowrap bg-neutral-900 dark:bg-neutral-800 text-neutral-100 shadow-md pointer-events-none">
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* 3. MODERN FLOATING COMPOSER */}
@@ -469,12 +597,12 @@ export const QuarterdeckView: React.FC = () => {
         <div className="max-w-4xl mx-auto w-full space-y-2">
           {/* Quick Context Injection Pills */}
           <div className="flex items-center justify-between text-xs px-1">
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
-              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Context:</span>
+            <SubMenuScroller className="gap-1.5" containerClassName="w-full">
+              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider shrink-0 mr-1">Context:</span>
               <button
                 type="button"
                 onClick={() => setComposerContext(`Workspace: ${selectedWorkspace}`)}
-                className={`px-2 py-0.5 rounded-md text-[11px] font-mono border transition-all cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[11px] font-mono border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   composerContext?.includes('Workspace')
                     ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold'
                     : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
@@ -485,7 +613,7 @@ export const QuarterdeckView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setComposerContext(`Project: ${selectedProject}`)}
-                className={`px-2 py-0.5 rounded-md text-[11px] font-mono border transition-all cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[11px] font-mono border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   composerContext?.includes('Project')
                     ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold'
                     : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
@@ -496,7 +624,7 @@ export const QuarterdeckView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setComposerContext('Ship: Developer Delivery Ship')}
-                className={`px-2 py-0.5 rounded-md text-[11px] font-mono border transition-all cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[11px] font-mono border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   composerContext?.includes('Developer Ship')
                     ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold'
                     : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
@@ -506,13 +634,14 @@ export const QuarterdeckView: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('quests')}
-                className="px-2 py-0.5 rounded-md text-[11px] font-mono border border-teal-500/30 text-teal-600 dark:text-teal-400 bg-teal-500/5 hover:bg-teal-500/10 transition-colors flex items-center gap-1 cursor-pointer"
+                onClick={() => setIsBrainstormModalOpen(true)}
+                className="px-2 py-0.5 rounded-md text-[11px] font-mono border border-teal-500/30 text-teal-600 dark:text-teal-400 bg-teal-500/5 hover:bg-teal-500/10 transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                title="Brainstorm & forge new Quest"
               >
                 <PlusCircle className="w-3 h-3" />
                 <span>Create Quest</span>
               </button>
-            </div>
+            </SubMenuScroller>
           </div>
 
           {/* Attached Context Badge */}
@@ -528,15 +657,53 @@ export const QuarterdeckView: React.FC = () => {
             </div>
           )}
 
-          {/* Main Input Box */}
-          <div className="rounded-2xl border border-neutral-300 dark:border-neutral-700/80 bg-white dark:bg-[#181a1e] shadow-lg focus-within:ring-2 focus-within:ring-teal-500/40 focus-within:border-teal-500 transition-all overflow-visible relative">
+          {/* Main Input Box with Navigator Radar Scanner Center & Phosphor Perimeter */}
+          <div className="rounded-2xl border border-teal-500/30 dark:border-teal-500/40 bg-white dark:bg-[#181a1e] shadow-[0_4px_24px_rgba(20,184,166,0.12)] transition-all relative overflow-hidden group">
+            {/* Navigator Radar Epicenter Beacon Badge */}
+            <div className="absolute top-2 right-3 z-20 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/10 dark:bg-teal-950/40 border border-teal-500/30 text-teal-600 dark:text-teal-400 font-mono text-[9px] pointer-events-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" />
+              <Radio className="w-3 h-3 text-teal-500" />
+              <span className="hidden sm:inline font-semibold uppercase tracking-wider">RADAR CENTER</span>
+            </div>
+
+            {/* SVG Radar Navigator Perimeter Pulse */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none rounded-2xl overflow-visible z-20"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient id="radarScanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.2" />
+                  <stop offset="50%" stopColor="#14b8a6" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="1" />
+                </linearGradient>
+                <filter id="radarScanGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#14b8a6" floodOpacity="0.75" />
+                </filter>
+              </defs>
+              <rect
+                x="1"
+                y="1"
+                width="calc(100% - 2px)"
+                height="calc(100% - 2px)"
+                rx="15"
+                ry="15"
+                fill="none"
+                stroke="url(#radarScanGradient)"
+                strokeWidth="2"
+                strokeDasharray="16 84"
+                filter="url(#radarScanGlow)"
+                className="animate-wave-crest"
+              />
+            </svg>
+
             <textarea
               rows={2}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={`Ask ${selectedTarget}... (e.g. 'Audit release checklist', 'Turn this issue into a Quest', or 'Triage socket timeout')`}
-              className="w-full bg-transparent px-4 py-3 text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none resize-none leading-relaxed"
+              className="w-full bg-transparent px-4 py-3 text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none resize-none leading-relaxed relative z-10"
             />
 
             {/* Bottom Toolbar inside Composer — 3 Buttons Relocated Here */}
@@ -745,5 +912,40 @@ export const QuarterdeckView: React.FC = () => {
         </div>
       </div>
     </div>
+
+      </div>
+
+      {/* Live Canvas Modal / Popup — Click outside or click button again to hide, NO close X button */}
+      {isCanvasOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setIsCanvasOpen(false)}
+        >
+          <div
+            className="w-full max-w-4xl h-[85vh] max-h-[820px] rounded-2xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#15171a] animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <LiveCanvasPane />
+          </div>
+        </div>
+      )}
+
+      {/* Voice Quartermaster Modal (Duplex Audio / Silero VAD) */}
+      <VoiceQuartermasterModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        onSendTranscript={(text) => sendQuartermasterMessage(text)}
+      />
+
+      {/* Quest Brainstorming Studio Modal */}
+      <QuestBrainstormModal
+        isOpen={isBrainstormModalOpen}
+        onClose={() => setIsBrainstormModalOpen(false)}
+        onSendToChat={(brief) => {
+          setInput(brief);
+        }}
+      />
+    </div>
+  </div>
   );
 };

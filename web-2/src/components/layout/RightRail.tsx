@@ -9,7 +9,6 @@ import {
   Play,
   CheckCircle2,
   AlertCircle,
-  X,
   Activity,
   Cpu
 } from 'lucide-react';
@@ -49,14 +48,6 @@ export const RightRail: React.FC = () => {
               Live Sync
             </span>
           </div>
-          {/* Close button for mobile drawer */}
-          <button
-            onClick={() => setFleetPulseOpen(false)}
-            className="xl:hidden p-1 rounded-md text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-            title="Close Fleet Pulse drawer"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Treasury Widget */}
@@ -241,10 +232,12 @@ export const RightRail: React.FC = () => {
 
   return (
     <>
-      {/* Desktop Fixed Right Rail */}
-      <aside className="w-72 shrink-0 border-l border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#141619]/60 backdrop-blur-sm p-4 hidden xl:flex flex-col justify-between overflow-y-auto h-[calc(100vh-3.5rem)] select-none">
-        {content}
-      </aside>
+      {/* Desktop Toggleable Fleet Pulse Right Rail / Tray */}
+      {isFleetPulseOpen && (
+        <aside className="w-80 shrink-0 border-l border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-[#141619]/95 backdrop-blur-md p-4 hidden xl:flex flex-col justify-between overflow-y-auto h-[calc(100vh-3.5rem)] select-none animate-in fade-in slide-in-from-right duration-150">
+          {content}
+        </aside>
+      )}
 
       {/* Mobile/Tablet Slide-Out Drawer Sheet */}
       {isFleetPulseOpen && (

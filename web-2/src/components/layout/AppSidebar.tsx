@@ -18,14 +18,14 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
   Play,
   CheckCircle2,
   AlertTriangle,
   User,
-  PanelLeftClose,
-  PanelLeft,
-  Flag
+  Flag,
+  Mic
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
@@ -44,6 +44,14 @@ export const AppSidebar: React.FC = () => {
   } = useFleetStore();
 
   const [showAnchorModal, setShowAnchorModal] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSectionCollapse = (sectionTitle: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [sectionTitle]: !prev[sectionTitle]
+    }));
+  };
 
   const pendingApprovalsCount = approvals.filter((a) => a.status === 'pending').length;
 
@@ -62,6 +70,7 @@ export const AppSidebar: React.FC = () => {
       title: 'COMMAND',
       items: [
         { id: 'quarterdeck', label: 'Quarterdeck', icon: Compass, hint: 'AI Chat Hub · chat intake & delegation' },
+        { id: 'realm', label: 'Realm', icon: Mic, hint: 'Voice Mode · 8-bit Quarterdeck conversation' },
         { id: 'flag-bridge', label: 'Flag Bridge', icon: Flag, hint: 'Quartermaster Control Room · see, steer & decide' },
         { id: 'quests', label: 'Quests', icon: Map, hint: 'Living SOPs & workflow maps' },
         { id: 'captains-journal', label: 'Captain’s Journal', icon: BookMarked, hint: 'Private working sessions & notes' }
@@ -132,7 +141,7 @@ export const AppSidebar: React.FC = () => {
       <aside
         className={`fixed inset-y-0 left-0 z-50 md:static flex flex-col justify-between select-none h-screen bg-white dark:bg-[#141619] border-r border-neutral-200 dark:border-neutral-800 transition-all duration-200 ease-in-out ${
           isMobileSidebarOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full md:translate-x-0'
-        } ${isSidebarCollapsed ? 'md:w-16' : 'md:w-64'}`}
+        } ${isSidebarCollapsed ? 'md:w-16 overflow-x-hidden' : 'md:w-64'}`}
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Brand header */}
@@ -160,119 +169,105 @@ export const AppSidebar: React.FC = () => {
               )}
             </div>
 
-            {/* Desktop Collapse & Mobile Close */}
-            <div className="flex items-center gap-1">
-              {/* Mobile close button */}
+            {/* Mobile Close Button only */}
+            <div className="flex items-center gap-1 md:hidden">
               <button
                 onClick={() => setMobileSidebarOpen(false)}
-                className="md:hidden p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 rounded"
+                className="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 rounded"
                 aria-label="Close sidebar"
               >
                 <X className="w-4 h-4" />
               </button>
-
-              {/* Desktop toggle collapse button */}
-              {!isSidebarCollapsed && (
-                <button
-                  onClick={toggleSidebarCollapsed}
-                  className="hidden md:flex p-1.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 rounded transition-colors"
-                  title="Collapse sidebar (⌘B)"
-                  aria-label="Collapse sidebar"
-                >
-                  <PanelLeftClose className="w-4 h-4" />
-                </button>
-              )}
             </div>
           </div>
 
-          {/* Collapsed expand button on desktop */}
-          {isSidebarCollapsed && (
-            <div className="hidden md:flex justify-center py-2 border-b border-neutral-100 dark:border-neutral-800/60">
-              <button
-                onClick={toggleSidebarCollapsed}
-                className="p-1.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 rounded transition-colors"
-                title="Expand sidebar (⌘B)"
-                aria-label="Expand sidebar"
-              >
-                <PanelLeft className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          {/* Navigation list (scrollbar hidden for clean visual) */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 space-y-4 scrollbar-none">
+            {navSections.map((section) => {
+              const isCollapsible = section.title !== 'COMMAND';
+              const isSectionCollapsed = isCollapsible && Boolean(collapsedSections[section.title]);
 
-          {/* Navigation list */}
-          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4 scrollbar-thin">
-            {navSections.map((section) => (
-              <div key={section.title} className="space-y-1">
-                {!isSidebarCollapsed && (
-                  <div className="px-2 pb-1 text-[10px] font-semibold tracking-wider text-neutral-400 dark:text-neutral-500 uppercase">
-                    {section.title}
-                  </div>
-                )}
-                {isSidebarCollapsed && (
-                  <div className="h-px bg-neutral-200 dark:bg-neutral-800 my-2 mx-1" />
-                )}
-                <div className="space-y-0.5">
-                  {section.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id || (item.id === 'quarterdeck' && activeTab === 'quartermaster');
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleTabClick(item.id)}
-                        title={isSidebarCollapsed ? `${item.label} — ${item.hint || ''}` : undefined}
-                        className={`w-full flex items-center ${
-                          isSidebarCollapsed ? 'justify-center px-0 py-2' : 'justify-between px-2.5 py-1.5'
-                        } rounded-md text-xs font-medium transition-colors relative group ${
-                          isActive
-                            ? 'bg-neutral-100 dark:bg-neutral-800/90 text-teal-700 dark:text-teal-300 font-semibold'
-                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 hover:text-neutral-950 dark:hover:text-white'
-                        }`}
-                      >
-                        <div className={`flex items-center gap-2.5 ${isSidebarCollapsed ? 'justify-center' : 'truncate'}`}>
-                          <Icon
-                            className={`w-4 h-4 shrink-0 transition-colors ${
-                              isActive
-                                ? 'text-teal-600 dark:text-teal-400'
-                                : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300'
+              return (
+                <div key={section.title} className="space-y-1">
+                  {!isSidebarCollapsed && (
+                    <>
+                      {isCollapsible ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionCollapse(section.title)}
+                          className="w-full flex items-center justify-between px-2 pb-1 text-[10px] font-semibold tracking-wider text-neutral-400 dark:text-neutral-500 uppercase hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors cursor-pointer select-none group"
+                          title={`Toggle ${section.title} section`}
+                        >
+                          <span>{section.title}</span>
+                          <ChevronDown
+                            className={`w-3 h-3 text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-transform duration-200 ${
+                              isSectionCollapsed ? '-rotate-90' : 'rotate-0'
                             }`}
                           />
-                          {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                        </button>
+                      ) : (
+                        <div className="px-2 pb-1 text-[10px] font-semibold tracking-wider text-neutral-400 dark:text-neutral-500 uppercase">
+                          {section.title}
                         </div>
-
-                        {/* Badges */}
-                        {item.badge !== undefined && item.badge > 0 && (
-                          <>
-                            {!isSidebarCollapsed ? (
-                              <span
-                                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                                  item.badgeColor || 'bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200'
+                      )}
+                    </>
+                  )}
+                  {isSidebarCollapsed && (
+                    <div className="h-px bg-neutral-200 dark:bg-neutral-800 my-2 mx-1" />
+                  )}
+                  {(!isSectionCollapsed || isSidebarCollapsed) && (
+                    <div className="space-y-0.5 animate-in fade-in duration-150">
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id || (item.id === 'quarterdeck' && activeTab === 'quartermaster');
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => handleTabClick(item.id)}
+                            title={isSidebarCollapsed ? `${item.label} — ${item.hint || ''}` : undefined}
+                            className={`w-full flex items-center ${
+                              isSidebarCollapsed ? 'justify-center px-0 py-2' : 'justify-between px-2.5 py-1.5'
+                            } rounded-md text-xs font-medium transition-colors relative group ${
+                              isActive
+                                ? 'bg-neutral-100 dark:bg-neutral-800/90 text-teal-700 dark:text-teal-300 font-semibold'
+                                : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 hover:text-neutral-950 dark:hover:text-white'
+                            }`}
+                          >
+                            <div className={`flex items-center gap-2.5 ${isSidebarCollapsed ? 'justify-center' : 'truncate'}`}>
+                              <Icon
+                                className={`w-4 h-4 shrink-0 transition-colors ${
+                                  isActive
+                                    ? 'text-teal-600 dark:text-teal-400'
+                                    : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300'
                                 }`}
-                              >
-                                {item.badge}
-                              </span>
-                            ) : (
-                              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#141619]" />
-                            )}
-                          </>
-                        )}
+                              />
+                              {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
+                            </div>
 
-                        {/* Collapsed Tooltip Flyout */}
-                        {isSidebarCollapsed && (
-                          <div className="hidden group-hover:md:flex absolute left-full ml-2 px-2.5 py-1 rounded bg-neutral-900 text-white text-[11px] font-sans font-medium whitespace-nowrap z-50 shadow-lg pointer-events-none items-center gap-1.5">
-                            <span>{item.label}</span>
+                            {/* Badges */}
                             {item.badge !== undefined && item.badge > 0 && (
-                              <span className="px-1 rounded bg-amber-500/30 text-amber-300 font-mono text-[10px]">
-                                {item.badge}
-                              </span>
+                              <>
+                                {!isSidebarCollapsed ? (
+                                  <span
+                                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                                      item.badgeColor || 'bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200'
+                                    }`}
+                                  >
+                                    {item.badge}
+                                  </span>
+                                ) : (
+                                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#141619]" />
+                                )}
+                              </>
                             )}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Bottom Settings Link */}
@@ -299,13 +294,6 @@ export const AppSidebar: React.FC = () => {
                 {!isSidebarCollapsed && <span>Settings</span>}
               </div>
               {!isSidebarCollapsed && <span className="text-[10px] font-mono text-neutral-400">⌘,</span>}
-
-              {/* Tooltip for collapsed mode */}
-              {isSidebarCollapsed && (
-                <div className="hidden group-hover:md:flex absolute left-full ml-2 px-2.5 py-1 rounded bg-neutral-900 text-white text-[11px] font-sans font-medium whitespace-nowrap z-50 shadow-lg pointer-events-none">
-                  Settings &amp; Preferences (⌘,)
-                </div>
-              )}
             </button>
           </div>
 
@@ -393,8 +381,14 @@ export const AppSidebar: React.FC = () => {
 
       {/* Drop Anchor Confirmation Modal (Pure in-app UI, no window.alert) */}
       {showAnchorModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4">
+        <div
+          onClick={() => setShowAnchorModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4 cursor-default"
+          >
             <div className="flex items-start gap-3">
               <div
                 className={`p-2.5 rounded-lg shrink-0 ${

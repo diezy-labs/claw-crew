@@ -8,7 +8,6 @@ import {
   Coins,
   Ship,
   CheckCircle2,
-  X,
   ArrowRight,
   PlusCircle,
   HelpCircle,
@@ -189,8 +188,14 @@ export const CrewView: React.FC = () => {
 
       {/* Make Me a Squad Wizard Modal */}
       {isWizardOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-xl rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-6 space-y-5 text-xs">
+        <div
+          onClick={() => setIsWizardOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xl rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-6 space-y-5 text-xs cursor-default"
+          >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
               <div>
@@ -204,12 +209,6 @@ export const CrewView: React.FC = () => {
                   Step {wizardStep} of 3: Formulate a persistent specialist squad without manual agent wiring.
                 </p>
               </div>
-              <button
-                onClick={() => setIsWizardOpen(false)}
-                className="p-1 rounded text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             {/* Step 1: Choose Intent */}

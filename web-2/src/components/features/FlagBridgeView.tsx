@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
+import { SubMenuScroller } from '../common/SubMenuScroller';
 
 export type FlagBridgeTab =
   | 'overview'
@@ -72,9 +73,9 @@ export const FlagBridgeView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-6xl mx-auto w-full animate-view-fade-in">
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 gap-6 max-w-6xl mx-auto w-full animate-view-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5 shrink-0">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-mono text-teal-600 dark:text-teal-400">
             <Compass className="w-4 h-4 text-teal-500 animate-spin-slow shrink-0" />
@@ -111,42 +112,44 @@ export const FlagBridgeView: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-neutral-200 dark:border-neutral-800 scrollbar-none text-xs font-medium">
-        {[
-          { id: 'overview', label: 'Overview' },
-          { id: 'briefings', label: 'Briefings' },
-          { id: 'ship-reports', label: 'Ship Reports' },
-          { id: 'decisions', label: 'Decisions', badge: pendingApprovals.length },
-          { id: 'treasury', label: 'Treasury' },
-          { id: 'health', label: 'Health' },
-          { id: 'strategy', label: 'Strategy' }
-        ].map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveFlagTab(tab.id as FlagBridgeTab)}
-              className={`px-3 py-2 rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-                isActive
-                  ? 'bg-neutral-200/90 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-semibold shadow-xs'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900'
-              }`}
-            >
-              <span>{tab.label}</span>
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              )}
-            </button>
-          );
-        })}
+      {/* Tabs Navigation Sub-header with < and > arrows */}
+      <div className="pb-3 pt-1 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
+        <SubMenuScroller className="gap-1.5" containerClassName="w-full">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'briefings', label: 'Briefings' },
+            { id: 'ship-reports', label: 'Ship Reports' },
+            { id: 'decisions', label: 'Decisions', badge: pendingApprovals.length },
+            { id: 'treasury', label: 'Treasury' },
+            { id: 'health', label: 'Health' },
+            { id: 'strategy', label: 'Strategy' }
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFlagTab(tab.id as FlagBridgeTab)}
+                className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                  isActive
+                    ? 'bg-neutral-200/90 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-semibold shadow-2xs border border-neutral-300 dark:border-neutral-700'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900/60 border border-transparent'
+                }`}
+              >
+                <span>{tab.label}</span>
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </SubMenuScroller>
       </div>
 
       {/* Overview Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* LEFT COLUMN */}
-          <div className="space-y-5">
+          <div className="flex flex-col gap-5">
             {/* 1. Executive Briefing */}
             <div className="p-4 sm:p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-3.5 shadow-xs">
               <div className="flex items-center justify-between">
@@ -305,7 +308,7 @@ export const FlagBridgeView: React.FC = () => {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="space-y-5">
+          <div className="flex flex-col gap-5">
             {/* 1. Fleet Pulse */}
             <div className="p-4 sm:p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-3.5 shadow-xs">
               <div className="flex items-center justify-between">

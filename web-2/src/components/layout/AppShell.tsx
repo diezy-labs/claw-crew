@@ -10,6 +10,9 @@ import { useSimulation } from '../../hooks/useSimulation';
 const QuarterdeckView = lazy(() =>
   import('../features/QuarterdeckView').then((m) => ({ default: m.QuarterdeckView }))
 );
+const RealmView = lazy(() =>
+  import('../features/RealmView').then((m) => ({ default: m.RealmView }))
+);
 const FlagBridgeView = lazy(() =>
   import('../features/FlagBridgeView').then((m) => ({ default: m.FlagBridgeView }))
 );
@@ -86,6 +89,8 @@ export const AppShell: React.FC = () => {
       case 'quarterdeck':
       case 'quartermaster':
         return <QuarterdeckView />;
+      case 'realm':
+        return <RealmView />;
       case 'flag-bridge':
         return <FlagBridgeView />;
       case 'quests':
@@ -122,12 +127,12 @@ export const AppShell: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-canvas)] text-[var(--text-primary)]">
+    <div className="flex h-screen h-[100dvh] w-screen overflow-hidden bg-[var(--bg-canvas)] text-[var(--text-primary)]">
       {/* Sidebar */}
       <AppSidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Context Breadcrumb Top Bar */}
         <ContextBar />
 

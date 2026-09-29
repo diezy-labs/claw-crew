@@ -11,7 +11,6 @@ import {
   AlertCircle,
   ShieldAlert,
   Sparkles,
-  X,
   ChevronRight,
   ArrowRight,
   FileCheck,
@@ -267,23 +266,27 @@ export const MissionBoard: React.FC = () => {
 
       {/* Quest Detail Drawer */}
       {selectedQuest && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-white dark:bg-[#191b1f] border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-40 flex flex-col animate-in slide-in-from-right duration-200">
-          <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                Quest Map &amp; Controls
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-600 dark:text-teal-400">
-                {selectedQuest.status.toUpperCase()}
-              </span>
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity cursor-pointer"
+            onClick={() => setSelectedQuestId(null)}
+          />
+
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full sm:w-[480px] bg-white dark:bg-[#191b1f] border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-10 flex flex-col animate-in slide-in-from-right duration-200 cursor-default"
+          >
+            <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                  Quest Map &amp; Controls
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-600 dark:text-teal-400">
+                  {selectedQuest.status.toUpperCase()}
+                </span>
+              </div>
             </div>
-            <button
-              onClick={() => setSelectedQuestId(null)}
-              className="p-1 rounded text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
             <div>
@@ -430,22 +433,23 @@ export const MissionBoard: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
       )}
 
       {/* New Quest Modal */}
       {isNewQuestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-5 space-y-4">
+        <div
+          onClick={() => setIsNewQuestModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-5 space-y-4 cursor-default"
+          >
             <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
               <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
                 Launch New Quest
               </h3>
-              <button
-                onClick={() => setIsNewQuestModalOpen(false)}
-                className="p-1 rounded text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             <form onSubmit={handleCreateQuestSubmit} className="space-y-3.5 text-xs">
