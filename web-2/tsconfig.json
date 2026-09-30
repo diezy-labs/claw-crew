@@ -25,6 +25,10 @@
     "noEmit": true
   },
   "exclude": [
-    "src/__tests__/**"
+    "node_modules",
+    "dist",
+    "src/__tests__",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }

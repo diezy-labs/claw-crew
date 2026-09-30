@@ -133,10 +133,13 @@ async function startServer() {
   const server = http.createServer(app);
 
   if (!isProduction) {
-    // Development mode: Mount Vite middleware
+    // Development mode: Mount Vite middleware with HMR disabled to prevent WebSocket loops on Cloud Run
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'spa'
     });
     app.use(vite.middlewares);
