@@ -318,16 +318,6 @@ export const QuarterdeckView: React.FC = () => {
             <span className="hidden sm:inline">Live Canvas</span>
           </button>
 
-          {/* Voice Quartermaster (Duplex Audio) Button */}
-          <button
-            onClick={() => setIsVoiceModalOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg border border-teal-500/40 bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-semibold hover:bg-teal-500/20 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
-            title="Launch Voice Quartermaster (Full-Duplex Audio & Silero VAD)"
-          >
-            <Mic className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Voice Mode</span>
-          </button>
-
           {/* Quick Handoff to Flag Bridge */}
           <button
             onClick={() => setActiveTab('flag-bridge')}
@@ -571,6 +561,7 @@ export const QuarterdeckView: React.FC = () => {
           })}
           <div ref={messagesEndRef} />
         </div>
+      </div>
 
       {/* Discreet floating 'Scroll to Bottom' button when user has scrolled up */}
       {showScrollToBottom && (
@@ -848,8 +839,17 @@ export const QuarterdeckView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right Group: Command Send Button */}
-              <div className="flex items-center gap-2">
+              {/* Right Group: Voice Mode & Command Send Button */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsVoiceModalOpen(true)}
+                  className="p-1.5 sm:p-2 rounded-xl border border-teal-500/40 bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0 flex items-center justify-center"
+                  title="Voice Quartermaster"
+                  aria-label="Voice Quartermaster"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
                 <span className="text-[10px] text-neutral-400 hidden sm:inline">
                   Enter ↵ to send
                 </span>
@@ -902,6 +902,5 @@ export const QuarterdeckView: React.FC = () => {
         }}
       />
     </div>
-  </div>
   );
 };

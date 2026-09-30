@@ -18,6 +18,9 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { Quest, QuestStatus } from '../../types';
+import { PageHeader } from '../common/PageHeader';
+import { PageStickyNav } from '../common/PageStickyNav';
+import { SubMenuScroller } from '../common/SubMenuScroller';
 
 export const MissionBoard: React.FC = () => {
   const {
@@ -100,63 +103,79 @@ export const MissionBoard: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Board Header & Controls */}
-      <div className="p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Mission Board
-            </h1>
-            <span className="text-xs font-mono text-neutral-400">
-              ({filteredQuests.length} Quests)
-            </span>
-          </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Fleet-wide work intake, priority, Map progression, and routing to Ships.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Filter quests..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-teal-500 w-48"
-            />
-          </div>
-
-          {/* Ship filter */}
-          <select
-            value={selectedShipFilter}
-            onChange={(e) => setSelectedShipFilter(e.target.value)}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Ships</option>
-            {ships.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-
-          {/* New Quest Button */}
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-7xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable Standard Header */}
+      <PageHeader
+        icon={<LayoutGrid className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Mission Board"
+        badge={
+          <span className="text-xs font-mono text-neutral-400">
+            ({filteredQuests.length} Quests)
+          </span>
+        }
+        description="Fleet-wide work intake, priority, Map progression, and routing to Ships."
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: 'Filter quests...'
+        }}
+        actions={
           <button
             onClick={() => setIsNewQuestModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span>New Quest</span>
+            <span className="hidden sm:inline">New Quest</span>
+            <span className="sm:hidden">Quest</span>
           </button>
-        </div>
-      </div>
+        }
+      />
+
+      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
+      <PageStickyNav>
+        <SubMenuScroller className="gap-2" containerClassName="w-full">
+          <button
+            onClick={() => setSelectedShipFilter('all')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
+              selectedShipFilter === 'all'
+                ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold shadow-2xs'
+                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
+            }`}
+          >
+            <span>All Ships</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300">
+              {quests.length}
+            </span>
+          </button>
+          {ships.map((ship) => {
+            const shipQuestsCount = quests.filter(
+              (q) => q.assignedShipId === ship.id || q.suggestedShipId === ship.id
+            ).length;
+            const isSelected = selectedShipFilter === ship.id;
+
+            return (
+              <button
+                key={ship.id}
+                onClick={() => setSelectedShipFilter(ship.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-teal-500/10 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300 font-semibold border border-teal-500/30'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#181a1d]'
+                }`}
+              >
+                <Ship className="w-3.5 h-3.5 text-neutral-400" />
+                <span className="whitespace-nowrap">{ship.name}</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                  {shipQuestsCount}
+                </span>
+              </button>
+            );
+          })}
+        </SubMenuScroller>
+      </PageStickyNav>
 
       {/* Kan-ban Columns Grid */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 sm:p-6">
+      <div className="flex-1 overflow-x-auto pb-4">
         <div className="flex gap-4 h-full min-w-[1100px]">
           {columns.map((col) => {
             const colQuests = filteredQuests.filter((q) => {

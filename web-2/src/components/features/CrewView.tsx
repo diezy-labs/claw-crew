@@ -15,11 +15,15 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { CrewMember } from '../../types';
+import { PageHeader } from '../common/PageHeader';
+import { PageStickyNav } from '../common/PageStickyNav';
+import { SubMenuScroller } from '../common/SubMenuScroller';
 
 export const CrewView: React.FC = () => {
   const { crew, ships, addCrewMember, updateCrewMember, setActiveTab, createQuest } = useFleetStore();
 
   const [selectedShipFilter, setSelectedShipFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [selectedTemplate, setSelectedTemplate] = useState('dev');
@@ -33,7 +37,13 @@ export const CrewView: React.FC = () => {
   const [editForm, setEditForm] = useState<Partial<CrewMember>>({});
 
   const filteredCrew = crew.filter((c) => {
-    return selectedShipFilter === 'all' || c.shipId === selectedShipFilter;
+    const matchShip = selectedShipFilter === 'all' || c.shipId === selectedShipFilter;
+    const matchSearch =
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.role.toLowerCase().includes(search.toLowerCase()) ||
+      c.purpose.toLowerCase().includes(search.toLowerCase()) ||
+      c.tools.some((t) => t.toLowerCase().includes(search.toLowerCase()));
+    return matchShip && matchSearch;
   });
 
   const handleFinishWizard = () => {
@@ -65,54 +75,73 @@ export const CrewView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-6xl mx-auto w-full animate-view-fade-in">
-      {/* Header - Compact on mobile with icon and title only */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4 shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
-              <Users className="w-4 h-4 text-teal-500 shrink-0" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                  Crew Members
-                </h1>
-                <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-                  {crew.length} / 15 Berths Active
-                </span>
-              </div>
-            </div>
-          </div>
-          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
-            Persistent AI specialists with scoped tools, memory, artifact contracts, and authority.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-start">
-          <select
-            value={selectedShipFilter}
-            onChange={(e) => setSelectedShipFilter(e.target.value)}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Ships</option>
-            {ships.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable Standard Header */}
+      <PageHeader
+        icon={<Users className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Crew Members"
+        badge={
+          <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+            {crew.length} / 15 Berths Active
+          </span>
+        }
+        description="Persistent AI specialists with scoped tools, memory, artifact contracts, and authority."
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: 'Search crew by role, tools...'
+        }}
+        actions={
           <button
             onClick={() => setIsWizardOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Make Me a Squad</span>
             <span className="sm:hidden">New Squad</span>
           </button>
-        </div>
-      </div>
+        }
+      />
+
+      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
+      <PageStickyNav>
+        <SubMenuScroller className="gap-2" containerClassName="w-full">
+          <button
+            onClick={() => setSelectedShipFilter('all')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
+              selectedShipFilter === 'all'
+                ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold shadow-2xs'
+                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
+            }`}
+          >
+            <span>All Ships</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300">
+              {crew.length}
+            </span>
+          </button>
+          {ships.map((ship) => {
+            const shipCrewCount = crew.filter((c) => c.shipId === ship.id).length;
+            const isSelected = selectedShipFilter === ship.id;
+            return (
+              <button
+                key={ship.id}
+                onClick={() => setSelectedShipFilter(ship.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-teal-500/10 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300 font-semibold border border-teal-500/30'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#181a1d]'
+                }`}
+              >
+                <Ship className="w-3.5 h-3.5 text-neutral-400" />
+                <span className="whitespace-nowrap">{ship.name}</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                  {shipCrewCount}
+                </span>
+              </button>
+            );
+          })}
+        </SubMenuScroller>
+      </PageStickyNav>
 
       {/* Crew Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
