@@ -26,7 +26,9 @@ import {
   User,
   Flag,
   Mic,
-  Terminal
+  Terminal,
+  GraduationCap,
+  ShieldCheck
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
@@ -82,8 +84,9 @@ export const AppSidebar: React.FC = () => {
       title: 'FLEET',
       items: [
         { id: 'mission-board', label: 'Mission Board', icon: LayoutGrid, hint: 'Global Kanban & work routing' },
-        { id: 'ships', label: 'Ships', icon: Ship, hint: 'Specialist team containers' },
-        { id: 'crew', label: 'Crew Members', icon: Users, hint: 'Specialist AI roster & squad wizard' },
+        { id: 'ships', label: 'Ships', icon: Ship, hint: 'Department fleet vessels' },
+        { id: 'squads', label: 'Squad', icon: ShieldCheck, hint: 'Cross-functional teams & squads' },
+        { id: 'crew', label: 'Crew Members', icon: Users, hint: 'Specialist AI roster & squad mapping' },
         { id: 'artifacts', label: 'Artifacts', icon: FileText, hint: 'Reviewable deliverables & treasures' },
         {
           id: 'approvals',
@@ -100,7 +103,8 @@ export const AppSidebar: React.FC = () => {
       items: [
         { id: 'treasury', label: 'Treasury', icon: Coins, hint: 'BYOK cost tracking & token ledger' },
         { id: 'logbook', label: 'Logbook', icon: BookOpen, hint: 'Official immutable audit record' },
-        { id: 'harbor', label: 'Harbor', icon: Anchor, hint: 'Model providers & connectors' }
+        { id: 'harbor', label: 'Harbor', icon: Anchor, hint: 'Model providers & connectors' },
+        { id: 'training-officer', label: 'Training Officer', icon: GraduationCap, hint: 'Skills, steering directives & hooks' }
       ]
     },
     {

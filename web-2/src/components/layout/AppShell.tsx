@@ -15,12 +15,14 @@ import { CaptainsJournalView } from '../features/CaptainsJournalView';
 import { QuartermasterOffice } from '../features/QuartermasterOffice';
 import { MissionBoard } from '../features/MissionBoard';
 import { ShipsView } from '../features/ShipsView';
+import { SquadsView } from '../features/SquadsView';
 import { CrewView } from '../features/CrewView';
 import { ArtifactsView } from '../features/ArtifactsView';
 import { ApprovalsView } from '../features/ApprovalsView';
 import { TreasuryView } from '../features/TreasuryView';
 import { LogbookView } from '../features/LogbookView';
 import { HarborView } from '../features/HarborView';
+import { TrainingOfficerView } from '../features/TrainingOfficerView';
 import { FleetCodeView } from '../features/FleetCodeView';
 import { CrowsNestView } from '../features/CrowsNestView';
 import { EngineRoomView } from '../features/EngineRoomView';
@@ -131,6 +133,8 @@ export const AppShell: React.FC = () => {
         return <MissionBoard />;
       case 'ships':
         return <ShipsView />;
+      case 'squads':
+        return <SquadsView />;
       case 'crew':
         return <CrewView />;
       case 'artifacts':
@@ -143,6 +147,8 @@ export const AppShell: React.FC = () => {
         return <LogbookView />;
       case 'harbor':
         return <HarborView />;
+      case 'training-officer':
+        return <TrainingOfficerView />;
       case 'fleet-code':
         return <FleetCodeView />;
       case 'crows-nest':
