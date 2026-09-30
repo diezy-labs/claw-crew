@@ -1,0 +1,241 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-canvas: #f7f7f5;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f2f3f4;
+    --border-subtle: #e1e3e5;
+    --text-primary: #17191c;
+    --text-secondary: #5f6872;
+    --text-muted: #8b949e;
+    --accent-sea: #087e8b;
+    --accent-treasure: #a46f00;
+    --accent-sail: #4a4a42;
+    --status-success: #18794e;
+    --status-warning: #b26a00;
+    --status-danger: #c83b3b;
+    --status-info: #286fa7;
+  }
+
+  .dark {
+    --bg-canvas: #121315;
+    --bg-surface: #191b1f;
+    --bg-elevated: #22252a;
+    --border-subtle: #2c3036;
+    --text-primary: #f3f4f1;
+    --text-secondary: #a7adb5;
+    --text-muted: #747c86;
+    --accent-sea: #66c7c5;
+    --accent-treasure: #d8a94a;
+    --accent-sail: #ede7d9;
+    --status-success: #59b38a;
+    --status-warning: #e8b65b;
+    --status-danger: #e16c68;
+    --status-info: #7ab7e8;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    overflow-x: hidden;
+  }
+
+  code, kbd, samp, pre {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Custom sleek scrollbar matching Quarterdeck design */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 150, 160, 0.25) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 150, 160, 0.25);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 150, 160, 0.45);
+}
+
+/* Hide scrollbar utility for clean modern panels and top bars */
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Ocean Wave Spark Pulse (Gentle, slow, rhythmic oceanic glow on chat toolbox outline) */
+@keyframes oceanWavePulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2), 0 0 20px rgba(6, 182, 212, 0.12), inset 0 0 8px rgba(14, 165, 233, 0.08);
+    border-color: rgba(56, 189, 248, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(14, 165, 233, 0.5), 0 0 45px rgba(6, 182, 212, 0.28), inset 0 0 16px rgba(14, 165, 233, 0.18);
+    border-color: rgba(56, 189, 248, 0.8);
+  }
+}
+
+@keyframes oceanSparkDrift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-ocean-wave {
+  animation: oceanWavePulse 5s ease-in-out infinite;
+}
+
+.ocean-spark-glow {
+  animation: oceanWavePulse 4.8s ease-in-out infinite;
+}
+
+/* Radar Navigator Wave Animation (Origin at bottom toolbox chat, expanding & fading out across chat) */
+@keyframes radarWaveExpand {
+  0% {
+    transform: scale(0.15) translate(-50%, 0);
+    opacity: 0.65;
+  }
+  45% {
+    opacity: 0.3;
+  }
+  80% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: scale(2.4) translate(-50%, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes radarSweepScan {
+  0% {
+    transform: rotate(-70deg);
+  }
+  50% {
+    transform: rotate(70deg);
+  }
+  100% {
+    transform: rotate(-70deg);
+  }
+}
+
+.animate-radar-wave-1 {
+  transform-origin: bottom center;
+  animation: radarWaveExpand 5.5s cubic-bezier(0.15, 0.45, 0.6, 1) infinite;
+}
+
+.animate-radar-wave-2 {
+  transform-origin: bottom center;
+  animation: radarWaveExpand 5.5s cubic-bezier(0.15, 0.45, 0.6, 1) infinite 1.8s;
+}
+
+.animate-radar-wave-3 {
+  transform-origin: bottom center;
+  animation: radarWaveExpand 5.5s cubic-bezier(0.15, 0.45, 0.6, 1) infinite 3.6s;
+}
+
+.animate-radar-sweep {
+  transform-origin: bottom center;
+  animation: radarSweepScan 6s ease-in-out infinite;
+}
+
+/* Smooth view transition */
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-view-fade-in {
+  animation: viewFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2.5s ease-in-out infinite;
+}
+
+/* Oceanic wave pulse on chat outline (desiran ombak) */
+@keyframes oceanicWave {
+  0% {
+    box-shadow: 0 0 0 1.5px rgba(14, 165, 233, 0.45), 0 0 14px 1px rgba(6, 182, 212, 0.22), 0 6px 20px -2px rgba(2, 132, 199, 0.14);
+    border-color: rgba(14, 165, 233, 0.65);
+  }
+  33% {
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.7), 0 0 28px 5px rgba(14, 165, 233, 0.4), 0 10px 30px -3px rgba(2, 132, 199, 0.28);
+    border-color: rgba(56, 189, 248, 0.95);
+  }
+  66% {
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.6), 0 0 20px 3px rgba(6, 182, 212, 0.3), 0 6px 22px -3px rgba(14, 165, 233, 0.2);
+    border-color: rgba(6, 182, 212, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 1.5px rgba(14, 165, 233, 0.45), 0 0 14px 1px rgba(6, 182, 212, 0.22), 0 6px 20px -2px rgba(2, 132, 199, 0.14);
+    border-color: rgba(14, 165, 233, 0.65);
+  }
+}
+
+.oceanic-wave-pulse {
+  animation: oceanicWave 3.8s ease-in-out infinite;
+}
+

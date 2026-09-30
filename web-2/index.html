@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Fleet AI — Agent Command &amp; Orchestration Workspace</title>
+    <meta name="description" content="Local-first AI organization workspace where Quartermaster coordinates specialist Crew across your Ships, turning SOPs into Quests, work into Artifacts, and approved outcomes into Treasures." />
+    <meta property="og:title" content="Fleet AI — Agent Command &amp; Orchestration Workspace" />
+    <meta property="og:description" content="Local-first AI organization workspace where Quartermaster coordinates specialist Crew across your Ships, turning SOPs into Quests, work into Artifacts, and approved outcomes into Treasures." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#14b8a6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Fleet AI" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      // Clear all legacy service worker caches to prevent serving stale bundles
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var reg of regs) {
+            reg.unregister();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(keys) {
+          for (var key of keys) {
+            caches.delete(key);
+          }
+        });
+      }
+    </script>
+  </head>
+  <body class="bg-neutral-950 text-neutral-100 antialiased selection:bg-teal-500/20 selection:text-teal-300">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

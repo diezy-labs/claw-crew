@@ -54,7 +54,7 @@ GET    /api/v1/ships/{ship_id}/summary
 {
   "name": "Development Ship",
   "domain": "development",
-  "workspace_ref": "workspace://claw-crew",
+  "workspace_ref": "workspace://galleon-fleet",
   "captain_template": "engineering-lead",
   "budget": {
     "currency": "USD",

@@ -160,4 +160,3 @@ func TestContextPacker(t *testing.T) {
 		t.Errorf("expected tight packed context to be shorter")
 	}
 }
-

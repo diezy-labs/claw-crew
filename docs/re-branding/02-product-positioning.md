@@ -6,7 +6,7 @@
 
 ## Product thesis
 
-Claw-Crew is a governed AI workforce platform organized as a fleet of specialized project workspaces.
+Galleon Fleet is a governed AI workforce platform organized as a fleet of specialized project workspaces.
 
 It is not merely:
 

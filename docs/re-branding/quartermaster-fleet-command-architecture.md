@@ -1,7 +1,7 @@
-# Quartermaster — Fleet Command Architecture for Claw-Crew
+# Quartermaster — Fleet Command Architecture for Galleon Fleet
 
 > **Status:** Product and technical design proposal  
-> **Product:** Claw-Crew  
+> **Product:** Galleon Fleet  
 > **Target architecture:** Go 1.27.1 as AI-native orchestrator and policy authority  
 > **Scope:** Pirate King, Quartermaster, Fleet, Ships, Captains, Squads, Crew Members, Voyages, Job Orders, reporting, budgets, policy inheritance, and cross-ship coordination  
 > **Date:** 2026-09-28
@@ -39,7 +39,7 @@
 
 # 1. Executive Summary
 
-Claw-Crew should evolve from a single-project agent workspace into a **Fleet Command system**. A human user, called the **Pirate King**, can own and govern multiple Ships. Each Ship is a bounded workspace or project with its own Captain, squads, crew members, memory boundary, budget, policies, artifacts, and active voyages.
+Galleon Fleet should evolve from a single-project agent workspace into a **Fleet Command system**. A human user, called the **Pirate King**, can own and govern multiple Ships. Each Ship is a bounded workspace or project with its own Captain, squads, crew members, memory boundary, budget, policies, artifacts, and active voyages.
 
 The Pirate King is supported by one strategic AI assistant: the **Quartermaster**.
 
@@ -87,7 +87,7 @@ The target implementation is Go 1.27.1 as the control plane. Rust TUI, Tauri des
 
 In maritime and naval traditions, a quartermaster historically had operational responsibilities that varied by era: navigation support, watch operations, crew coordination, supply/logistics, stores, and distribution of operational resources. In pirate narratives, the quartermaster is often portrayed as an important officer who represents crew interests, helps coordinate operations, and manages practical ship-level concerns.
 
-For Claw-Crew, the Quartermaster name is useful because it implies more than a secretary and less than an unchecked commander. It communicates:
+For Galleon Fleet, the Quartermaster name is useful because it implies more than a secretary and less than an unchecked commander. It communicates:
 
 - Operational coordination.
 - Resource and budget awareness.
@@ -97,7 +97,7 @@ For Claw-Crew, the Quartermaster name is useful because it implies more than a s
 - Report consolidation.
 - Fleet discipline and governance support.
 
-It is particularly appropriate because Claw-Crew will eventually need to manage finite resources:
+It is particularly appropriate because Galleon Fleet will eventually need to manage finite resources:
 
 - Token budgets.
 - Provider/model allocation.
@@ -110,7 +110,7 @@ It is particularly appropriate because Claw-Crew will eventually need to manage 
 
 ## 2.2 Why not First Mate
 
-**First Mate** is a strong alternative for a general executive assistant. It emphasizes leadership and command succession. However, within Claw-Crew, a Ship already has a Captain. If the global assistant is named First Mate, users may confuse whether it belongs to one Ship or the entire Fleet.
+**First Mate** is a strong alternative for a general executive assistant. It emphasizes leadership and command succession. However, within Galleon Fleet, a Ship already has a Captain. If the global assistant is named First Mate, users may confuse whether it belongs to one Ship or the entire Fleet.
 
 **Quartermaster** is more specific to fleet-level coordination and resource governance. It fits the intended role better:
 
@@ -194,7 +194,7 @@ This makes the interface approachable for users who enjoy the theme and understa
 
 ## 4.1 Product thesis
 
-Claw-Crew is a governed AI workforce platform organized as a fleet of specialized project workspaces.
+Galleon Fleet is a governed AI workforce platform organized as a fleet of specialized project workspaces.
 
 It is not merely:
 
@@ -912,7 +912,7 @@ The default action is **deny cross-Ship raw-data access**. Handoff can use:
            │ goals, approvals, policy decisions
            ▼
 ┌────────────────────────────────────────────────────────────┐
-│ Claw-Crew Fleet Command System                              │
+│ Galleon Fleet Fleet Command System                              │
 │                                                            │
 │ Coordinates Ships, Captains, Squads, Crew Members,         │
 │ Voyages, reports, budget, policy, and approvals.           │
@@ -940,7 +940,7 @@ The default action is **deny cross-Ship raw-data access**. Handoff can use:
 
 ```text
 ┌───────────────────────────────────────────────────────────────────────────┐
-│ Claw-Crew System                                                          │
+│ Galleon Fleet System                                                          │
 │                                                                           │
 │  ┌────────────────────────────┐                                           │
 │  │ Rust TUI / Tauri / Web UI  │                                           │
@@ -1609,7 +1609,7 @@ GET    /api/v1/ships/{ship_id}/summary
 {
   "name": "Development Ship",
   "domain": "development",
-  "workspace_ref": "workspace://claw-crew",
+  "workspace_ref": "workspace://galleon-fleet",
   "captain_template": "engineering-lead",
   "budget": {
     "currency": "USD",

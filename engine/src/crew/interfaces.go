@@ -12,8 +12,8 @@ type Orchestrator interface {
 
 // Registry defines storage and retrieval for crew and agent definitions
 type Registry interface {
-	ListCrews(ctx context.Context) ([]*CrewDefinition, error)
-	GetCrew(ctx context.Context, id string) (*CrewDefinition, error)
-	RegisterCrew(ctx context.Context, crew *CrewDefinition) error
-	UpdateAgentStatus(ctx context.Context, crewID, agentID string, status AgentStatus) error
+	ListSquads(ctx context.Context) ([]*Squad, error)
+	GetSquad(ctx context.Context, id string) (*Squad, error)
+	RegisterSquad(ctx context.Context, crew *Squad) error
+	UpdateCrewMemberStatus(ctx context.Context, crewID, agentID string, status CrewMemberStatus) error
 }

@@ -29,37 +29,38 @@ type TurnEvent struct {
 	ErrorMessage string        `json:"error_message,omitempty"`
 }
 
-// AgentStatus represents the state machine status of an agent
-type AgentStatus string
+// CrewMemberStatus represents the state machine status of an agent
+type CrewMemberStatus string
 
 const (
-	AgentStatusIdle            AgentStatus = "idle"
-	AgentStatusThinking        AgentStatus = "thinking"
-	AgentStatusExecutingTool   AgentStatus = "executing_tool"
-	AgentStatusWaitingApproval AgentStatus = "waiting_approval"
-	AgentStatusCompleted       AgentStatus = "completed"
-	AgentStatusError           AgentStatus = "error"
+	CrewMemberStatusIdle            CrewMemberStatus = "idle"
+	CrewMemberStatusThinking        CrewMemberStatus = "thinking"
+	CrewMemberStatusExecutingTool   CrewMemberStatus = "executing_tool"
+	CrewMemberStatusWaitingApproval CrewMemberStatus = "waiting_approval"
+	CrewMemberStatusCompleted       CrewMemberStatus = "completed"
+	CrewMemberStatusError           CrewMemberStatus = "error"
 )
 
-// AgentDefinition describes an agent's identity, role, and capabilities
-type AgentDefinition struct {
-	ID           string      `json:"id"`
-	Name         string      `json:"name"`
-	Role         string      `json:"role"`
-	Status       AgentStatus `json:"status"`
-	Capabilities []string    `json:"capabilities"`
+// CrewMember describes an agent's identity, role, and capabilities
+type CrewMember struct {
+	ID           string           `json:"id"`
+	Name         string           `json:"name"`
+	Role         string           `json:"role"`
+	Status       CrewMemberStatus `json:"status"`
+	Capabilities []string         `json:"capabilities"`
 }
 
-// CrewDefinition represents a team of specialized agents
-type CrewDefinition struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	AgentCount  int                `json:"agent_count"`
-	Agents      []*AgentDefinition `json:"agents"`
+// Squad represents a team of specialized agents
+type Squad struct {
+	ID              string        `json:"id"`
+	ShipID          string        `json:"ship_id"`
+	Name            string        `json:"name"`
+	Description     string        `json:"description"`
+	CrewMemberCount int           `json:"crew_member_count"`
+	Agents          []*CrewMember `json:"agents"`
 }
 
-// ListCrewsResponse payload for GET /api/v1/crews
-type ListCrewsResponse struct {
-	Items []*CrewDefinition `json:"items"`
+// ListSquadsResponse payload for GET /api/v1/crews
+type ListSquadsResponse struct {
+	Items []*Squad `json:"items"`
 }

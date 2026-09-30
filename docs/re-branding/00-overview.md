@@ -1,7 +1,7 @@
 # Quartermaster — Fleet Command Architecture: Overview
 
 > **Status:** Product and technical design proposal
-> **Product:** Claw-Crew
+> **Product:** Galleon Fleet
 > **Target architecture:** Go 1.27.1 as AI-native orchestrator and policy authority
 > **Date:** 2026-09-28
 
@@ -41,7 +41,7 @@ This architecture was split into focused documents for easier navigation and rev
 
 ## Executive Summary
 
-Claw-Crew should evolve from a single-project agent workspace into a **Fleet Command system**. A human user, called the **Pirate King**, can own and govern multiple Ships. Each Ship is a bounded workspace or project with its own Captain, squads, crew members, memory boundary, budget, policies, artifacts, and active voyages.
+Galleon Fleet should evolve from a single-project agent workspace into a **Fleet Command system**. A human user, called the **Pirate King**, can own and govern multiple Ships. Each Ship is a bounded workspace or project with its own Captain, squads, crew members, memory boundary, budget, policies, artifacts, and active voyages.
 
 The Pirate King is supported by one strategic AI assistant: the **Quartermaster**.
 
@@ -89,7 +89,7 @@ The target implementation is Go 1.27.1 as the control plane. Rust TUI, Tauri des
 
 In maritime and naval traditions, a quartermaster historically had operational responsibilities that varied by era: navigation support, watch operations, crew coordination, supply/logistics, stores, and distribution of operational resources. In pirate narratives, the quartermaster is often portrayed as an important officer who represents crew interests, helps coordinate operations, and manages practical ship-level concerns.
 
-For Claw-Crew, the Quartermaster name is useful because it implies more than a secretary and less than an unchecked commander. It communicates:
+For Galleon Fleet, the Quartermaster name is useful because it implies more than a secretary and less than an unchecked commander. It communicates:
 
 - Operational coordination.
 - Resource and budget awareness.
@@ -99,7 +99,7 @@ For Claw-Crew, the Quartermaster name is useful because it implies more than a s
 - Report consolidation.
 - Fleet discipline and governance support.
 
-It is particularly appropriate because Claw-Crew will eventually need to manage finite resources:
+It is particularly appropriate because Galleon Fleet will eventually need to manage finite resources:
 
 - Token budgets.
 - Provider/model allocation.
@@ -112,7 +112,7 @@ It is particularly appropriate because Claw-Crew will eventually need to manage 
 
 ### Why not First Mate
 
-**First Mate** is a strong alternative for a general executive assistant. It emphasizes leadership and command succession. However, within Claw-Crew, a Ship already has a Captain. If the global assistant is named First Mate, users may confuse whether it belongs to one Ship or the entire Fleet.
+**First Mate** is a strong alternative for a general executive assistant. It emphasizes leadership and command succession. However, within Galleon Fleet, a Ship already has a Captain. If the global assistant is named First Mate, users may confuse whether it belongs to one Ship or the entire Fleet.
 
 **Quartermaster** is more specific to fleet-level coordination and resource governance. It fits the intended role better:
 
