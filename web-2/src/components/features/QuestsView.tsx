@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Map,
   PlusCircle,
@@ -43,6 +43,26 @@ export const QuestsView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isNewQuestModalOpen, setIsNewQuestModalOpen] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      if (currentScrollTop > 15) {
+        if (currentScrollTop > lastScrollTop.current + 6) {
+          // Scrolling down: collapse header so subtabs attach directly under navbar
+          setIsHeaderVisible(false);
+        } else if (currentScrollTop < lastScrollTop.current - 8) {
+          // Scrolling up: reveal header
+          setIsHeaderVisible(true);
+        }
+      } else {
+        setIsHeaderVisible(true);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
 
   // New Quest Form state
   const [newTitle, setNewTitle] = useState('');
@@ -106,8 +126,14 @@ export const QuestsView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header */}
-      <div className="px-4 py-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex items-center justify-between gap-3 shrink-0">
+      {/* Top Header - Auto-collapses on mobile when scrolled down so content sits directly below navbar */}
+      <div
+        className={`transition-all duration-300 shrink-0 ${
+          isHeaderVisible
+            ? 'max-h-24 px-4 py-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
+            : 'max-h-0 py-0 px-4 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-5 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
+        } flex items-center justify-between gap-3`}
+      >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
@@ -326,7 +352,10 @@ export const QuestsView: React.FC = () => {
           </div>
 
           {/* Quests Viewport */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <div
+            onScroll={handleViewportScroll}
+            className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
+          >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredQuests.map((quest) => {
                 const assignedShip = ships.find(
