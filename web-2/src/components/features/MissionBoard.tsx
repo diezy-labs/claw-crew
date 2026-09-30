@@ -21,6 +21,9 @@ import { Quest, QuestStatus } from '../../types';
 import { PageHeader } from '../common/PageHeader';
 import { PageStickyNav } from '../common/PageStickyNav';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { ItemCard } from '../common/ItemCard';
+import { CardPopover } from '../common/CardPopover';
+import { Modal } from '../common/Modal';
 
 export const MissionBoard: React.FC = () => {
   const {
@@ -219,19 +222,20 @@ export const MissionBoard: React.FC = () => {
                       );
 
                       return (
-                        <div
+                        <ItemCard
                           key={quest.id}
+                          compact
+                          selected={selectedQuestId === quest.id}
                           onClick={() => setSelectedQuestId(quest.id)}
-                          className={`p-3 rounded-lg border transition-all cursor-pointer bg-white dark:bg-[#191b1f] hover:border-teal-500/50 space-y-2 shadow-xs ${
-                            selectedQuestId === quest.id
-                              ? 'border-teal-500 ring-1 ring-teal-500/30'
-                              : 'border-neutral-200 dark:border-neutral-800'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-1.5">
-                            <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2">
-                              {quest.title}
-                            </span>
+                          accentColor={
+                            quest.priority === 'urgent'
+                              ? 'rose'
+                              : quest.priority === 'high'
+                              ? 'amber'
+                              : 'teal'
+                          }
+                          title={quest.title}
+                          badge={
                             <span
                               className={`text-[9px] font-mono px-1 py-0.2 rounded uppercase shrink-0 font-medium ${
                                 quest.priority === 'urgent'
@@ -243,51 +247,50 @@ export const MissionBoard: React.FC = () => {
                             >
                               {quest.priority}
                             </span>
-                          </div>
-
-                          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2">
-                            {quest.objective}
-                          </p>
-
-                          {/* Progress bar if underway */}
-                          {quest.status === 'underway' && (
-                            <div className="space-y-1 pt-1">
-                              <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
-                                <span>Voyage Progress</span>
-                                <span className="text-blue-500 font-semibold">
-                                  {quest.activeVoyageProgress}%
+                          }
+                          description={quest.objective}
+                          descriptionClamp={2}
+                          children={
+                            quest.status === 'underway' ? (
+                              <div className="space-y-1 pt-1">
+                                <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
+                                  <span>Voyage Progress</span>
+                                  <span className="text-teal-600 dark:text-teal-400 font-semibold">
+                                    {quest.activeVoyageProgress}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-teal-500 h-full rounded-full transition-all duration-300"
+                                    style={{ width: `${quest.activeVoyageProgress}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ) : null
+                          }
+                          footer={
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-[10px] text-neutral-400 font-mono">
+                                <span className="truncate max-w-[120px]">
+                                  {assignedShip?.name || 'Developer Ship'}
                                 </span>
+                                <span>${quest.budgetLimitUSD.toFixed(2)} cap</span>
                               </div>
-                              <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-                                <div
-                                  className="bg-blue-500 h-full rounded-full transition-all duration-300"
-                                  style={{ width: `${quest.activeVoyageProgress}%` }}
-                                />
-                              </div>
+                              {quest.status === 'ready' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    runQuestVoyage(quest.id);
+                                  }}
+                                  className="w-full py-1 rounded bg-teal-600/10 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300 hover:bg-teal-600/20 text-[11px] font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                >
+                                  <Play className="w-3 h-3 text-teal-500" />
+                                  <span>Set Sail</span>
+                                </button>
+                              )}
                             </div>
-                          )}
-
-                          <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[10px] text-neutral-400 font-mono">
-                            <span className="truncate max-w-[110px]">
-                              {assignedShip?.name || 'Developer Ship'}
-                            </span>
-                            <span>${quest.budgetLimitUSD.toFixed(2)} cap</span>
-                          </div>
-
-                          {/* Action button if ready */}
-                          {quest.status === 'ready' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                runQuestVoyage(quest.id);
-                              }}
-                              className="w-full mt-1 py-1 rounded bg-teal-600/10 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300 hover:bg-teal-600/20 text-[11px] font-medium flex items-center justify-center gap-1 transition-colors"
-                            >
-                              <Play className="w-3 h-3 text-teal-500" />
-                              <span>Set Sail</span>
-                            </button>
-                          )}
-                        </div>
+                          }
+                        />
                       );
                     })
                   )}
@@ -298,43 +301,74 @@ export const MissionBoard: React.FC = () => {
         </div>
       </div>
 
-      {/* Quest Detail Drawer */}
-      {selectedQuest && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity cursor-pointer"
-            onClick={() => setSelectedQuestId(null)}
-          />
+      {/* Quest Detail Popover / Drawer */}
+      <CardPopover
+        isOpen={Boolean(selectedQuest)}
+        onClose={() => setSelectedQuestId(null)}
+        variant="sheet-right"
+        drawerWidth="sm:w-[500px]"
+        icon={<LayoutGrid className="w-4 h-4 text-teal-500" />}
+        title={selectedQuest?.title}
+        subtitle={selectedQuest?.objective}
+        badge={
+          selectedQuest && (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/20 text-teal-600 dark:text-teal-400 font-semibold">
+              {selectedQuest.status.toUpperCase()}
+            </span>
+          )
+        }
+        footer={
+          selectedQuest && (
+            <div className="flex items-center gap-2 w-full">
+              {selectedQuest.status === 'ready' && (
+                <button
+                  type="button"
+                  onClick={() => runQuestVoyage(selectedQuest.id)}
+                  className="flex-1 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Set Sail (Start Voyage)</span>
+                  <span className="sm:hidden">Set Sail</span>
+                </button>
+              )}
 
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full sm:w-[480px] bg-white dark:bg-[#191b1f] border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-10 flex flex-col animate-in slide-in-from-right duration-200 cursor-default"
-          >
-            <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                  Quest Map &amp; Controls
-                </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-600 dark:text-teal-400 font-semibold">
-                  {selectedQuest.status.toUpperCase()}
-                </span>
-              </div>
-              <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded select-none">
-                Click outside to close
-              </span>
+              {selectedQuest.status === 'awaiting_captain' && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('approvals')}
+                  className="flex-1 py-2 rounded-lg bg-amber-500 text-neutral-950 font-semibold text-xs hover:opacity-90 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Review Approval</span>
+                  <span className="sm:hidden">Approval</span>
+                </button>
+              )}
+
+              {selectedQuest.status === 'underway' && (
+                <button
+                  type="button"
+                  onClick={() => updateQuestStatus(selectedQuest.id, 'review')}
+                  className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-semibold text-xs hover:opacity-90 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Advance to Review</span>
+                  <span className="sm:hidden">To Review</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setSelectedQuestId(null)}
+                className="px-3.5 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-medium cursor-pointer"
+              >
+                Close
+              </button>
             </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-5">
-            <div>
-              <h2 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
-                {selectedQuest.title}
-              </h2>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
-                {selectedQuest.objective}
-              </p>
-            </div>
-
+          )
+        }
+      >
+        {selectedQuest && (
+          <div className="space-y-5">
             {/* Scope / Metadata */}
             <div className="grid grid-cols-2 gap-2 text-xs p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 font-mono">
               <div>
@@ -429,63 +463,16 @@ export const MissionBoard: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Drawer Actions */}
-          <div className="p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex items-center gap-2">
-            {selectedQuest.status === 'ready' && (
-              <button
-                onClick={() => runQuestVoyage(selectedQuest.id)}
-                className="flex-1 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 flex items-center justify-center gap-1.5"
-              >
-                <Play className="w-3.5 h-3.5" />
-                <span>Set Sail (Start Voyage)</span>
-              </button>
-            )}
-
-            {selectedQuest.status === 'awaiting_captain' && (
-              <button
-                onClick={() => setActiveTab('approvals')}
-                className="flex-1 py-2 rounded-lg bg-amber-500 text-neutral-950 font-semibold text-xs hover:opacity-90 flex items-center justify-center gap-1.5"
-              >
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>Review Approval in Captain’s Desk</span>
-              </button>
-            )}
-
-            {selectedQuest.status === 'underway' && (
-              <button
-                onClick={() => updateQuestStatus(selectedQuest.id, 'review')}
-                className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-semibold text-xs hover:opacity-90 flex items-center justify-center gap-1.5"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Advance to Review</span>
-              </button>
-            )}
-
-            {/* Tap outside indicator instead of close button */}
-            <span className="text-[11px] font-mono text-neutral-400 select-none shrink-0">
-              Tap outside to dismiss &bull; Esc
-            </span>
-          </div>
-        </div>
-      </div>
-      )}
+        )}
+      </CardPopover>
 
       {/* New Quest Modal */}
-      {isNewQuestModalOpen && (
-        <div
-          onClick={() => setIsNewQuestModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-5 space-y-4 cursor-default"
-          >
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                Launch New Quest
-              </h3>
-            </div>
+      <Modal
+        isOpen={isNewQuestModalOpen}
+        onClose={() => setIsNewQuestModalOpen(false)}
+        maxWidth="lg"
+        title="Launch New Quest"
+      >
 
             <form onSubmit={handleCreateQuestSubmit} className="space-y-3.5 text-xs">
               <div>
@@ -569,21 +556,20 @@ export const MissionBoard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsNewQuestModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90"
+                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer text-xs"
                 >
-                  Create Quest
+                  <span className="hidden sm:inline">Create Quest</span>
+                  <span className="sm:hidden">Create</span>
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 };

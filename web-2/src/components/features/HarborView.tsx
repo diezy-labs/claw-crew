@@ -26,6 +26,7 @@ import {
 import { SubMenuScroller } from '../common/SubMenuScroller';
 import { PageHeader } from '../common/PageHeader';
 import { PageStickyNav } from '../common/PageStickyNav';
+import { ItemCard } from '../common/ItemCard';
 import { useFleetStore } from '../../store/fleetStore';
 
 export const HarborView: React.FC = () => {
@@ -179,8 +180,8 @@ export const HarborView: React.FC = () => {
               title="Scan QR to open on Mobile or Laptop"
             >
               <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span className="hidden sm:inline">Remote Access Hub &amp; QR</span>
-              <span className="sm:hidden">Remote Hub</span>
+              <span className="hidden sm:inline">Remote Access &amp; QR</span>
+              <span className="sm:hidden">Remote</span>
             </button>
 
             {activeHarborTab === 'a2a_mesh' && (
@@ -190,7 +191,7 @@ export const HarborView: React.FC = () => {
                 className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isScanningPeers ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Scan mDNS Peers</span>
+                <span className="hidden sm:inline">Scan Peers</span>
                 <span className="sm:hidden">Scan</span>
               </button>
             )}
@@ -263,48 +264,44 @@ export const HarborView: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {providers.map((p) => (
-              <div
+              <ItemCard
                 key={p.name}
-                className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-3 text-xs shadow-xs"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
-                      <Cpu className="w-3.5 h-3.5 text-teal-500" />
-                      <span>{p.name}</span>
-                    </div>
-                    <div className="text-[11px] text-neutral-400">{p.type}</div>
-                  </div>
+                icon={<Cpu className="w-4 h-4 text-teal-500" />}
+                title={p.name}
+                subtitle={p.type}
+                badge={
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     <span>Active</span>
                   </span>
-                </div>
-
-                <div className="space-y-1.5 pt-2 border-t border-neutral-100 dark:border-neutral-800/80 font-mono text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Default Model:</span>
-                    <span className="text-neutral-700 dark:text-neutral-300 font-semibold">{p.defaultModel}</span>
+                }
+                children={
+                  <div className="space-y-1.5 pt-1 font-mono text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Default Model:</span>
+                      <span className="text-neutral-700 dark:text-neutral-300 font-semibold">{p.defaultModel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">API Key Mask:</span>
+                      <span className="text-neutral-500">{p.keyMask}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Routing:</span>
+                      <span className="text-teal-600 dark:text-teal-400 font-sans">{p.activeUsage}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">API Key Mask:</span>
-                    <span className="text-neutral-500">{p.keyMask}</span>
+                }
+                footer={
+                  <div className="flex items-center justify-end gap-2">
+                    <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer text-xs">
+                      Configure Keys
+                    </button>
+                    <button className="px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer text-xs">
+                      Test Latency
+                    </button>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Routing:</span>
-                    <span className="text-teal-600 dark:text-teal-400 font-sans">{p.activeUsage}</span>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center justify-end gap-2">
-                  <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer">
-                    Configure Keys
-                  </button>
-                  <button className="px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer">
-                    Test Latency
-                  </button>
-                </div>
-              </div>
+                }
+              />
             ))}
           </div>
         </div>
@@ -319,28 +316,25 @@ export const HarborView: React.FC = () => {
 
           <div className="space-y-3">
             {tools.map((t) => (
-              <div
+              <ItemCard
                 key={t.name}
-                className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs"
-              >
-                <div className="space-y-1">
-                  <div className="font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                    <FolderGit2 className="w-4 h-4 text-teal-500" />
-                    <span>{t.name}</span>
-                  </div>
-                  <div className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400">{t.target}</div>
-                  <div className="text-[11px] text-neutral-600 dark:text-neutral-400">{t.auth}</div>
-                </div>
-
-                <div className="flex items-center gap-2 self-start sm:self-auto">
+                icon={<FolderGit2 className="w-4 h-4 text-teal-500" />}
+                title={t.name}
+                subtitle={t.target}
+                badge={
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500 font-semibold">
                     {t.status}
                   </span>
-                  <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-teal-500 transition-colors cursor-pointer">
-                    Review Scopes
-                  </button>
-                </div>
-              </div>
+                }
+                description={t.auth}
+                footer={
+                  <div className="flex items-center justify-end">
+                    <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-teal-500 transition-colors cursor-pointer text-xs">
+                      Review Scopes
+                    </button>
+                  </div>
+                }
+              />
             ))}
           </div>
         </div>
@@ -413,10 +407,10 @@ export const HarborView: React.FC = () => {
 
                   <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                     <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs hover:border-teal-500 transition-colors cursor-pointer">
-                      Inspect Card JSON
+                      Inspect JSON
                     </button>
                     <button className="px-2.5 py-1 rounded-md bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-opacity cursor-pointer">
-                      Delegate Mission &rarr;
+                      Delegate &rarr;
                     </button>
                   </div>
                 </div>
@@ -435,7 +429,8 @@ export const HarborView: React.FC = () => {
             </span>
             <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold cursor-pointer">
               <Plus className="w-3 h-3" />
-              <span>Install Wasm Plugin</span>
+              <span className="hidden sm:inline">Install Wasm Plugin</span>
+              <span className="sm:hidden">+ Plugin</span>
             </button>
           </div>
 

@@ -200,13 +200,15 @@ export const FlagBridgeView: React.FC = () => {
                   onClick={() => setActiveFlagTab('decisions')}
                   className="px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
                 >
-                  Review decisions
+                  <span className="hidden sm:inline">Review Decisions</span>
+                  <span className="sm:hidden">Decisions</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('approvals')}
                   className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
-                  Open approval
+                  <span className="hidden sm:inline">Open Approval</span>
+                  <span className="sm:hidden">Approval</span>
                 </button>
               </div>
             </div>
@@ -222,7 +224,8 @@ export const FlagBridgeView: React.FC = () => {
                   onClick={() => setActiveTab('mission-board')}
                   className="text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
                 >
-                  Open Mission Board →
+                  <span className="hidden sm:inline">Open Mission Board →</span>
+                  <span className="sm:hidden">Board →</span>
                 </button>
               </div>
 
@@ -399,7 +402,8 @@ export const FlagBridgeView: React.FC = () => {
                       onClick={() => handleAskQM('Apply Quartermaster recommendations for release v1.4')}
                       className="px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
                     >
-                      Review recommendations
+                      <span className="hidden sm:inline">Review Recommendations</span>
+                      <span className="sm:hidden">Review</span>
                     </button>
                     <button
                       onClick={() => setRecommendationDismissed(true)}
@@ -597,13 +601,15 @@ export const FlagBridgeView: React.FC = () => {
                     onClick={() => handleApproval(appr.id, 'approved')}
                     className="px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-all cursor-pointer"
                   >
-                    Grant Authorization
+                    <span className="hidden sm:inline">Grant Authorization</span>
+                    <span className="sm:hidden">Authorize</span>
                   </button>
                   <button
                     onClick={() => handleApproval(appr.id, 'rejected')}
                     className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                   >
-                    Deny Action
+                    <span className="hidden sm:inline">Deny Action</span>
+                    <span className="sm:hidden">Deny</span>
                   </button>
                 </div>
               </div>

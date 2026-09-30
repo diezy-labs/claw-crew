@@ -27,6 +27,7 @@ import {
 import { useFleetStore } from '../../store/fleetStore';
 import { SettingsCategory, NavigationTab } from '../../types';
 import { PWAInstallButton } from '../common/PWAInstallButton';
+import { Modal } from '../common/Modal';
 
 export const ContextBar: React.FC = () => {
   const {
@@ -291,14 +292,14 @@ export const ContextBar: React.FC = () => {
           )}
         </div>
 
-        {/* Remote Access & Multi-Platform Hub (QR Code & LAN) */}
+        {/* Remote Access & Multi-Platform QR Hub */}
         <button
           onClick={() => setRemoteAccessModalOpen(true)}
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 hover:bg-teal-500/20 text-xs font-medium transition-colors cursor-pointer"
-          title="Multi-Platform & Remote Access Hub (Scan QR for Mobile)"
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 hover:bg-teal-500/20 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
+          title="Remote Access QR Code & Multi-Platform Hub"
         >
           <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-          <span className="hidden xl:inline font-mono text-[11px] font-semibold text-teal-600 dark:text-teal-300">Remote Hub</span>
+          <span className="hidden lg:inline font-mono text-[11px] font-semibold text-teal-600 dark:text-teal-300">QR Access</span>
         </button>
 
         {/* PWA In-App Install Prompt */}
@@ -520,108 +521,98 @@ export const ContextBar: React.FC = () => {
       </div>
 
       {/* Sign Out Confirmation Modal */}
-      {showSignOutModal && (
-        <div
-          onClick={() => setShowSignOutModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4 cursor-default"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-rose-500/10 text-rose-500">
-                <LogOut className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                  Sign out of Fleet AI?
-                </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  Your local sessions and persistent Ship memory will remain securely encrypted on this machine.
-                </p>
-              </div>
+      <Modal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+        maxWidth="sm"
+        title="Sign Out"
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setShowSignOutModal(false)}
+              className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSignOutModal(false);
+                setActiveTab('quarterdeck');
+              }}
+              className="px-3.5 py-1.5 rounded-lg bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </div>
+        }
+      >
+        <div className="flex items-start gap-3 py-1">
+          <div className="p-2.5 rounded-lg bg-rose-500/10 text-rose-500 shrink-0 mt-0.5">
+            <LogOut className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+              Sign out of Fleet AI?
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
+              Your local sessions and persistent Ship memory will remain securely encrypted on this machine.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Send Feedback Modal */}
+      <Modal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        maxWidth="md"
+        title={
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-teal-500" />
+            <span>Send Feedback</span>
+          </div>
+        }
+      >
+        {feedbackSent ? (
+          <div className="py-6 text-center text-xs text-emerald-600 dark:text-emerald-400 font-semibold space-y-1">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-2">
+              ✓
             </div>
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+            Thank you, Pirate King! Your feedback was logged.
+          </div>
+        ) : (
+          <form onSubmit={handleFeedbackSubmit} className="space-y-3 pt-1">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Help us refine autonomous fleet orchestration, BYOK provider efficiency, and control room responsiveness.
+            </p>
+            <textarea
+              rows={4}
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="What would make Fleet AI work better for your team?"
+              className="w-full p-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
               <button
-                onClick={() => setShowSignOutModal(false)}
+                type="button"
+                onClick={() => setShowFeedbackModal(false)}
                 className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  setShowSignOutModal(false);
-                  setActiveTab('quarterdeck');
-                }}
-                className="px-3.5 py-1.5 rounded-lg bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 cursor-pointer"
+                type="submit"
+                disabled={!feedbackText.trim()}
+                className="px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 disabled:opacity-40 cursor-pointer"
               >
-                Sign out
+                Submit Feedback
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Send Feedback Modal */}
-      {showFeedbackModal && (
-        <div
-          onClick={() => setShowFeedbackModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1d] shadow-2xl p-5 space-y-4 cursor-default"
-          >
-            <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-2">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-teal-500" />
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                  Send Fleet Feedback
-                </h3>
-              </div>
-            </div>
-
-            {feedbackSent ? (
-              <div className="py-6 text-center text-xs text-emerald-600 dark:text-emerald-400 font-semibold space-y-1">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-2">
-                  ✓
-                </div>
-                Thank you, Pirate King! Your feedback was logged.
-              </div>
-            ) : (
-              <form onSubmit={handleFeedbackSubmit} className="space-y-3">
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Help us refine autonomous fleet orchestration, BYOK provider efficiency, and control room responsiveness.
-                </p>
-                <textarea
-                  rows={4}
-                  value={feedbackText}
-                  onChange={(e) => setFeedbackText(e.target.value)}
-                  placeholder="What would make Fleet AI work better for your team?"
-                  className="w-full p-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500"
-                />
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowFeedbackModal(false)}
-                    className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-xs font-medium text-neutral-600 dark:text-neutral-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!feedbackText.trim()}
-                    className="px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 disabled:opacity-40 cursor-pointer"
-                  >
-                    Submit Feedback
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+          </form>
+        )}
+      </Modal>
     </header>
   );
 };

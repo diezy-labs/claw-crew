@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Layers,
   Ship,
@@ -7,12 +7,15 @@ import {
   Check,
   ShieldCheck,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Info,
+  X
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 
 export const ShipyardView: React.FC = () => {
   const { ships, crew } = useFleetStore();
+  const [showNotice, setShowNotice] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in">
@@ -30,6 +33,21 @@ export const ShipyardView: React.FC = () => {
           Manage your Fleet capacity, berths, and specialized Squad Charters. We charge for organizational scaling—never for model inference credits.
         </p>
       </div>
+
+      {showNotice && (
+        <div className="p-3.5 rounded-xl border border-teal-500/30 bg-teal-500/10 text-xs text-teal-800 dark:text-teal-200 flex items-center justify-between gap-3 animate-in fade-in duration-150">
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+            <span>Shipyard Notice: You are operating on the self-hosted Community edition. Pro fleet capacity expansion blueprints are ready on request.</span>
+          </div>
+          <button
+            onClick={() => setShowNotice(false)}
+            className="p-1 rounded-md text-teal-600 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-200 shrink-0 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Timber Capacity Meter */}
       <div className="p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-xs space-y-4">
@@ -154,8 +172,8 @@ export const ShipyardView: React.FC = () => {
           </ul>
 
           <button
-            onClick={() => alert('Shipyard Notice: You are operating on the self-hosted Community edition. Pro fleet capacity expansion blueprints are ready on request.')}
-            className="w-full py-2 rounded-lg bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-semibold hover:opacity-90 transition-opacity"
+            onClick={() => setShowNotice(true)}
+            className="w-full py-2 rounded-lg bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-semibold hover:opacity-90 transition-opacity text-xs cursor-pointer shadow-xs"
           >
             Explore Squad Charters
           </button>

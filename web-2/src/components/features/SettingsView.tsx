@@ -956,15 +956,17 @@ export const SettingsView: React.FC = () => {
                 <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-3">
                   <button
                     onClick={() => setActiveTab('crows-nest')}
-                    className="text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-medium"
+                    className="text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
                   >
-                    Open Crow’s Nest Diagnostics →
+                    <span className="hidden sm:inline">Open Crow’s Nest Diagnostics →</span>
+                    <span className="sm:hidden">Crow’s Nest →</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('shipyard')}
-                    className="text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 font-medium"
+                    className="text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 font-medium cursor-pointer"
                   >
-                    View Shipyard Capacity →
+                    <span className="hidden sm:inline">View Shipyard Capacity →</span>
+                    <span className="sm:hidden">Shipyard →</span>
                   </button>
                 </div>
               </div>

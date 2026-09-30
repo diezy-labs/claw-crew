@@ -14,6 +14,7 @@ import { useFleetStore } from '../../store/fleetStore';
 import { PageHeader } from '../common/PageHeader';
 import { PageStickyNav } from '../common/PageStickyNav';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { ItemCard } from '../common/ItemCard';
 
 export const LogbookView: React.FC = () => {
   const { logbook } = useFleetStore();
@@ -108,48 +109,38 @@ export const LogbookView: React.FC = () => {
       {/* Timeline List */}
       <div className="space-y-3">
         {filtered.map((entry) => (
-          <div
+          <ItemCard
             key={entry.id}
-            className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] flex items-start justify-between gap-3 text-xs shadow-xs"
-          >
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0">
-                {entry.severity === 'success' && (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                )}
-                {entry.severity === 'warning' && (
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                )}
-                {entry.severity === 'info' && (
-                  <Info className="w-4 h-4 text-teal-500" />
-                )}
-                {entry.severity === 'alert' && (
-                  <ShieldAlert className="w-4 h-4 text-rose-500" />
-                )}
+            compact
+            icon={
+              entry.severity === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              ) : entry.severity === 'warning' ? (
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+              ) : entry.severity === 'alert' ? (
+                <ShieldAlert className="w-4 h-4 text-rose-500" />
+              ) : (
+                <Info className="w-4 h-4 text-teal-500" />
+              )
+            }
+            title={entry.actorName}
+            badge={
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 uppercase">
+                  {entry.actorType}
+                </span>
+                <span className="text-[11px] font-mono text-neutral-400">
+                  {entry.timestamp}
+                </span>
               </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                    {entry.actorName}
-                  </span>
-                  <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 uppercase">
-                    {entry.actorType}
-                  </span>
-                </div>
-                <p className="text-neutral-700 dark:text-neutral-300 font-medium">
-                  {entry.action}
-                </p>
-                <div className="text-[10px] font-mono text-neutral-400">
-                  Trace ID: {entry.correlationId}
-                </div>
+            }
+            description={entry.action}
+            footer={
+              <div className="text-[10px] font-mono text-neutral-400">
+                Trace ID: {entry.correlationId}
               </div>
-            </div>
-
-            <div className="text-[11px] font-mono text-neutral-400 shrink-0">
-              {entry.timestamp}
-            </div>
-          </div>
+            }
+          />
         ))}
       </div>
     </div>

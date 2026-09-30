@@ -18,6 +18,9 @@ import { CrewMember } from '../../types';
 import { PageHeader } from '../common/PageHeader';
 import { PageStickyNav } from '../common/PageStickyNav';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { Modal } from '../common/Modal';
+import { ItemCard } from '../common/ItemCard';
+import { CardPopover } from '../common/CardPopover';
 
 export const CrewView: React.FC = () => {
   const { crew, ships, addCrewMember, updateCrewMember, setActiveTab, createQuest } = useFleetStore();
@@ -148,8 +151,9 @@ export const CrewView: React.FC = () => {
         {filteredCrew.map((member) => {
           const ship = ships.find((s) => s.id === member.shipId);
           return (
-            <div
+            <ItemCard
               key={member.id}
+              selected={editingCrew?.id === member.id}
               onClick={() => {
                 setEditingCrew(member);
                 setEditForm({
@@ -163,19 +167,9 @@ export const CrewView: React.FC = () => {
                   status: member.status
                 });
               }}
-              className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-3.5 text-xs shadow-xs hover:border-teal-500/60 hover:shadow-md transition-all cursor-pointer group"
-              title="Click to view and edit specialist details"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">
-                    {member.name}
-                  </h3>
-                  <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                    {member.role}
-                  </div>
-                </div>
+              title={member.name}
+              subtitle={member.role}
+              badge={
                 <span
                   className={`text-[9px] font-mono px-1.5 py-0.2 rounded uppercase font-semibold ${
                     member.authority === 'read_only'
@@ -187,84 +181,86 @@ export const CrewView: React.FC = () => {
                 >
                   {member.authority.replace('_', ' ')}
                 </span>
-              </div>
-
-              {/* Purpose */}
-              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-2">
-                {member.purpose}
-              </p>
-
-              {/* Skills badges */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-                  Specialist Skills
-                </span>
-                <div className="flex flex-wrap gap-1">
-                  {member.skills.map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-[10px] font-mono"
-                    >
-                      {skill}
+              }
+              description={member.purpose}
+              tags={member.skills}
+              footer={
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-neutral-500">
+                    <div>
+                      <span className="text-neutral-400 block">Model Profile</span>
+                      <span className="text-neutral-800 dark:text-neutral-200 truncate block">
+                        {member.modelProfile}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 block">Memory Boundary</span>
+                      <span className="text-neutral-800 dark:text-neutral-200 block capitalize">
+                        {member.memoryScope} Scoped
+                      </span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-neutral-400">
+                      Ship: {ship?.name.replace(' Ship', '') || 'Developer'}
                     </span>
-                  ))}
+                    <span className="text-teal-600 dark:text-teal-400 font-semibold">
+                      ${member.costLast30Days.toFixed(2)}/mo
+                    </span>
+                  </div>
                 </div>
-              </div>
-
-              {/* Model & Tool scope */}
-              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800/80 grid grid-cols-2 gap-2 text-[10px] font-mono text-neutral-500">
-                <div>
-                  <span className="text-neutral-400 block">Model Profile</span>
-                  <span className="text-neutral-800 dark:text-neutral-200 truncate block">
-                    {member.modelProfile}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-neutral-400 block">Memory Boundary</span>
-                  <span className="text-neutral-800 dark:text-neutral-200 block capitalize">
-                    {member.memoryScope} Scoped
-                  </span>
-                </div>
-              </div>
-
-              {/* Footer status */}
-              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[11px] font-mono">
-                <span className="text-neutral-400">
-                  Ship: {ship?.name.replace(' Ship', '') || 'Developer'}
-                </span>
-                <span className="text-teal-600 dark:text-teal-400 font-semibold">
-                  ${member.costLast30Days.toFixed(2)}/mo
-                </span>
-              </div>
-            </div>
+              }
+            />
           );
         })}
       </div>
 
       {/* Make Me a Squad Wizard Modal */}
-      {isWizardOpen && (
-        <div
-          onClick={() => setIsWizardOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-6 space-y-5 text-xs cursor-default"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                    Make Me a Squad — AI Team Blueprint
-                  </h3>
-                </div>
-                <p className="text-[11px] text-neutral-400 mt-0.5">
-                  Step {wizardStep} of 3: Formulate a persistent specialist squad without manual agent wiring.
-                </p>
-              </div>
-            </div>
+      <Modal
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        maxWidth="xl"
+        icon={<Sparkles className="w-4 h-4 text-amber-500" />}
+        title="Make Me a Squad — AI Team Blueprint"
+        subtitle={`Step ${wizardStep} of 3: Formulate a persistent specialist squad without manual agent wiring.`}
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <button
+              type="button"
+              onClick={() => {
+                if (wizardStep > 1) {
+                  setWizardStep(wizardStep - 1);
+                } else {
+                  setIsWizardOpen(false);
+                }
+              }}
+              className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-medium cursor-pointer"
+            >
+              {wizardStep === 1 ? 'Cancel' : 'Back'}
+            </button>
+
+            {wizardStep < 3 ? (
+              <button
+                type="button"
+                onClick={() => setWizardStep(wizardStep + 1)}
+                className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer"
+              >
+                Continue
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleFinishWizard}
+                className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer"
+              >
+                <span className="hidden sm:inline">Recruit &amp; Launch First Quest</span>
+                <span className="sm:hidden">Recruit &amp; Launch</span>
+              </button>
+            )}
+          </div>
+        }
+      >
+        <div className="space-y-4">
 
             {/* Step 1: Choose Intent */}
             {wizardStep === 1 && (
@@ -382,65 +378,58 @@ export const CrewView: React.FC = () => {
               </div>
             )}
 
-            {/* Wizard Navigation Footer */}
-            <div className="pt-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              {wizardStep > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => setWizardStep(wizardStep - 1)}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                  Back
-                </button>
-              ) : (
-                <div />
-              )}
-
-              {wizardStep < 3 ? (
-                <button
-                  type="button"
-                  onClick={() => setWizardStep(wizardStep + 1)}
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer"
-                >
-                  Continue
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleFinishWizard}
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer"
-                >
-                  Recruit &amp; Launch First Quest
-                </button>
-              )}
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
-      {/* Specialist Edit & Update Modal / Popup (Click outside to close, NO close X button) */}
-      {editingCrew && (
-        <div
-          onClick={() => setEditingCrew(null)}
-          className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl border border-teal-500/40 bg-white dark:bg-[#181a1e] p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
-          >
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
-                <h2 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
-                  Edit Specialist: {editingCrew.name}
-                </h2>
-              </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                Update specialist identity, model parameters, skills, and autonomous authority boundaries.
-              </p>
+      {/* Specialist Edit & Details Popover / Drawer */}
+      <CardPopover
+        isOpen={Boolean(editingCrew)}
+        onClose={() => setEditingCrew(null)}
+        variant="sheet-right"
+        drawerWidth="sm:w-[560px]"
+        icon={<Users className="w-4 h-4 text-teal-500" />}
+        title={
+          editingCrew && (
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
+              <span>Specialist: {editingCrew.name}</span>
             </div>
-
-            <div className="space-y-3 text-xs">
+          )
+        }
+        badge={
+          editingCrew && (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold uppercase">
+              {editingCrew.authority.replace('_', ' ')}
+            </span>
+          )
+        }
+        subtitle="Manage specialist identity, LLM profile, scoped tools, and authority boundaries."
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setEditingCrew(null)}
+              className="px-3.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-medium cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (editingCrew) {
+                  updateCrewMember(editingCrew.id, editForm);
+                  setEditingCrew(null);
+                }
+              }}
+              className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+            >
+              <span className="hidden sm:inline">Save Specialist</span>
+              <span className="sm:hidden">Save</span>
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
               <div>
                 <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                   Specialist Name
@@ -563,31 +552,7 @@ export const CrewView: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setEditingCrew(null)}
-                className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-medium cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (editingCrew) {
-                    updateCrewMember(editingCrew.id, editForm);
-                    setEditingCrew(null);
-                  }
-                }}
-                className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
-              >
-                Save &amp; Update Specialist
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </CardPopover>
     </div>
   );
 };

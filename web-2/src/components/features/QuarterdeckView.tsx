@@ -316,21 +316,25 @@ export const QuarterdeckView: React.FC = () => {
           >
             <LayoutTemplate className="w-3.5 h-3.5 text-teal-500" />
             <span className="hidden sm:inline">Live Canvas</span>
+            <span className="sm:hidden">Canvas</span>
           </button>
 
-          {/* Quick Handoff to Flag Bridge */}
+          {/* Quick Handoff to Flag Bridge (Optimized concise label) */}
           <button
             onClick={() => setActiveTab('flag-bridge')}
             className="text-xs text-neutral-600 dark:text-neutral-300 hover:text-teal-600 dark:hover:text-teal-400 font-medium flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-teal-500/40 bg-white dark:bg-neutral-900 transition-colors cursor-pointer"
+            title="Switch to Flag Bridge Control Room"
           >
             <Flag className="w-3.5 h-3.5 text-teal-500" />
-            <span className="hidden md:inline">Flag Bridge Control Room</span>
+            <span className="hidden sm:inline">Flag Bridge</span>
+            <span className="sm:hidden">Bridge</span>
           </button>
 
           {/* New Chat Button - Responsively adapts size on mobile */}
           <button
             onClick={handleNewChat}
             className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
+            title="Start New Chat Session"
           >
             <Plus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">New Chat</span>
@@ -502,7 +506,8 @@ export const QuarterdeckView: React.FC = () => {
                           className="w-full py-1.5 px-2.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 flex items-center justify-center gap-1 active:scale-[0.99] transition-all cursor-pointer"
                         >
                           <BookmarkPlus className="w-3.5 h-3.5" />
-                          Save to Artifact Gallery
+                          <span className="hidden sm:inline">Save to Artifact Gallery</span>
+                          <span className="sm:hidden">Save to Artifacts</span>
                         </button>
                       </div>
                     )}

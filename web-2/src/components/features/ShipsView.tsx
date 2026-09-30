@@ -20,6 +20,10 @@ import { useFleetStore } from '../../store/fleetStore';
 import { PageHeader } from '../common/PageHeader';
 import { PageStickyNav } from '../common/PageStickyNav';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { Modal } from '../common/Modal';
+import { ItemCard } from '../common/ItemCard';
+import { CardPopover } from '../common/CardPopover';
+import { CrewMember } from '../../types';
 
 const AVAILABLE_SQUADS = [
   {
@@ -48,6 +52,7 @@ export const ShipsView: React.FC = () => {
   const { ships, crew, quests, artifacts, setActiveTab, createQuest, createShip } = useFleetStore();
   const [selectedShipId, setSelectedShipId] = useState<string>('ship-dev');
   const [isCraftShipOpen, setIsCraftShipOpen] = useState(false);
+  const [inspectingCrew, setInspectingCrew] = useState<CrewMember | null>(null);
 
   // Craft ship form state
   const [shipName, setShipName] = useState('');
@@ -118,10 +123,11 @@ export const ShipsView: React.FC = () => {
           <button
             onClick={() => setIsCraftShipOpen(true)}
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
+            title="Craft a new Ship"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">+ Craft a Ship</span>
-            <span className="sm:hidden">Craft</span>
+            <span className="hidden sm:inline">+ Craft Ship</span>
+            <span className="sm:hidden">+ Ship</span>
           </button>
         }
       />
@@ -179,13 +185,15 @@ export const ShipsView: React.FC = () => {
                 onClick={() => setActiveTab('mission-board')}
                 className="px-2.5 py-1 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-teal-500 transition-colors cursor-pointer"
               >
-                Inspect Quests →
+                <span className="hidden sm:inline">Inspect Quests →</span>
+                <span className="sm:hidden">Quests →</span>
               </button>
               <button
                 onClick={() => setActiveTab('approvals')}
                 className="px-2.5 py-1 text-xs rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-colors cursor-pointer"
               >
-                Review Blocker Approval
+                <span className="hidden sm:inline">Review Blocker Approval</span>
+                <span className="sm:hidden">Approval</span>
               </button>
             </div>
           </div>
@@ -206,33 +214,29 @@ export const ShipsView: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {shipCrew.map((member) => (
-                <div
+                <ItemCard
                   key={member.id}
-                  className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] flex flex-col gap-2 text-xs"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-semibold text-neutral-900 dark:text-neutral-100">
-                        {member.name}
-                      </div>
-                      <div className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                        {member.role}
-                      </div>
-                    </div>
+                  compact
+                  selected={inspectingCrew?.id === member.id}
+                  onClick={() => setInspectingCrew(member)}
+                  title={member.name}
+                  subtitle={member.role}
+                  badge={
                     <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-400">
-                      {member.authority}
+                      {member.authority.replace('_', ' ')}
                     </span>
-                  </div>
-
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2">
-                    {member.purpose}
-                  </p>
-
-                  <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[10px] text-neutral-400 font-mono">
-                    <span>{member.modelProfile.split(' ')[0]}</span>
-                    <span>${member.costLast30Days.toFixed(2)} cost</span>
-                  </div>
-                </div>
+                  }
+                  description={member.purpose}
+                  descriptionClamp={2}
+                  footer={
+                    <div className="flex items-center justify-between text-[10px] text-neutral-400 font-mono">
+                      <span>{member.modelProfile.split(' ')[0]}</span>
+                      <span className="text-teal-600 dark:text-teal-400 font-semibold">
+                        ${member.costLast30Days.toFixed(2)} cost
+                      </span>
+                    </div>
+                  }
+                />
               ))}
             </div>
           </div>
@@ -343,34 +347,19 @@ export const ShipsView: React.FC = () => {
       </div>
 
       {/* Craft a Ship Modal */}
-      {isCraftShipOpen && (
-        <div
-          onClick={() => setIsCraftShipOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150 cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-2xl rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1e] shadow-2xl p-5 sm:p-6 space-y-5 max-h-[90vh] overflow-y-auto scrollbar-none cursor-default"
-          >
-            {/* Modal Header without X */}
-            <div className="flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20 shrink-0">
-                <Ship className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
-                    Craft a Ship — Commission Vessel
-                  </h3>
-                  <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30">
-                    Squads &amp; Crew
-                  </span>
-                </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  Commission an operational container for multiple specialist squads and assigned AI crew members.
-                </p>
-              </div>
-            </div>
+      <Modal
+        isOpen={isCraftShipOpen}
+        onClose={() => setIsCraftShipOpen(false)}
+        maxWidth="2xl"
+        icon={<Ship className="w-4 h-4 text-teal-500" />}
+        title="Craft a Ship — Commission Vessel"
+        subtitle="Commission an operational container for multiple specialist squads and assigned AI crew members."
+        badge={
+          <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30">
+            Squads &amp; Crew
+          </span>
+        }
+      >
 
             {/* Form */}
             <form onSubmit={handleCraftShipSubmit} className="space-y-4 text-xs">
@@ -517,9 +506,97 @@ export const ShipsView: React.FC = () => {
                 </button>
               </div>
             </form>
+      </Modal>
+
+      {/* Assigned Crew Detail Popover */}
+      <CardPopover
+        isOpen={Boolean(inspectingCrew)}
+        onClose={() => setInspectingCrew(null)}
+        variant="sheet-right"
+        drawerWidth="sm:w-[500px]"
+        icon={<Users className="w-4 h-4 text-teal-500" />}
+        title={inspectingCrew?.name}
+        subtitle={inspectingCrew?.role}
+        badge={
+          inspectingCrew && (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold uppercase">
+              {inspectingCrew.authority.replace('_', ' ')}
+            </span>
+          )
+        }
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <button
+              type="button"
+              onClick={() => {
+                setInspectingCrew(null);
+                setActiveTab('crew');
+              }}
+              className="px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 cursor-pointer"
+            >
+              Open Full Crew Manager →
+            </button>
+            <button
+              type="button"
+              onClick={() => setInspectingCrew(null)}
+              className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs font-medium cursor-pointer"
+            >
+              Close
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {inspectingCrew && (
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1.5">
+              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 block">
+                Purpose & Scope
+              </span>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                {inspectingCrew.purpose}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div className="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800">
+                <span className="text-[10px] text-neutral-400 block">Model Profile</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200">
+                  {inspectingCrew.modelProfile}
+                </span>
+              </div>
+              <div className="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800">
+                <span className="text-[10px] text-neutral-400 block">Memory Boundary</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200 capitalize">
+                  {inspectingCrew.memoryScope} Scoped
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 block">
+                Skills &amp; Capabilities
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {inspectingCrew.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200/60 dark:border-neutral-700/60"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs font-mono text-neutral-500">
+              <span>Cost (Last 30 days):</span>
+              <span className="text-teal-600 dark:text-teal-400 font-bold">
+                ${inspectingCrew.costLast30Days.toFixed(2)}/mo
+              </span>
+            </div>
+          </div>
+        )}
+      </CardPopover>
     </div>
   );
 };

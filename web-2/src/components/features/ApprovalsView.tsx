@@ -13,6 +13,9 @@ import {
 import { useFleetStore } from '../../store/fleetStore';
 import { CaptainApproval } from '../../types';
 import { PageHeader } from '../common/PageHeader';
+import { Modal } from '../common/Modal';
+import { ItemCard } from '../common/ItemCard';
+import { CardPopover } from '../common/CardPopover';
 
 export const ApprovalsView: React.FC = () => {
   const { approvals, handleApproval, ships, crew } = useFleetStore();
@@ -70,98 +73,92 @@ export const ApprovalsView: React.FC = () => {
             const crewMember = crew.find((c) => c.id === appr.crewId);
 
             return (
-              <div
+              <ItemCard
                 key={appr.id}
+                selected={selectedApproval?.id === appr.id}
                 onClick={() => setSelectedApproval(appr)}
-                className="p-5 rounded-xl border border-amber-500/40 bg-white dark:bg-[#191b1f] shadow-sm space-y-4 text-xs cursor-pointer hover:border-amber-500/80 hover:shadow-md transition-all group"
-                title="Click to inspect complete verification details"
-              >
-                {/* Header item */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-3">
-                  <div>
-                    <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                      {appr.title}
-                    </h3>
-                    <div className="text-[11px] text-neutral-500 font-mono mt-0.5">
-                      Requested by {crewMember?.name || 'Specialist'} · {ship?.name}
-                    </div>
-                  </div>
+                accentColor="amber"
+                icon={<ShieldAlert className="w-4 h-4 text-amber-500" />}
+                title={appr.title}
+                subtitle={`Requested by ${crewMember?.name || 'Specialist'} · ${ship?.name || 'Vessel'}`}
+                badge={
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 font-semibold self-start sm:self-auto">
                     ACTION DIGEST VERIFIED
                   </span>
-                </div>
+                }
+                children={
+                  <div className="space-y-3 pt-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 font-mono text-[11px]">
+                      <div>
+                        <span className="text-[10px] text-neutral-400 uppercase block">Target Resource</span>
+                        <span className="text-neutral-900 dark:text-neutral-100 font-semibold break-all">
+                          {appr.targetResource}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-neutral-400 uppercase block">Action Type</span>
+                        <span className="text-teal-600 dark:text-teal-400 font-semibold uppercase">
+                          {appr.actionType.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Grid details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3.5 rounded-lg bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 font-mono text-[11px]">
-                  <div>
-                    <span className="text-[10px] text-neutral-400 uppercase block">Target Resource</span>
-                    <span className="text-neutral-900 dark:text-neutral-100 font-semibold break-all">
-                      {appr.targetResource}
-                    </span>
+                    <div>
+                      <span className="font-semibold text-neutral-800 dark:text-neutral-200 block mb-0.5">
+                        Why Now?
+                      </span>
+                      <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                        {appr.justification}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="font-semibold text-neutral-800 dark:text-neutral-200 block mb-0.5">
+                        Exact Side Effect &amp; Scope Boundary
+                      </span>
+                      <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed bg-neutral-50 dark:bg-neutral-900/40 p-2.5 rounded border border-neutral-200 dark:border-neutral-800">
+                        {appr.effect}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="font-semibold text-neutral-800 dark:text-neutral-200 block mb-0.5">
+                        Draft Body Preview
+                      </span>
+                      <pre className="p-3 rounded-lg bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-[11px] font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap">
+                        {appr.draftSummary}
+                      </pre>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-neutral-400 uppercase block">Action Type</span>
-                    <span className="text-teal-600 dark:text-teal-400 font-semibold uppercase">
-                      {appr.actionType.replace(/_/g, ' ')}
-                    </span>
+                }
+                footer={
+                  <div className="flex items-center justify-end gap-2.5">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApproval(appr.id, 'rejected');
+                      }}
+                      className="px-3.5 py-1.5 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex items-center gap-1.5 cursor-pointer text-xs"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Reject Action</span>
+                      <span className="sm:hidden">Reject</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApproval(appr.id, 'approved');
+                      }}
+                      className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs text-xs"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Approve &amp; Sign Action</span>
+                      <span className="sm:hidden">Approve</span>
+                    </button>
                   </div>
-                </div>
-
-                {/* Justification & Effect */}
-                <div className="space-y-3">
-                  <div>
-                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 block mb-0.5">
-                      Why Now?
-                    </span>
-                    <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                      {appr.justification}
-                    </p>
-                  </div>
-
-                  <div>
-                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 block mb-0.5">
-                      Exact Side Effect &amp; Scope Boundary
-                    </span>
-                    <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed bg-neutral-50 dark:bg-neutral-900/40 p-2.5 rounded border border-neutral-200 dark:border-neutral-800">
-                      {appr.effect}
-                    </p>
-                  </div>
-
-                  <div>
-                    <span className="font-semibold text-neutral-800 dark:text-neutral-200 block mb-0.5">
-                      Draft Body Preview
-                    </span>
-                    <pre className="p-3 rounded-lg bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-[11px] font-mono text-neutral-800 dark:text-neutral-200 overflow-x-auto whitespace-pre-wrap">
-                      {appr.draftSummary}
-                    </pre>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-end gap-2.5">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleApproval(appr.id, 'rejected');
-                    }}
-                    className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>Reject Action</span>
-                  </button>
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleApproval(appr.id, 'approved');
-                    }}
-                    className="px-5 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Approve &amp; Sign Action</span>
-                  </button>
-                </div>
-              </div>
+                }
+              />
             );
           })
         )}
@@ -205,62 +202,102 @@ export const ApprovalsView: React.FC = () => {
         </div>
       )}
 
-      {/* Detail Approval Modal / Popup (Click outside to close, NO close X button) */}
-      {selectedApproval && (
-        <div
-          onClick={() => setSelectedApproval(null)}
-          className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-2xl rounded-2xl border border-amber-500/50 bg-white dark:bg-[#181a1e] p-5 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
-          >
-            {/* Header info */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      selectedApproval.status === 'pending'
-                        ? 'bg-amber-500 animate-pulse'
-                        : selectedApproval.status === 'approved'
-                        ? 'bg-emerald-500'
-                        : 'bg-rose-500'
-                    }`}
-                  />
-                  <span className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider">
-                    Captain Risk Verification Gate
-                  </span>
-                </div>
-                <h2 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-neutral-100 mt-1">
-                  {selectedApproval.title}
-                </h2>
-                <div className="text-xs text-neutral-500 font-mono mt-1">
-                  Requested by{' '}
-                  {crew.find((c) => c.id === selectedApproval.crewId)?.name || 'Specialist'} ·{' '}
-                  {ships.find((s) => s.id === selectedApproval.shipId)?.name || 'Vessel'}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 self-start">
-                <span
-                  className={`text-[10px] font-mono px-2.5 py-1 rounded uppercase font-bold ${
-                    selectedApproval.status === 'pending'
-                      ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
-                      : selectedApproval.status === 'approved'
-                      ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
-                      : 'bg-rose-500/20 text-rose-500 border border-rose-500/30'
-                  }`}
-                >
-                  {selectedApproval.status === 'pending'
-                    ? 'ACTION DIGEST VERIFIED'
-                    : selectedApproval.status.toUpperCase()}
-                </span>
-                <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-2 py-0.5 rounded select-none">
-                  Click outside to close
-                </span>
-              </div>
+      {/* Detail Approval Popover / Drawer */}
+      <CardPopover
+        isOpen={Boolean(selectedApproval)}
+        onClose={() => setSelectedApproval(null)}
+        variant="sheet-right"
+        drawerWidth="sm:w-[580px]"
+        icon={<ShieldAlert className="w-4 h-4 text-amber-500" />}
+        title={
+          selectedApproval && (
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  selectedApproval.status === 'pending'
+                    ? 'bg-amber-500 animate-pulse'
+                    : selectedApproval.status === 'approved'
+                    ? 'bg-emerald-500'
+                    : 'bg-rose-500'
+                }`}
+              />
+              <span className="text-base sm:text-lg font-bold text-neutral-900 dark:text-neutral-100">
+                {selectedApproval.title}
+              </span>
             </div>
+          )
+        }
+        subtitle={
+          selectedApproval && (
+            <span>
+              Requested by {crew.find((c) => c.id === selectedApproval.crewId)?.name || 'Specialist'} ·{' '}
+              {ships.find((s) => s.id === selectedApproval.shipId)?.name || 'Vessel'}
+            </span>
+          )
+        }
+        badge={
+          selectedApproval && (
+            <span
+              className={`text-[10px] font-mono px-2.5 py-1 rounded uppercase font-bold ${
+                selectedApproval.status === 'pending'
+                  ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
+                  : selectedApproval.status === 'approved'
+                  ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                  : 'bg-rose-500/20 text-rose-500 border border-rose-500/30'
+              }`}
+            >
+              {selectedApproval.status === 'pending'
+                ? 'ACTION DIGEST VERIFIED'
+                : selectedApproval.status.toUpperCase()}
+            </span>
+          )
+        }
+        footer={
+          selectedApproval && (
+            <div className="flex items-center justify-between w-full">
+              <button
+                type="button"
+                onClick={() => setSelectedApproval(null)}
+                className="px-3.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-medium cursor-pointer"
+              >
+                Close
+              </button>
 
+              {selectedApproval.status === 'pending' && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleApproval(selectedApproval.id, 'rejected');
+                      setSelectedApproval(null);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span className="hidden sm:inline">Reject Action</span>
+                    <span className="sm:hidden">Reject</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleApproval(selectedApproval.id, 'approved');
+                      setSelectedApproval(null);
+                    }}
+                    className="px-5 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Approve &amp; Sign Action</span>
+                    <span className="sm:hidden">Approve</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        }
+      >
+        {selectedApproval && (
+          <div className="space-y-4">
             {/* Target and Action metadata */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 font-mono text-xs">
               <div>
@@ -306,44 +343,9 @@ export const ApprovalsView: React.FC = () => {
                 </pre>
               </div>
             </div>
-
-            {/* Action Buttons inside modal */}
-            <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-3">
-              <span className="text-[11px] font-mono text-neutral-400 select-none">
-                Tap or click outside to dismiss &bull; Esc
-              </span>
-
-              {selectedApproval.status === 'pending' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleApproval(selectedApproval.id, 'rejected');
-                      setSelectedApproval(null);
-                    }}
-                    className="px-4 py-2 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>Reject Action</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleApproval(selectedApproval.id, 'approved');
-                      setSelectedApproval(null);
-                    }}
-                    className="px-5 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Approve &amp; Sign Action</span>
-                  </button>
-                </>
-              )}
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </CardPopover>
     </div>
   );
 };

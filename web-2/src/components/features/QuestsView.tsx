@@ -23,6 +23,8 @@ import { Quest, QuestTab } from '../../types';
 import { PageHeader } from '../common/PageHeader';
 import { PageStickyNav } from '../common/PageStickyNav';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { Modal } from '../common/Modal';
+import { ItemCard } from '../common/ItemCard';
 
 export const QuestsView: React.FC = () => {
   const {
@@ -248,41 +250,34 @@ export const QuestsView: React.FC = () => {
         <div className="flex-1 min-w-0 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filteredQuests.map((quest) => {
-                const assignedShip = ships.find(
-                  (s) => s.id === (quest.assignedShipId || quest.suggestedShipId)
-                );
-                const isSelected = selectedQuest?.id === quest.id;
+              const assignedShip = ships.find(
+                (s) => s.id === (quest.assignedShipId || quest.suggestedShipId)
+              );
+              const isSelected = selectedQuest?.id === quest.id;
 
-                return (
-                  <div
-                    key={quest.id}
-                    onClick={() => setSelectedQuestId(quest.id)}
-                    className={`p-4 rounded-xl border bg-white dark:bg-[#191b1f] hover:border-teal-500/50 cursor-pointer transition-all space-y-3 shadow-xs ${
-                      isSelected
-                        ? 'border-teal-500 ring-1 ring-teal-500/30'
-                        : 'border-neutral-200 dark:border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">
-                          {quest.title}
-                        </h3>
-                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                          {assignedShip?.name || 'Developer Ship'} · Priority: {(quest.priority || 'medium').toUpperCase()}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 uppercase font-semibold text-neutral-600 dark:text-neutral-300">
-                        {(quest.status || 'ready').replace('_', ' ')}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">
-                      {quest.objective}
-                    </p>
-
-                    {/* Map Progress Bar */}
-                    <div className="space-y-1">
+              return (
+                <ItemCard
+                  key={quest.id}
+                  selected={isSelected}
+                  onClick={() => setSelectedQuestId(quest.id)}
+                  accentColor={
+                    quest.priority === 'urgent'
+                      ? 'rose'
+                      : quest.priority === 'high'
+                      ? 'amber'
+                      : 'teal'
+                  }
+                  title={quest.title}
+                  subtitle={`${assignedShip?.name || 'Developer Ship'} · Priority: ${(quest.priority || 'medium').toUpperCase()}`}
+                  badge={
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 uppercase font-semibold text-neutral-600 dark:text-neutral-300">
+                      {(quest.status || 'ready').replace('_', ' ')}
+                    </span>
+                  }
+                  description={quest.objective}
+                  descriptionClamp={2}
+                  children={
+                    <div className="space-y-1 pt-1">
                       <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
                         <span>Map Step Progression</span>
                         <span className="text-teal-600 dark:text-teal-400 font-bold">
@@ -296,20 +291,19 @@ export const QuestsView: React.FC = () => {
                         />
                       </div>
                     </div>
-
-                    {/* Metadata & Actions */}
-                    <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[11px] font-mono">
+                  }
+                  footer={
+                    <div className="flex items-center justify-between text-[11px] font-mono">
                       <span className="text-neutral-400">
                         {(quest.requiredArtifacts || []).length} Artifacts Required
                       </span>
-
                       {quest.status === 'ready' ? (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             runQuestVoyage(quest.id);
                           }}
-                          className="px-2.5 py-1 rounded bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs flex items-center gap-1 hover:opacity-90"
+                          className="px-2.5 py-1 rounded bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs flex items-center gap-1 hover:opacity-90 cursor-pointer"
                         >
                           <Play className="w-3 h-3" />
                           <span>Set Sail</span>
@@ -320,10 +314,11 @@ export const QuestsView: React.FC = () => {
                         </span>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  }
+                />
+              );
+            })}
+          </div>
 
             {/* Selected Quest Living Map Preview */}
             {selectedQuest && (
@@ -388,22 +383,14 @@ export const QuestsView: React.FC = () => {
         </div>
 
       {/* New Quest Modal */}
-      {isNewQuestModalOpen && (
-        <div
-          onClick={() => setIsNewQuestModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-5 space-y-4 cursor-default"
-          >
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                Create a Quest — Step-by-Step
-              </h3>
-            </div>
-
-            <form onSubmit={handleCreateQuestSubmit} className="space-y-3.5 text-xs">
+      <Modal
+        isOpen={isNewQuestModalOpen}
+        onClose={() => setIsNewQuestModalOpen(false)}
+        maxWidth="lg"
+        title="Create a Quest — Step-by-Step"
+        subtitle="Formulate an SOP directive, assign specialist ship, and set budget limit."
+      >
+        <form onSubmit={handleCreateQuestSubmit} className="space-y-3.5 text-xs">
               <div>
                 <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1">
                   1. Objective / Title
@@ -491,15 +478,14 @@ export const QuestsView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90"
+                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer text-xs"
                 >
-                  Confirm &amp; Set Sail
+                  <span className="hidden sm:inline">Confirm &amp; Set Sail</span>
+                  <span className="sm:hidden">Set Sail</span>
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Modal>
     </div>
   );
 };
