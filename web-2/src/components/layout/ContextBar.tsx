@@ -191,27 +191,29 @@ export const ContextBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Middle: Clean horizontal sub-navigation without overlapping buttons */}
-      <div className="flex-1 max-w-xl mx-2 min-w-0 hidden md:block">
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
-          {currentSection.items.map((item) => {
-            const isActive = activeTab === item.id || (item.id === 'quarterdeck' && activeTab === 'quartermaster');
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer shrink-0 ${
-                  isActive
-                    ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 font-bold border border-teal-500/30 shadow-2xs'
-                    : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800/60'
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+      {/* Middle: Clean horizontal sub-navigation without overlapping buttons (hidden on Quarterdeck) */}
+      {activeTab !== 'quarterdeck' && (
+        <div className="flex-1 max-w-xl mx-2 min-w-0 hidden md:block">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
+            {currentSection.items.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`px-2.5 py-1 rounded-lg text-xs whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                    isActive
+                      ? 'bg-teal-500/15 text-teal-700 dark:text-teal-300 font-bold border border-teal-500/30 shadow-2xs'
+                      : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800/60'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Right controls */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -229,9 +231,9 @@ export const ContextBar: React.FC = () => {
             )}
           </button>
 
-          {/* Notifications Dropdown Popover */}
+          {/* Notifications Dropdown Popover (Mobile Responsive Flyout) */}
           {isNotifOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl z-50 p-3 space-y-2 animate-in fade-in duration-100">
+            <div className="fixed inset-x-3 top-14 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 rounded-2xl sm:rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl z-50 p-3 sm:p-3.5 space-y-2 max-h-[calc(100vh-4.5rem)] flex flex-col animate-in fade-in zoom-in-95 duration-100">
               <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-neutral-800">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
