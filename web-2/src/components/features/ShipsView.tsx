@@ -17,9 +17,8 @@ import {
   Layers
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { ItemCard } from '../common/ItemCard';
 import { CardPopover } from '../common/CardPopover';
@@ -108,9 +107,9 @@ export const ShipsView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 gap-6 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Standard Reusable PageHeader */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Standard Reusable PageHeader with Integrated Chips */}
+      <PageHeaderNav
         icon={<Ship className="w-4 h-4 text-teal-500 shrink-0" />}
         title="Ships & Squads"
         badge={
@@ -120,43 +119,29 @@ export const ShipsView: React.FC = () => {
         }
         description="A Ship is an operational home for a persistent specialist AI team with its own Charter, Navigator, and memory."
         actions={
-          <button
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            shortLabel="+ Ship"
             onClick={() => setIsCraftShipOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
             title="Craft a new Ship"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">+ Craft Ship</span>
-            <span className="sm:hidden">+ Ship</span>
-          </button>
+            + Craft Ship
+          </Button>
         }
+        chips={{
+          items: ships.map((s) => ({
+            id: s.id,
+            label: s.name,
+            count: `${s.crewIds.length} Crew`,
+            icon: <Ship className="w-3.5 h-3.5 opacity-70" />
+          })),
+          selectedId: selectedShip.id,
+          onSelect: setSelectedShipId,
+          variant: 'subtle'
+        }}
       />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
-      <PageStickyNav>
-        <SubMenuScroller className="gap-2" containerClassName="w-full">
-          {ships.map((ship) => {
-            const isSelected = ship.id === selectedShip.id;
-            return (
-              <button
-                key={ship.id}
-                onClick={() => setSelectedShipId(ship.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
-                  isSelected
-                    ? 'bg-teal-500/10 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300 font-semibold border border-teal-500/30 shadow-2xs'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#181a1d] hover:border-neutral-300 dark:hover:border-neutral-700'
-                }`}
-              >
-                <Ship className={`w-3.5 h-3.5 ${isSelected ? 'text-teal-600 dark:text-teal-400' : 'text-neutral-400'}`} />
-                <span className="whitespace-nowrap">{ship.name}</span>
-                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${isSelected ? 'bg-teal-500/20 text-teal-800 dark:text-teal-200' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'}`}>
-                  {ship.crewIds.length} Crew
-                </span>
-              </button>
-            );
-          })}
-        </SubMenuScroller>
-      </PageStickyNav>
 
       {/* Selected Ship Showcase */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

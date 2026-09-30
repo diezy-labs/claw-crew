@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   ThemeMode,
+  ColorTone,
   NavigationTab,
   Ship,
   CrewMember,
@@ -52,6 +53,8 @@ interface FleetState {
   setRemoteAccessModalOpen: (open: boolean) => void;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
+  colorTone: ColorTone;
+  setColorTone: (tone: ColorTone) => void;
   setActiveTab: (tab: NavigationTab) => void;
   setActiveSettingsCategory: (cat: SettingsCategory) => void;
   setCommandPaletteOpen: (open: boolean) => void;
@@ -676,6 +679,7 @@ const defaultSettings: FleetSettings = {
   },
   appearance: {
     theme: 'dark',
+    colorTone: (typeof localStorage !== 'undefined' ? (localStorage.getItem('galleon_color_tone') as ColorTone) : null) || 'teal',
     density: 'comfortable',
     terminology: 'adventure',
     showFunctionalSubtitles: true,
@@ -885,6 +889,27 @@ export const useFleetStore = create<FleetState>((set, get) => ({
   setTheme: (theme) => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     set({ theme });
+  },
+
+  colorTone: (typeof localStorage !== 'undefined' ? (localStorage.getItem('galleon_color_tone') as ColorTone) : null) || 'teal',
+
+  setColorTone: (tone) => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('galleon_color_tone', tone);
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-color-tone', tone);
+    }
+    set((state) => ({
+      colorTone: tone,
+      settings: {
+        ...state.settings,
+        appearance: {
+          ...state.settings.appearance,
+          colorTone: tone
+        }
+      }
+    }));
   },
 
   toggleTheme: () => {
@@ -1456,3 +1481,9 @@ export const useFleetStore = create<FleetState>((set, get) => ({
     }));
   }
 }));
+
+// Initialize document data-color-tone on boot
+if (typeof document !== 'undefined') {
+  const initialTone = (localStorage.getItem('galleon_color_tone') as ColorTone) || 'teal';
+  document.documentElement.setAttribute('data-color-tone', initialTone);
+}

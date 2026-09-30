@@ -26,9 +26,8 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 
 export type FlagBridgeTab =
   | 'overview'
@@ -75,9 +74,9 @@ export const FlagBridgeView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 gap-6 max-w-6xl mx-auto w-full animate-view-fade-in">
-      {/* Standard Reusable PageHeader */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in">
+      {/* Standard Reusable PageHeader with Integrated Chips */}
+      <PageHeaderNav
         icon={<Compass className="w-4 h-4 text-teal-500 animate-spin-slow shrink-0" />}
         title="Flag Bridge"
         badge={
@@ -88,59 +87,41 @@ export const FlagBridgeView: React.FC = () => {
         description="See, steer, and decide across your Fleet with live intelligence and Quartermaster oversight."
         actions={
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<MessageSquare className="w-3.5 h-3.5" />}
+              shortLabel="Ask QM"
               onClick={() => handleAskQM('Give me an executive briefing on Fleet readiness')}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Ask QM</span>
-              <span className="sm:hidden">QM</span>
-            </button>
+              Ask QM
+            </Button>
 
-            <button
-              onClick={handleRefresh}
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />}
               disabled={isRefreshing}
-              className="p-1.5 sm:p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              onClick={handleRefresh}
               title="Refresh Fleet signals"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
+            />
           </div>
         }
-      />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
-      <PageStickyNav>
-        <SubMenuScroller className="gap-1.5" containerClassName="w-full">
-          {[
+        chips={{
+          items: [
             { id: 'overview', label: 'Overview' },
             { id: 'briefings', label: 'Briefings' },
             { id: 'ship-reports', label: 'Ship Reports' },
-            { id: 'decisions', label: 'Decisions', badge: pendingApprovals.length },
+            { id: 'decisions', label: 'Decisions', badge: pendingApprovals.length > 0 },
             { id: 'treasury', label: 'Treasury' },
             { id: 'health', label: 'Health' },
             { id: 'strategy', label: 'Strategy' }
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveFlagTab(tab.id as FlagBridgeTab)}
-                className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                  isActive
-                    ? 'bg-neutral-200/90 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-semibold shadow-2xs border border-neutral-300 dark:border-neutral-700'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900/60 border border-transparent'
-                }`}
-              >
-                <span>{tab.label}</span>
-                {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                )}
-              </button>
-            );
-          })}
-        </SubMenuScroller>
-      </PageStickyNav>
+          ],
+          selectedId: activeTab,
+          onSelect: (id) => setActiveFlagTab(id as FlagBridgeTab),
+          variant: 'tabs'
+        }}
+      />
 
       {/* Overview Tab Content */}
       {activeTab === 'overview' && (

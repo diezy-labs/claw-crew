@@ -20,9 +20,8 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { Quest, QuestTab } from '../../types';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { ItemCard } from '../common/ItemCard';
 
@@ -110,9 +109,9 @@ export const QuestsView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Reusable Standard Header */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-3 sm:space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable General Header with Integrated Chips */}
+      <PageHeaderNav
         icon={<Map className="w-4 h-4 text-teal-500 shrink-0" />}
         title="Quests"
         badge={
@@ -127,20 +126,23 @@ export const QuestsView: React.FC = () => {
           placeholder: 'Search quests, objectives, keys...'
         }}
         actions={
-          <button
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            shortLabel="Quest"
             onClick={() => setIsNewQuestModalOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">+ Quest</span>
-            <span className="sm:hidden">Quest</span>
-          </button>
+            + Quest
+          </Button>
         }
-      />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows & Guided Map Button */}
-      <PageStickyNav
-        rightContent={
+        chips={{
+          items: questTabs,
+          selectedId: activeTabFilter,
+          onSelect: (id) => setActiveTabFilter(id as QuestTab),
+          variant: 'tabs'
+        }}
+        navRightContent={
           <button
             type="button"
             onClick={() => setMapStudioMode((prev) => (prev === 'guided' ? 'advanced' : 'guided'))}
@@ -156,23 +158,7 @@ export const QuestsView: React.FC = () => {
             </div>
           </button>
         }
-      >
-        <SubMenuScroller className="gap-1.5" containerClassName="w-full">
-          {questTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTabFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
-                activeTabFilter === tab.id
-                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold'
-                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </SubMenuScroller>
-      </PageStickyNav>
+      />
 
       {/* Main Content Layout */}
       <div className="flex gap-6 items-start">
@@ -298,16 +284,17 @@ export const QuestsView: React.FC = () => {
                         {(quest.requiredArtifacts || []).length} Artifacts Required
                       </span>
                       {quest.status === 'ready' ? (
-                        <button
+                        <Button
+                          variant="primary"
+                          size="xs"
+                          icon={<Play className="w-3 h-3" />}
                           onClick={(e) => {
                             e.stopPropagation();
                             runQuestVoyage(quest.id);
                           }}
-                          className="px-2.5 py-1 rounded bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs flex items-center gap-1 hover:opacity-90 cursor-pointer"
                         >
-                          <Play className="w-3 h-3" />
-                          <span>Set Sail</span>
-                        </button>
+                          Set Sail
+                        </Button>
                       ) : (
                         <span className="text-teal-600 dark:text-teal-400 font-medium">
                           ${quest.budgetLimitUSD.toFixed(2)} cap
@@ -469,20 +456,22 @@ export const QuestsView: React.FC = () => {
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2 border-t border-neutral-200 dark:border-neutral-800">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   type="button"
                   onClick={() => setIsNewQuestModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer text-xs"
+                  shortLabel="Set Sail"
                 >
-                  <span className="hidden sm:inline">Confirm &amp; Set Sail</span>
-                  <span className="sm:hidden">Set Sail</span>
-                </button>
+                  Confirm &amp; Set Sail
+                </Button>
               </div>
             </form>
           </Modal>

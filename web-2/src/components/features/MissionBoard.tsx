@@ -18,9 +18,8 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { Quest, QuestStatus } from '../../types';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 import { CardPopover } from '../common/CardPopover';
 import { Modal } from '../common/Modal';
@@ -106,9 +105,9 @@ export const MissionBoard: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-7xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Reusable Standard Header */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-3 sm:space-y-4 max-w-7xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable General Header with Integrated Chips */}
+      <PageHeaderNav
         icon={<LayoutGrid className="w-4 h-4 text-teal-500 shrink-0" />}
         title="Mission Board"
         badge={
@@ -123,59 +122,30 @@ export const MissionBoard: React.FC = () => {
           placeholder: 'Filter quests...'
         }}
         actions={
-          <button
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<PlusCircle className="w-3.5 h-3.5" />}
+            shortLabel="Quest"
             onClick={() => setIsNewQuestModalOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
           >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Quest</span>
-            <span className="sm:hidden">Quest</span>
-          </button>
+            + New Quest
+          </Button>
         }
+        chips={{
+          items: [
+            { id: 'all', label: 'All Ships', count: quests.length },
+            ...ships.map((ship) => ({
+              id: ship.id,
+              label: ship.name,
+              count: quests.filter((q) => q.assignedShipId === ship.id || q.suggestedShipId === ship.id).length
+            }))
+          ],
+          selectedId: selectedShipFilter,
+          onSelect: setSelectedShipFilter,
+          variant: 'pills'
+        }}
       />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
-      <PageStickyNav>
-        <SubMenuScroller className="gap-2" containerClassName="w-full">
-          <button
-            onClick={() => setSelectedShipFilter('all')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
-              selectedShipFilter === 'all'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold shadow-2xs'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            <span>All Ships</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300">
-              {quests.length}
-            </span>
-          </button>
-          {ships.map((ship) => {
-            const shipQuestsCount = quests.filter(
-              (q) => q.assignedShipId === ship.id || q.suggestedShipId === ship.id
-            ).length;
-            const isSelected = selectedShipFilter === ship.id;
-
-            return (
-              <button
-                key={ship.id}
-                onClick={() => setSelectedShipFilter(ship.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
-                  isSelected
-                    ? 'bg-teal-500/10 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300 font-semibold border border-teal-500/30'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#181a1d]'
-                }`}
-              >
-                <Ship className="w-3.5 h-3.5 text-neutral-400" />
-                <span className="whitespace-nowrap">{ship.name}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                  {shipQuestsCount}
-                </span>
-              </button>
-            );
-          })}
-        </SubMenuScroller>
-      </PageStickyNav>
 
       {/* Kan-ban Columns Grid */}
       <div className="flex-1 overflow-x-auto pb-4">

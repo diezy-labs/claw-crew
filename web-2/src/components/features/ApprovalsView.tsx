@@ -13,6 +13,7 @@ import {
 import { useFleetStore } from '../../store/fleetStore';
 import { CaptainApproval } from '../../types';
 import { PageHeader } from '../common/PageHeader';
+import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { ItemCard } from '../common/ItemCard';
 import { CardPopover } from '../common/CardPopover';
@@ -38,7 +39,7 @@ export const ApprovalsView: React.FC = () => {
   const historyList = approvals.filter((a) => a.status !== 'pending');
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in">
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-5xl mx-auto w-full animate-view-fade-in">
       {/* Standard Reusable PageHeader */}
       <PageHeader
         icon={<ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />}
@@ -133,29 +134,32 @@ export const ApprovalsView: React.FC = () => {
                 }
                 footer={
                   <div className="flex items-center justify-end gap-2.5">
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={<XCircle className="w-3.5 h-3.5 text-rose-500" />}
+                      shortLabel="Reject"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleApproval(appr.id, 'rejected');
                       }}
-                      className="px-3.5 py-1.5 rounded-lg border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex items-center gap-1.5 cursor-pointer text-xs"
+                      className="border-rose-300 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                     >
-                      <XCircle className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Reject Action</span>
-                      <span className="sm:hidden">Reject</span>
-                    </button>
+                      Reject
+                    </Button>
 
-                    <button
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                      shortLabel="Approve"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleApproval(appr.id, 'approved');
                       }}
-                      className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 cursor-pointer shadow-xs text-xs"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Approve &amp; Sign Action</span>
-                      <span className="sm:hidden">Approve</span>
-                    </button>
+                      Approve Action
+                    </Button>
                   </div>
                 }
               />

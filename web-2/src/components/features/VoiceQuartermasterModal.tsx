@@ -288,8 +288,7 @@ export const VoiceQuartermasterModal: React.FC<VoiceQuartermasterModalProps> = (
               title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
             >
               {isMuted ? <MicOff className="w-3.5 h-3.5 text-rose-400" /> : <Mic className="w-3.5 h-3.5 text-teal-400" />}
-              <span className="hidden sm:inline">{isMuted ? 'Muted' : 'Mic Active'}</span>
-              <span className="sm:hidden">{isMuted ? 'Muted' : 'Active'}</span>
+              <span>{isMuted ? 'Muted' : 'Mic Active'}</span>
             </button>
 
             {vadState === 'speaking' && (
@@ -299,8 +298,7 @@ export const VoiceQuartermasterModal: React.FC<VoiceQuartermasterModalProps> = (
                 title="Barge-In (Interrupt AI speech)"
               >
                 <Zap className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Barge-In (Interrupt)</span>
-                <span className="sm:hidden">Interrupt</span>
+                <span>Barge-In (Interrupt)</span>
               </button>
             )}
           </div>

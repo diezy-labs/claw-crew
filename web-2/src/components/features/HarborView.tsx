@@ -24,8 +24,8 @@ import {
   QrCode
 } from 'lucide-react';
 import { SubMenuScroller } from '../common/SubMenuScroller';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 import { useFleetStore } from '../../store/fleetStore';
 
@@ -161,9 +161,9 @@ export const HarborView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Standard Reusable PageHeader */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Standard Reusable PageHeader with Integrated Chips */}
+      <PageHeaderNav
         icon={<Anchor className="w-4 h-4 text-teal-500 shrink-0" />}
         title="Harbor"
         badge={
@@ -174,81 +174,43 @@ export const HarborView: React.FC = () => {
         description="Connect the intelligence models, local endpoints, git repositories, A2A mesh peers, and WebAssembly tools your Fleet can use."
         actions={
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />}
+              shortLabel="Remote"
               onClick={() => setRemoteAccessModalOpen(true)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 font-semibold text-xs hover:bg-teal-500/20 transition-all cursor-pointer shadow-xs"
               title="Scan QR to open on Mobile or Laptop"
             >
-              <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span className="hidden sm:inline">Remote Access &amp; QR</span>
-              <span className="sm:hidden">Remote</span>
-            </button>
+              Remote Access &amp; QR
+            </Button>
 
             {activeHarborTab === 'a2a_mesh' && (
-              <button
-                onClick={handleScanMdnsPeers}
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<RefreshCw className={`w-3.5 h-3.5 ${isScanningPeers ? 'animate-spin' : ''}`} />}
+                shortLabel="Scan"
                 disabled={isScanningPeers}
-                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                onClick={handleScanMdnsPeers}
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isScanningPeers ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Scan Peers</span>
-                <span className="sm:hidden">Scan</span>
-              </button>
+                Scan Peers
+              </Button>
             )}
           </div>
         }
+        chips={{
+          items: [
+            { id: 'providers', label: 'Model Intelligence (BYOK / BYOM)' },
+            { id: 'connectors', label: 'Work Connectors & Git' },
+            { id: 'a2a_mesh', label: 'A2A Mesh Network & Peers', count: peerList.length },
+            { id: 'plugins', label: 'Wasm Plugins', count: plugins.length }
+          ],
+          selectedId: activeHarborTab,
+          onSelect: (id) => setActiveHarborTab(id as any),
+          variant: 'pills'
+        }}
       />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
-      <PageStickyNav>
-        <SubMenuScroller className="gap-2 text-xs" containerClassName="w-full">
-          <button
-            onClick={() => setActiveHarborTab('providers')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-              activeHarborTab === 'providers'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            Model Intelligence (BYOK / BYOM)
-          </button>
-          <button
-            onClick={() => setActiveHarborTab('connectors')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-              activeHarborTab === 'connectors'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            Work Connectors &amp; Git
-          </button>
-          <button
-            onClick={() => setActiveHarborTab('a2a_mesh')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-              activeHarborTab === 'a2a_mesh'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            <Network className="w-3.5 h-3.5 text-teal-500" />
-            <span>A2A Mesh Network &amp; Peers</span>
-            <span className="text-[9px] font-mono px-1 rounded bg-teal-500/20 text-teal-600 dark:text-teal-300">
-              {peerList.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveHarborTab('plugins')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-              activeHarborTab === 'plugins'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-teal-500" />
-            <span>Wasm Plugins ({plugins.length})</span>
-          </button>
-        </SubMenuScroller>
-      </PageStickyNav>
 
       {/* Tab 1: Model Intelligence (BYOK / BYOM) */}
       {activeHarborTab === 'providers' && (

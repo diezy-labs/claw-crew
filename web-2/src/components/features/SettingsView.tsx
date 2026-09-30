@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { PageHeader } from '../common/PageHeader';
-import { SettingsCategory, TerminologyMode, DensityMode, UpdateChannel } from '../../types';
+import { SettingsCategory, TerminologyMode, DensityMode, UpdateChannel, ColorTone } from '../../types';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -39,7 +39,9 @@ export const SettingsView: React.FC = () => {
     updateSettings,
     resetSettingsCategory,
     setActiveTab,
-    setTheme
+    setTheme,
+    colorTone,
+    setColorTone
   } = useFleetStore();
 
   const [searchQuery, setSearchQuery] = useState('');

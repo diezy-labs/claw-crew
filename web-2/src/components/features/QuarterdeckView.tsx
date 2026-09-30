@@ -38,6 +38,8 @@ import { QuestBrainstormModal } from './QuestBrainstormModal';
 import { VoiceQuartermasterModal } from './VoiceQuartermasterModal';
 import { LiveCanvasPane } from './LiveCanvasPane';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { Dropdown } from '../common/Dropdown';
+import { Button } from '../common/Button';
 
 export type AIModelOption = {
   id: string;
@@ -663,210 +665,122 @@ export const QuarterdeckView: React.FC = () => {
               {/* Left Group: Counterpart, AI Model & Effort Selectors */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 {/* 1. Counterpart Selector Dropdown */}
-                <div className="relative" ref={targetMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsTargetMenuOpen(!isTargetMenuOpen)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs font-medium text-neutral-900 dark:text-neutral-100 transition-colors shadow-xs cursor-pointer"
-                  >
-                    <span className="text-neutral-400 text-[11px] hidden sm:inline">Chatting with:</span>
-                    <span className="font-semibold text-teal-600 dark:text-teal-400">{selectedTarget}</span>
-                    <ChevronDown className="w-3 h-3 text-neutral-400" />
-                  </button>
-
-                  {isTargetMenuOpen && (
-                    <div className="absolute bottom-full mb-2 left-0 w-80 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1e] shadow-2xl z-50 p-2 space-y-2 max-h-96 overflow-y-auto animate-in fade-in duration-100">
-                      {counterparts.map((grp) => (
-                        <div key={grp.group} className="space-y-1">
-                          <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider px-2">
-                            {grp.group}
-                          </span>
-                          <div className="space-y-0.5">
-                            {grp.items.map((item) => {
-                              const Icon = item.icon;
-                              const isChosen = selectedTarget === item.name;
-                              return (
-                                <button
-                                  key={item.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedTarget(item.name);
-                                    setIsTargetMenuOpen(false);
-                                  }}
-                                  className={`w-full text-left p-2 rounded-lg text-xs transition-colors flex items-start gap-2.5 cursor-pointer ${
-                                    isChosen
-                                      ? 'bg-teal-500/10 text-teal-700 dark:text-teal-300 font-semibold'
-                                      : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
-                                  }`}
-                                >
-                                  <Icon className="w-4 h-4 text-teal-500 mt-0.5 shrink-0" />
-                                  <div>
-                                    <div className="font-semibold text-neutral-900 dark:text-neutral-100">{item.name}</div>
-                                    <div className="text-[11px] text-neutral-400 leading-tight mt-0.5">{item.role}</div>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <Dropdown
+                  title="Chatting with Counterpart"
+                  menuWidth="w-80"
+                  groups={counterparts.map((grp) => ({
+                    group: grp.group,
+                    items: grp.items.map((item) => {
+                      const Icon = item.icon;
+                      return {
+                        id: item.name,
+                        label: item.name,
+                        description: item.role,
+                        icon: <Icon className="w-4 h-4 text-teal-500" />
+                      };
+                    })
+                  }))}
+                  selectedId={selectedTarget}
+                  onSelect={(name) => setSelectedTarget(name)}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs font-medium text-neutral-900 dark:text-neutral-100 transition-colors shadow-xs cursor-pointer"
+                    >
+                      <span className="text-neutral-400 text-[11px] hidden sm:inline">Chatting with:</span>
+                      <span className="font-semibold text-teal-600 dark:text-teal-400">{selectedTarget}</span>
+                      <ChevronDown className="w-3 h-3 text-neutral-400" />
+                    </button>
+                  }
+                />
 
                 {/* 2. AI Model Selector Dropdown */}
-                <div className="relative" ref={modelMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
-                    title="Select AI Model"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
-                  >
-                    <Cpu className="w-3.5 h-3.5 text-teal-500" />
-                    <span className="font-semibold truncate max-w-[120px] sm:max-w-none">{selectedModel.name}</span>
-                    <ChevronDown className="w-3 h-3 text-neutral-400" />
-                  </button>
-
-                  {isModelMenuOpen && (
-                    <div className="absolute bottom-full mb-2 left-0 w-72 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1e] shadow-2xl z-50 p-2 space-y-1 animate-in fade-in duration-100">
-                      <div className="px-2 py-1 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800/80 mb-1">
-                        Select Provider &amp; Model
-                      </div>
-                      {AI_MODELS.map((mod) => (
-                        <button
-                          key={mod.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedModel(mod);
-                            setIsModelMenuOpen(false);
-                          }}
-                          className={`w-full text-left p-2 rounded-lg text-xs transition-colors flex items-start justify-between cursor-pointer ${
-                            selectedModel.id === mod.id
-                              ? 'bg-teal-500/10 text-teal-700 dark:text-teal-300 font-semibold'
-                              : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
-                          }`}
-                        >
-                          <div>
-                            <div className="font-semibold text-neutral-900 dark:text-neutral-100">{mod.name}</div>
-                            <div className="text-[10px] text-neutral-400 mt-0.5">{mod.recommendedFor}</div>
-                          </div>
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-500 shrink-0 ml-2">
-                            {mod.tag}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <Dropdown
+                  title="Select AI Model"
+                  menuWidth="w-72"
+                  items={AI_MODELS.map((mod) => ({
+                    id: mod.id,
+                    label: mod.name,
+                    description: mod.recommendedFor,
+                    icon: <Cpu className="w-4 h-4 text-teal-500" />,
+                    badge: (
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-500 shrink-0">
+                        {mod.tag}
+                      </span>
+                    )
+                  }))}
+                  selectedId={selectedModel.id}
+                  onSelect={(id) => {
+                    const mod = AI_MODELS.find((m) => m.id === id);
+                    if (mod) setSelectedModel(mod);
+                  }}
+                  trigger={
+                    <button
+                      type="button"
+                      title="Select AI Model"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
+                    >
+                      <Cpu className="w-3.5 h-3.5 text-teal-500" />
+                      <span className="font-semibold truncate max-w-[120px] sm:max-w-none">{selectedModel.name}</span>
+                      <ChevronDown className="w-3 h-3 text-neutral-400" />
+                    </button>
+                  }
+                />
 
                 {/* 3. Effort Selector Dropdown (Low ~ High) */}
-                <div className="relative" ref={effortMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsEffortMenuOpen(!isEffortMenuOpen)}
-                    title="Thinking / Reasoning Effort (Low ~ High)"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
-                  >
-                    <Brain className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-neutral-400 hidden sm:inline">Effort:</span>
-                    <span className={`font-semibold capitalize ${
-                      effortLevel === 'high' ? 'text-amber-500' : effortLevel === 'medium' ? 'text-teal-500' : 'text-blue-500'
-                    }`}>
-                      {effortLevel}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-neutral-400" />
-                  </button>
-
-                  {isEffortMenuOpen && (
-                    <div className="absolute bottom-full mb-2 left-0 w-64 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1e] shadow-2xl z-50 p-2 space-y-1 animate-in fade-in duration-100">
-                      <div className="px-2 py-1 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800/80 mb-1">
-                        Reasoning / Thinking Effort
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEffortLevel('low');
-                          setIsEffortMenuOpen(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-lg text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                          effortLevel === 'low'
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold'
-                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
-                        }`}
-                      >
-                        <div>
-                          <div className="font-semibold">Low Effort</div>
-                          <div className="text-[10px] text-neutral-400">~1k tokens &middot; Fast direct triage</div>
-                        </div>
-                        {effortLevel === 'low' && <Check className="w-3.5 h-3.5 text-blue-500" />}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEffortLevel('medium');
-                          setIsEffortMenuOpen(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-lg text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                          effortLevel === 'medium'
-                            ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold'
-                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
-                        }`}
-                      >
-                        <div>
-                          <div className="font-semibold">Medium Effort</div>
-                          <div className="text-[10px] text-neutral-400">~4k tokens &middot; Balanced problem solving</div>
-                        </div>
-                        {effortLevel === 'medium' && <Check className="w-3.5 h-3.5 text-teal-500" />}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEffortLevel('high');
-                          setIsEffortMenuOpen(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-lg text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                          effortLevel === 'high'
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold'
-                            : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
-                        }`}
-                      >
-                        <div>
-                          <div className="font-semibold">High Effort</div>
-                          <div className="text-[10px] text-neutral-400">~16k tokens &middot; Deep verification &amp; AST audits</div>
-                        </div>
-                        {effortLevel === 'high' && <Check className="w-3.5 h-3.5 text-amber-500" />}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <Dropdown
+                  title="Thinking & Reasoning Effort"
+                  menuWidth="w-64"
+                  items={[
+                    { id: 'low', label: 'Low Effort', description: '~1k tokens · Fast direct triage' },
+                    { id: 'medium', label: 'Medium Effort', description: '~4k tokens · Balanced problem solving' },
+                    { id: 'high', label: 'High Effort', description: '~16k tokens · Deep verification & AST audits' }
+                  ]}
+                  selectedId={effortLevel}
+                  onSelect={(id) => setEffortLevel(id as 'low' | 'medium' | 'high')}
+                  trigger={
+                    <button
+                      type="button"
+                      title="Thinking / Reasoning Effort (Low ~ High)"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
+                    >
+                      <Brain className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-neutral-400 hidden sm:inline">Effort:</span>
+                      <span className={`font-semibold capitalize ${
+                        effortLevel === 'high' ? 'text-amber-500' : effortLevel === 'medium' ? 'text-teal-500' : 'text-blue-500'
+                      }`}>
+                        {effortLevel}
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-neutral-400" />
+                    </button>
+                  }
+                />
               </div>
 
               {/* Right Group: Voice Mode & Command Send Button */}
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setIsVoiceModalOpen(true)}
-                  className="p-1.5 sm:p-2 rounded-xl border border-teal-500/40 bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0 flex items-center justify-center"
+                  icon={<Mic className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
                   title="Voice Quartermaster"
                   aria-label="Voice Quartermaster"
-                >
-                  <Mic className="w-4 h-4" />
-                </button>
+                  className="px-2"
+                />
                 <span className="text-[10px] text-neutral-400 hidden sm:inline">
                   Enter ↵ to send
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => handleSend()}
                   disabled={!input.trim()}
-                  className="px-3.5 py-1.5 rounded-xl bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 disabled:opacity-30 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
+                  icon={<Send className="w-3 h-3" />}
+                  shortLabel="Send"
                 >
-                  <Send className="w-3 h-3" />
-                  <span>Command</span>
-                </button>
+                  Command
+                </Button>
               </div>
             </div>
           </div>

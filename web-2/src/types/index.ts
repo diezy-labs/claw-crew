@@ -1,4 +1,5 @@
 export type ThemeMode = 'dark' | 'light';
+export type ColorTone = 'teal' | 'emerald' | 'sapphire' | 'amber' | 'amethyst' | 'crimson';
 
 export type NavigationTab =
   | 'quarterdeck'
@@ -16,6 +17,7 @@ export type NavigationTab =
   | 'harbor'
   | 'fleet-code'
   | 'crows-nest'
+  | 'engine-room'
   | 'shipyard'
   | 'settings'
   | 'quartermaster'; // backward compatibility alias
@@ -51,6 +53,7 @@ export interface FleetSettings {
   };
   appearance: {
     theme: ThemeMode | 'system';
+    colorTone?: ColorTone;
     density: DensityMode;
     terminology: TerminologyMode;
     showFunctionalSubtitles: boolean;

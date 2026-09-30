@@ -21,9 +21,8 @@ import {
   Database,
   Lock
 } from 'lucide-react';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 
 export const CrowsNestView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'doctor' | 'recovery'>('overview');
@@ -142,9 +141,9 @@ export const CrowsNestView: React.FC = () => {
   const hasWarnings = diagnostics.some((d) => d.status === 'warning');
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Standard Reusable PageHeader */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Standard Reusable PageHeader with Integrated Chips */}
+      <PageHeaderNav
         icon={<Activity className="w-4 h-4 text-teal-500 shrink-0" />}
         title="Crow’s Nest"
         badge={
@@ -162,82 +161,54 @@ export const CrowsNestView: React.FC = () => {
         actions={
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {activeTab === 'doctor' && hasWarnings && !remedyApplied && (
-              <button
-                onClick={handleApplyRemedy}
+              <Button
+                variant="amber"
+                size="sm"
+                icon={<Wrench className={`w-3.5 h-3.5 ${isApplyingRemedy ? 'animate-spin' : ''}`} />}
+                shortLabel="Remedy"
                 disabled={isApplyingRemedy}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-neutral-950 font-bold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                onClick={handleApplyRemedy}
               >
-                <Wrench className={`w-3.5 h-3.5 ${isApplyingRemedy ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{isApplyingRemedy ? 'Applying Remedy...' : 'Apply Automated Remedy'}</span>
-                <span className="sm:hidden">Remedy</span>
-              </button>
+                {isApplyingRemedy ? 'Applying Remedy...' : 'Apply Remedy'}
+              </Button>
             )}
 
             {activeTab === 'recovery' && (
-              <button
-                onClick={handleCreateSnapshot}
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Archive className="w-3.5 h-3.5" />}
+                shortLabel="Snapshot"
                 disabled={isCreatingSnapshot}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-opacity shadow-xs cursor-pointer disabled:opacity-50"
+                onClick={handleCreateSnapshot}
               >
-                <Archive className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isCreatingSnapshot ? 'Creating Snapshot...' : 'Create Snapshot'}</span>
-                <span className="sm:hidden">Snapshot</span>
-              </button>
+                {isCreatingSnapshot ? 'Creating Snapshot...' : 'Create Snapshot'}
+              </Button>
             )}
 
-            <button
-              onClick={handleRunDoctor}
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<RefreshCw className={`w-3.5 h-3.5 ${isRunningDoctor ? 'animate-spin text-teal-500' : ''}`} />}
+              shortLabel="Scan"
               disabled={isRunningDoctor}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              onClick={handleRunDoctor}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRunningDoctor ? 'animate-spin text-teal-500' : ''}`} />
-              <span className="hidden sm:inline">Scan Diagnostics</span>
-              <span className="sm:hidden">Scan</span>
-            </button>
+              Scan Diagnostics
+            </Button>
           </div>
         }
+        chips={{
+          items: [
+            { id: 'overview', label: 'System Observability' },
+            { id: 'doctor', label: 'Crow’s Nest Doctor', badge: hasWarnings && !remedyApplied },
+            { id: 'recovery', label: 'Disaster Recovery', count: snapshots.length }
+          ],
+          selectedId: activeTab,
+          onSelect: (id) => setActiveTab(id as any),
+          variant: 'pills'
+        }}
       />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
-      <PageStickyNav>
-        <SubMenuScroller className="gap-2 text-xs" containerClassName="w-full">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-              activeTab === 'overview'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            System Observability
-          </button>
-          <button
-            onClick={() => setActiveTab('doctor')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'doctor'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            <Stethoscope className="w-3.5 h-3.5 text-teal-500" />
-            <span>Crow’s Nest Doctor</span>
-            {hasWarnings && !remedyApplied && (
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('recovery')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-              activeTab === 'recovery'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-teal-500" />
-            <span>Disaster Recovery ({snapshots.length})</span>
-          </button>
-        </SubMenuScroller>
-      </PageStickyNav>
 
       {/* Tab 1: Overview & Metrics */}
       {activeTab === 'overview' && (

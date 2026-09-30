@@ -11,9 +11,8 @@ import {
   Clock
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 
 export const LogbookView: React.FC = () => {
@@ -49,9 +48,9 @@ export const LogbookView: React.FC = () => {
   ];
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-4xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Reusable Standard Header */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-3 sm:space-y-4 max-w-4xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable General Header with Integrated Chips */}
+      <PageHeaderNav
         icon={<BookOpen className="w-4 h-4 text-teal-500 shrink-0" />}
         title="Logbook"
         badge={
@@ -66,45 +65,27 @@ export const LogbookView: React.FC = () => {
           placeholder: 'Search traces, actors, correlation IDs...'
         }}
         actions={
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Download className="w-3.5 h-3.5" />}
+            shortLabel="Export"
             onClick={handleExportJSON}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-700 dark:text-neutral-300 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer shadow-2xs"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Export JSON</span>
-            <span className="sm:hidden">Export</span>
-          </button>
+            Export JSON
+          </Button>
         }
+        chips={{
+          items: severities.map((sev) => ({
+            id: sev.id,
+            label: sev.label,
+            count: sev.id === 'all' ? logbook.length : logbook.filter((e) => e.severity === sev.id).length
+          })),
+          selectedId: filterSeverity,
+          onSelect: setFilterSeverity,
+          variant: 'pills'
+        }}
       />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
-      <PageStickyNav>
-        <SubMenuScroller className="gap-2" containerClassName="w-full">
-          {severities.map((sev) => {
-            const isSelected = filterSeverity === sev.id;
-            const count = sev.id === 'all'
-              ? logbook.length
-              : logbook.filter((e) => e.severity === sev.id).length;
-
-            return (
-              <button
-                key={sev.id}
-                onClick={() => setFilterSeverity(sev.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
-                  isSelected
-                    ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold shadow-2xs'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-                }`}
-              >
-                <span>{sev.label}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300">
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </SubMenuScroller>
-      </PageStickyNav>
 
       {/* Timeline List */}
       <div className="space-y-3">

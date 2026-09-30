@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AppSidebar } from './AppSidebar';
-import { ContextBar } from './ContextBar';
+import { Navbar } from '../common/Navbar';
 import { RightRail } from './RightRail';
 import { CommandPalette } from './CommandPalette';
 import { RemoteAccessModal } from '../features/RemoteAccessModal';
@@ -23,6 +23,7 @@ import { LogbookView } from '../features/LogbookView';
 import { HarborView } from '../features/HarborView';
 import { FleetCodeView } from '../features/FleetCodeView';
 import { CrowsNestView } from '../features/CrowsNestView';
+import { EngineRoomView } from '../features/EngineRoomView';
 import { ShipyardView } from '../features/ShipyardView';
 import { SettingsView } from '../features/SettingsView';
 
@@ -146,6 +147,8 @@ export const AppShell: React.FC = () => {
         return <FleetCodeView />;
       case 'crows-nest':
         return <CrowsNestView />;
+      case 'engine-room':
+        return <EngineRoomView />;
       case 'shipyard':
         return <ShipyardView />;
       case 'settings':
@@ -162,8 +165,8 @@ export const AppShell: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Context Breadcrumb Top Bar */}
-        <ContextBar />
+        {/* Standard General Navbar */}
+        <Navbar />
 
         {/* Dynamic Canvas + Optional Right Rail */}
         <div className="flex-1 flex overflow-hidden">

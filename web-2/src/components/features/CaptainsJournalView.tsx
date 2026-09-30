@@ -20,6 +20,7 @@ import {
 import { useFleetStore } from '../../store/fleetStore';
 import { JournalSession } from '../../types';
 import { PageHeader } from '../common/PageHeader';
+import { Button } from '../common/Button';
 
 export const CaptainsJournalView: React.FC = () => {
   const {
@@ -94,14 +95,15 @@ export const CaptainsJournalView: React.FC = () => {
             placeholder: 'Search journal entries...'
           }}
           actions={
-            <button
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<PlusCircle className="w-3.5 h-3.5" />}
+              shortLabel="Entry"
               onClick={() => setIsCreating(true)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">New Entry</span>
-              <span className="sm:hidden">Entry</span>
-            </button>
+              + New Entry
+            </Button>
           }
         />
       </div>
@@ -289,25 +291,27 @@ export const CaptainsJournalView: React.FC = () => {
 
               {/* Conversion and Pin actions */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap self-end sm:self-auto">
-                <button
+                <Button
+                  variant="outline"
+                  size="xs"
+                  icon={<FileText className="w-3.5 h-3.5 text-teal-500" />}
+                  shortLabel="Artifact"
                   onClick={() => convertJournalToArtifact(activeSession.id)}
-                  className="px-2 sm:px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 hover:border-teal-500 text-neutral-700 dark:text-neutral-300 text-xs font-medium flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
                   title="Promote these notes to a durable Artifact"
                 >
-                  <FileText className="w-3.5 h-3.5 text-teal-500" />
-                  <span className="hidden sm:inline">Save as Artifact</span>
-                  <span className="sm:hidden">Artifact</span>
-                </button>
+                  Save Artifact
+                </Button>
 
-                <button
+                <Button
+                  variant="outline"
+                  size="xs"
+                  icon={<Map className="w-3.5 h-3.5 text-teal-500" />}
+                  shortLabel="Quest"
                   onClick={() => convertJournalToQuest(activeSession.id)}
-                  className="px-2 sm:px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 hover:border-teal-500 text-neutral-700 dark:text-neutral-300 text-xs font-medium flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
                   title="Turn this discussion into an operational Quest"
                 >
-                  <Map className="w-3.5 h-3.5 text-teal-500" />
-                  <span className="hidden sm:inline">Create Quest</span>
-                  <span className="sm:hidden">Quest</span>
-                </button>
+                  Draft Quest
+                </Button>
 
                 <button
                   onClick={() => togglePinJournalSession(activeSession.id)}

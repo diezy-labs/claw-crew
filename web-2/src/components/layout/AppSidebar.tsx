@@ -25,10 +25,12 @@ import {
   AlertTriangle,
   User,
   Flag,
-  Mic
+  Mic,
+  Terminal
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
+import { GalleonLogo } from '../common/GalleonLogo';
 
 export const AppSidebar: React.FC = () => {
   const {
@@ -106,6 +108,7 @@ export const AppSidebar: React.FC = () => {
       items: [
         { id: 'fleet-code', label: 'Fleet Code', icon: Shield, hint: 'Policy engine & risk tiers' },
         { id: 'crows-nest', label: 'Crow’s Nest', icon: Activity, hint: 'Observability & gateway health' },
+        { id: 'engine-room', label: 'Engine Room', icon: Terminal, hint: 'Local terminal, process monitor & services' },
         { id: 'shipyard', label: 'Shipyard', icon: Layers, hint: 'Fleet capacity & upgrades' }
       ]
     }
@@ -149,15 +152,15 @@ export const AppSidebar: React.FC = () => {
             <div className={`flex items-center gap-2.5 overflow-hidden ${isSidebarCollapsed ? 'mx-auto' : ''}`}>
               <div
                 onClick={() => handleTabClick('quarterdeck')}
-                className="w-8 h-8 rounded-lg bg-teal-600 dark:bg-teal-500 flex items-center justify-center text-neutral-950 font-bold shadow-sm shrink-0 cursor-pointer hover:bg-teal-500 transition-colors"
-                title="Fleet AI — Return to Quarterdeck"
+                className="w-8 h-8 rounded-lg overflow-hidden shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
+                title="Galleon Fleet — Return to Quarterdeck"
               >
-                <Anchor className="w-4 h-4 text-neutral-950" />
+                <GalleonLogo className="w-full h-full" />
               </div>
               {!isSidebarCollapsed && (
                 <div className="min-w-0">
                   <div className="text-sm font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
-                    <span className="truncate">Fleet AI</span>
+                    <span className="truncate">Galleon Fleet</span>
                     <span className="text-[10px] text-teal-600 dark:text-teal-400 font-mono px-1 py-0.2 rounded bg-teal-500/10 shrink-0">
                       v1.4
                     </span>

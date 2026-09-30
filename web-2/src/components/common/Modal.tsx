@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
+import { useSwipeToDismiss } from '../../hooks/useSwipeToDismiss';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -45,6 +46,12 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalContentRef = useRef<HTMLDivElement>(null);
 
+  // Hook for mobile swipe from left-to-right to dismiss
+  const { touchHandlers, style: swipeStyle, isDragging, dragOffset } = useSwipeToDismiss({
+    onDismiss: onClose,
+    enabled: isOpen
+  });
+
   // Close on Escape key press & prevent background scroll
   useEffect(() => {
     if (!isOpen) return;
@@ -83,12 +90,28 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={modalContentRef}
         onClick={(e) => e.stopPropagation()}
+        {...touchHandlers}
+        style={swipeStyle}
         className={
           isSheet
-            ? `w-full sm:w-[500px] h-full flex flex-col bg-white dark:bg-[#181a1e] border-l border-neutral-200 dark:border-neutral-800 shadow-2xl animate-in slide-in-from-right duration-200 cursor-default ${className}`
-            : `w-full ${maxWidthMap[maxWidth]} my-auto max-h-[88vh] flex flex-col rounded-2xl border border-teal-500/30 dark:border-teal-500/25 bg-white dark:bg-[#181a1e] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 cursor-default ${className}`
+            ? `relative w-full sm:w-[500px] h-full flex flex-col bg-white dark:bg-[#181a1e] border-l border-neutral-200 dark:border-neutral-800 shadow-2xl animate-in slide-in-from-right duration-200 cursor-default ${className}`
+            : `relative w-full ${maxWidthMap[maxWidth]} my-auto max-h-[88vh] flex flex-col rounded-2xl border border-teal-500/30 dark:border-teal-500/25 bg-white dark:bg-[#181a1e] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 cursor-default ${className}`
         }
       >
+        {/* Mobile Edge Swipe Indicator & Feedback */}
+        <div
+          className="sm:hidden absolute left-0 top-0 bottom-0 w-3 z-30 flex items-center justify-center pointer-events-none"
+          title="Swipe right to close"
+        >
+          <div className="w-1 h-14 rounded-full bg-neutral-300 dark:bg-neutral-600/70 opacity-40 ml-0.5" />
+        </div>
+
+        {isDragging && dragOffset > 20 && (
+          <div className="sm:hidden absolute top-3 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-full bg-neutral-900/90 dark:bg-black/90 text-white text-[11px] font-mono shadow-xl border border-neutral-700/50 flex items-center gap-1.5 animate-in fade-in duration-100 pointer-events-none">
+            <ChevronRight className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
+            <span>Swipe right to back</span>
+          </div>
+        )}
         {/* Header */}
         {(title || icon || badge || showCloseButton) && (
           <div className="px-5 py-4 sm:px-6 sm:py-4.5 border-b border-neutral-100 dark:border-neutral-800/80 flex items-start justify-between gap-3 shrink-0">

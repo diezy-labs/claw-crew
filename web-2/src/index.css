@@ -35,6 +35,73 @@
     --status-info: #7ab7e8;
   }
 
+  /* Galleon Dynamic Color Tone Palettes */
+  :root, [data-color-tone="teal"] {
+    --brand-primary: #0d9488;
+    --brand-primary-rgb: 13, 148, 136;
+    --accent-sea: #087e8b;
+  }
+  .dark, [data-color-tone="teal"].dark, .dark[data-color-tone="teal"] {
+    --brand-primary: #2dd4bf;
+    --brand-primary-rgb: 45, 212, 191;
+    --accent-sea: #66c7c5;
+  }
+
+  [data-color-tone="emerald"] {
+    --brand-primary: #059669;
+    --brand-primary-rgb: 5, 150, 105;
+    --accent-sea: #059669;
+  }
+  .dark[data-color-tone="emerald"], [data-color-tone="emerald"].dark {
+    --brand-primary: #34d399;
+    --brand-primary-rgb: 52, 211, 153;
+    --accent-sea: #34d399;
+  }
+
+  [data-color-tone="sapphire"] {
+    --brand-primary: #2563eb;
+    --brand-primary-rgb: 37, 99, 235;
+    --accent-sea: #2563eb;
+  }
+  .dark[data-color-tone="sapphire"], [data-color-tone="sapphire"].dark {
+    --brand-primary: #60a5fa;
+    --brand-primary-rgb: 96, 165, 250;
+    --accent-sea: #60a5fa;
+  }
+
+  [data-color-tone="amber"] {
+    --brand-primary: #d97706;
+    --brand-primary-rgb: 217, 119, 6;
+    --accent-sea: #d97706;
+  }
+  .dark[data-color-tone="amber"], [data-color-tone="amber"].dark {
+    --brand-primary: #fbbf24;
+    --brand-primary-rgb: 251, 191, 36;
+    --accent-sea: #fbbf24;
+  }
+
+  [data-color-tone="amethyst"] {
+    --brand-primary: #7c3aed;
+    --brand-primary-rgb: 124, 58, 237;
+    --accent-sea: #7c3aed;
+  }
+  .dark[data-color-tone="amethyst"], [data-color-tone="amethyst"].dark {
+    --brand-primary: #a78bfa;
+    --brand-primary-rgb: 167, 139, 250;
+    --accent-sea: #a78bfa;
+  }
+
+  [data-color-tone="crimson"] {
+    --brand-primary: #e11d48;
+    --brand-primary-rgb: 225, 29, 72;
+    --accent-sea: #e11d48;
+  }
+  .dark[data-color-tone="crimson"], [data-color-tone="crimson"].dark {
+    --brand-primary: #fb7185;
+    --brand-primary-rgb: 251, 113, 133;
+    --accent-sea: #fb7185;
+  }
+
   * {
     -webkit-tap-highlight-color: transparent;
   }

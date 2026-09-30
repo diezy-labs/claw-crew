@@ -20,7 +20,7 @@ export const TreasuryView: React.FC = () => {
   const percentage = Math.min(100, Math.round((totalSpent / monthlyCap) * 100));
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in">
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-5xl mx-auto w-full animate-view-fade-in">
       {/* Standard Reusable PageHeader */}
       <PageHeader
         icon={<Coins className="w-4 h-4 text-teal-500 shrink-0" />}

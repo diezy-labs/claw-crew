@@ -15,9 +15,8 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { Artifact } from '../../types';
-import { PageHeader } from '../common/PageHeader';
-import { PageStickyNav } from '../common/PageStickyNav';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 import { CardPopover } from '../common/CardPopover';
 
@@ -62,9 +61,9 @@ export const ArtifactsView: React.FC = () => {
   ];
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Reusable Standard Header */}
-      <PageHeader
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-3 sm:space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable General Header with Integrated Chips */}
+      <PageHeaderNav
         icon={<FileText className="w-4 h-4 text-teal-500 shrink-0" />}
         title="Artifact Gallery"
         badge={
@@ -78,36 +77,17 @@ export const ArtifactsView: React.FC = () => {
           onChange: setSearch,
           placeholder: 'Search artifacts & findings...'
         }}
+        chips={{
+          items: artifactTypes.map((type) => ({
+            id: type.id,
+            label: type.label,
+            count: type.id === 'all' ? artifacts.length : artifacts.filter((a) => a.type === type.id).length
+          })),
+          selectedId: filterType,
+          onSelect: setFilterType,
+          variant: 'pills'
+        }}
       />
-
-      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
-      <PageStickyNav>
-        <SubMenuScroller className="gap-2" containerClassName="w-full">
-          {artifactTypes.map((type) => {
-            const isSelected = filterType === type.id;
-            const count = type.id === 'all'
-              ? artifacts.length
-              : artifacts.filter((a) => a.type === type.id).length;
-
-            return (
-              <button
-                key={type.id}
-                onClick={() => setFilterType(type.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
-                  isSelected
-                    ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold shadow-2xs'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-                }`}
-              >
-                <span>{type.label}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300">
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </SubMenuScroller>
-      </PageStickyNav>
 
       {/* Grid of Artifacts */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -187,25 +167,26 @@ export const ArtifactsView: React.FC = () => {
         footer={
           selectedArtifact && (
             <div className="flex items-center justify-between w-full">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Download className="w-3.5 h-3.5" />}
+                shortLabel="Export"
                 onClick={() => handleExport(selectedArtifact)}
-                className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-1.5 cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export (.md)</span>
-              </button>
+                Export (.md)
+              </Button>
 
               {selectedArtifact.status !== 'treasure' ? (
-                <button
-                  type="button"
+                <Button
+                  variant="amber"
+                  size="sm"
+                  icon={<BookmarkCheck className="w-4 h-4" />}
+                  shortLabel="Treasure"
                   onClick={() => promoteArtifactToTreasure(selectedArtifact.id)}
-                  className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
-                  <BookmarkCheck className="w-4 h-4" />
-                  <span className="hidden sm:inline">Mark as Treasure</span>
-                  <span className="sm:hidden">Treasure</span>
-                </button>
+                  Mark as Treasure
+                </Button>
               ) : (
                 <span className="text-xs font-mono text-amber-500 flex items-center gap-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />

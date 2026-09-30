@@ -352,8 +352,7 @@ Quartermaster, please review this draft. Do you see any risks or opportunities t
                   className="text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
                 >
                   <Wand2 className="w-3.5 h-3.5 text-teal-500" />
-                  <span className="hidden sm:inline">{isGenerating ? 'Synthesizing...' : 'Synthesize SOP with AI'}</span>
-                  <span className="sm:hidden">{isGenerating ? 'Synthesizing...' : 'AI SOP'}</span>
+                  <span>{isGenerating ? 'Synthesizing...' : 'Synthesize SOP with AI'}</span>
                 </button>
               </div>
               <textarea
@@ -545,8 +544,7 @@ Quartermaster, please review this draft. Do you see any risks or opportunities t
               title="Discuss this brainstormed draft in Quarterdeck chat"
             >
               <MessageSquare className="w-3.5 h-3.5 text-teal-500" />
-              <span className="hidden sm:inline">Discuss in Chat</span>
-              <span className="sm:hidden">Discuss</span>
+              <span>Discuss in Chat</span>
             </button>
 
             <button
@@ -554,8 +552,7 @@ Quartermaster, please review this draft. Do you see any risks or opportunities t
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 dark:bg-teal-500 hover:bg-teal-500 dark:hover:bg-teal-400 text-white dark:text-neutral-950 text-xs font-bold transition-all shadow-md active:scale-[0.98] cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Launch Quest to Fleet</span>
-              <span className="sm:hidden">Launch</span>
+              <span>Launch Quest to Fleet</span>
             </button>
           </div>
         </div>
