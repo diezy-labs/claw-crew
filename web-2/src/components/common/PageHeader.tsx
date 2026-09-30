@@ -28,7 +28,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div
-      className={`border-b border-neutral-200 dark:border-neutral-800 pb-3 sm:pb-4 shrink-0 transition-all ${className}`}
+      className={`border-b border-neutral-200 dark:border-neutral-800 pt-4 sm:pt-5 pb-3 sm:pb-4 shrink-0 transition-all ${className}`}
     >
       <div className="flex items-center justify-between gap-3">
         {/* Left: Icon, Title & Badge */}
@@ -71,8 +71,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   {icon}
                 </div>
               )}
-              <div className="min-w-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+              <div className="min-w-0 flex-1 flex items-center gap-2 overflow-hidden">
+                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight whitespace-nowrap shrink-0">
                   {title}
                 </h1>
                 {badge && (

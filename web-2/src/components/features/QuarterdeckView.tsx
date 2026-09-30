@@ -40,6 +40,8 @@ import { LiveCanvasPane } from './LiveCanvasPane';
 import { SubMenuScroller } from '../common/SubMenuScroller';
 import { Dropdown } from '../common/Dropdown';
 import { Button } from '../common/Button';
+import { ChatboxSparksEffect } from '../common/ChatboxSparksEffect';
+import { getSparksConfig, SparksConfig } from '../../utils/sparksEngine';
 
 export type AIModelOption = {
   id: string;
@@ -125,6 +127,25 @@ export const QuarterdeckView: React.FC = () => {
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isCanvasOpen, setIsCanvasOpen] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+
+  // Quarterdeck Chatbox Sparks Effect Config
+  const [sparksConfig, setSparksConfig] = useState<SparksConfig>(() => getSparksConfig());
+
+  useEffect(() => {
+    const handleSparksUpdated = (e: any) => {
+      if (e.detail) {
+        setSparksConfig(e.detail);
+      } else {
+        setSparksConfig(getSparksConfig());
+      }
+    };
+    window.addEventListener('galleon:sparks-updated', handleSparksUpdated);
+    window.addEventListener('storage', handleSparksUpdated);
+    return () => {
+      window.removeEventListener('galleon:sparks-updated', handleSparksUpdated);
+      window.removeEventListener('storage', handleSparksUpdated);
+    };
+  }, []);
 
   // Auto-hide Quarterdeck header in mobile mode after inactivity or when clicking/tapping
   useEffect(() => {
@@ -646,12 +667,16 @@ export const QuarterdeckView: React.FC = () => {
             </div>
           )}
 
-          {/* Main Input Box with Ocean Wave Spark Outline (Slow, Gentle, Rhythmic Pulse) */}
-          <div className="rounded-2xl border bg-white dark:bg-[#181a1e] ocean-spark-glow transition-all relative overflow-hidden group">
-            {/* Luminous Ocean Wave Spark Accent Line */}
-            <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 dark:via-cyan-300 to-transparent opacity-85 pointer-events-none animate-pulse" />
-
-            <textarea
+          {/* Main Input Box with Custom Sparks & Ambient Glow Effect */}
+          <ChatboxSparksEffect config={sparksConfig} className="w-full">
+            <div
+              className="rounded-2xl border transition-all relative overflow-hidden group shadow-sm"
+              style={{
+                backgroundColor: 'var(--bg-surface)',
+                borderColor: 'var(--border-subtle)'
+              }}
+            >
+              <textarea
               rows={2}
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -660,8 +685,14 @@ export const QuarterdeckView: React.FC = () => {
               className="w-full bg-transparent px-4 py-3 text-xs sm:text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none resize-none leading-relaxed relative z-10"
             />
 
-            {/* Bottom Toolbar inside Composer — 3 Buttons Relocated Here */}
-            <div className="px-3 py-2 bg-neutral-50/80 dark:bg-neutral-900/60 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between gap-2 flex-wrap rounded-b-2xl">
+            {/* Bottom Toolbar inside Composer — Dynamic Theme Tokens */}
+            <div
+              className="px-3 py-2 border-t flex items-center justify-between gap-2 flex-wrap rounded-b-2xl"
+              style={{
+                backgroundColor: 'var(--bg-elevated)',
+                borderColor: 'var(--border-subtle)'
+              }}
+            >
               {/* Left Group: Counterpart, AI Model & Effort Selectors */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 {/* 1. Counterpart Selector Dropdown */}
@@ -676,7 +707,7 @@ export const QuarterdeckView: React.FC = () => {
                         id: item.name,
                         label: item.name,
                         description: item.role,
-                        icon: <Icon className="w-4 h-4 text-teal-500" />
+                        icon: <Icon className="w-4 h-4" style={{ color: 'var(--brand-primary)' }} />
                       };
                     })
                   }))}
@@ -685,10 +716,14 @@ export const QuarterdeckView: React.FC = () => {
                   trigger={
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs font-medium text-neutral-900 dark:text-neutral-100 transition-colors shadow-xs cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium text-neutral-900 dark:text-neutral-100 transition-colors shadow-xs cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)'
+                      }}
                     >
                       <span className="text-neutral-400 text-[11px] hidden sm:inline">Chatting with:</span>
-                      <span className="font-semibold text-teal-600 dark:text-teal-400">{selectedTarget}</span>
+                      <span className="font-semibold" style={{ color: 'var(--brand-primary)' }}>{selectedTarget}</span>
                       <ChevronDown className="w-3 h-3 text-neutral-400" />
                     </button>
                   }
@@ -702,7 +737,7 @@ export const QuarterdeckView: React.FC = () => {
                     id: mod.id,
                     label: mod.name,
                     description: mod.recommendedFor,
-                    icon: <Cpu className="w-4 h-4 text-teal-500" />,
+                    icon: <Cpu className="w-4 h-4" style={{ color: 'var(--brand-primary)' }} />,
                     badge: (
                       <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-500 shrink-0">
                         {mod.tag}
@@ -718,9 +753,13 @@ export const QuarterdeckView: React.FC = () => {
                     <button
                       type="button"
                       title="Select AI Model"
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)'
+                      }}
                     >
-                      <Cpu className="w-3.5 h-3.5 text-teal-500" />
+                      <Cpu className="w-3.5 h-3.5" style={{ color: 'var(--brand-primary)' }} />
                       <span className="font-semibold truncate max-w-[120px] sm:max-w-none">{selectedModel.name}</span>
                       <ChevronDown className="w-3 h-3 text-neutral-400" />
                     </button>
@@ -742,7 +781,11 @@ export const QuarterdeckView: React.FC = () => {
                     <button
                       type="button"
                       title="Thinking / Reasoning Effort (Low ~ High)"
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-teal-500/50 text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs text-neutral-800 dark:text-neutral-200 transition-colors shadow-xs cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderColor: 'var(--border-subtle)'
+                      }}
                     >
                       <Brain className="w-3.5 h-3.5 text-amber-500" />
                       <span className="text-neutral-400 hidden sm:inline">Effort:</span>
@@ -763,7 +806,7 @@ export const QuarterdeckView: React.FC = () => {
                   variant="secondary"
                   size="sm"
                   onClick={() => setIsVoiceModalOpen(true)}
-                  icon={<Mic className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+                  icon={<Mic className="w-4 h-4" style={{ color: 'var(--brand-primary)' }} />}
                   title="Voice Quartermaster"
                   aria-label="Voice Quartermaster"
                   className="px-2"
@@ -784,6 +827,7 @@ export const QuarterdeckView: React.FC = () => {
               </div>
             </div>
           </div>
+        </ChatboxSparksEffect>
         </div>
       </div>
     </div>

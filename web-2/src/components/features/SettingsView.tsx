@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { PageHeader } from '../common/PageHeader';
+import { ThemeCustomizer } from './ThemeCustomizer';
 import { SettingsCategory, TerminologyMode, DensityMode, UpdateChannel, ColorTone } from '../../types';
 
 export const SettingsView: React.FC = () => {
@@ -316,26 +317,32 @@ export const SettingsView: React.FC = () => {
 
           {/* 2. Appearance & Language */}
           {activeSettingsCategory === 'appearance' && (
-            <div className="space-y-5 text-xs">
+            <div className="space-y-6 text-xs">
               <div>
                 <h2 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
-                  Appearance &amp; Language
+                  Appearance, Themes &amp; Color Customization
                 </h2>
                 <p className="text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  Personalize how Fleet AI looks and speaks without altering core fleet behavior.
+                  Personalize UI colors, customize canvas/accent palettes, and apply themes directly from VS Code.
                 </p>
               </div>
 
+              {/* Theme & VS Code Customizer */}
               <div className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-5">
-                {/* Theme */}
-                <div>
-                  <label className="block font-semibold text-neutral-800 dark:text-neutral-200 mb-2">
-                    Theme
-                  </label>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4">
+                  <div>
+                    <label className="block font-bold text-neutral-900 dark:text-neutral-100 text-sm">
+                      Base Luminance Mode
+                    </label>
+                    <span className="text-[11px] text-neutral-500">
+                      Standard dark or light luminance foundation
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     {(['dark', 'light'] as const).map((t) => (
                       <button
                         key={t}
+                        type="button"
                         onClick={() => {
                           setTheme(t);
                           updateSettings((s) => ({
@@ -343,10 +350,10 @@ export const SettingsView: React.FC = () => {
                             appearance: { ...s.appearance, theme: t }
                           }));
                         }}
-                        className={`px-4 py-2 rounded-lg border font-semibold capitalize ${
+                        className={`px-3.5 py-1.5 rounded-lg border font-semibold capitalize transition-all cursor-pointer ${
                           settings.appearance.theme === t
-                            ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400'
-                            : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400'
+                            ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400 shadow-2xs'
+                            : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                         }`}
                       >
                         {t} Mode
@@ -355,6 +362,11 @@ export const SettingsView: React.FC = () => {
                   </div>
                 </div>
 
+                {/* VS Code & Custom Theme Engine */}
+                <ThemeCustomizer />
+              </div>
+
+              <div className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-5">
                 {/* Terminology Mode */}
                 <div>
                   <label className="block font-semibold text-neutral-800 dark:text-neutral-200 mb-1">

@@ -228,22 +228,35 @@ export const AppSidebar: React.FC = () => {
                             key={item.id}
                             onClick={() => handleTabClick(item.id)}
                             title={isSidebarCollapsed ? `${item.label} — ${item.hint || ''}` : undefined}
+                            style={
+                              isActive
+                                ? {
+                                    backgroundColor: 'rgba(var(--brand-primary-rgb, 13, 148, 136), 0.16)',
+                                    color: 'var(--brand-primary, #2dd4bf)'
+                                  }
+                                : undefined
+                            }
                             className={`w-full flex items-center ${
                               isSidebarCollapsed ? 'justify-center px-0 py-2' : 'justify-between px-2.5 py-1.5'
                             } rounded-md text-xs font-medium transition-colors relative group ${
                               isActive
-                                ? 'bg-neutral-100 dark:bg-neutral-800/90 text-teal-700 dark:text-teal-300 font-semibold'
+                                ? 'font-semibold'
                                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 hover:text-neutral-950 dark:hover:text-white'
                             }`}
                           >
                             <div className={`flex items-center gap-2.5 ${isSidebarCollapsed ? 'justify-center' : 'truncate'}`}>
-                              <Icon
-                                className={`w-4 h-4 shrink-0 transition-colors ${
-                                  isActive
-                                    ? 'text-teal-600 dark:text-teal-400'
-                                    : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300'
-                                }`}
-                              />
+                              <span
+                                style={isActive ? { color: 'var(--brand-primary, #2dd4bf)' } : undefined}
+                                className="shrink-0 flex items-center justify-center"
+                              >
+                                <Icon
+                                  className={`w-4 h-4 shrink-0 transition-colors ${
+                                    isActive
+                                      ? 'text-teal-600 dark:text-teal-400'
+                                      : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300'
+                                  }`}
+                                />
+                              </span>
                               {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
                             </div>
 
@@ -318,8 +331,9 @@ export const AppSidebar: React.FC = () => {
 
                 <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
                   <div
+                    style={!isAnchorDropped ? { backgroundColor: 'var(--brand-primary, #0d9488)' } : undefined}
                     className={`h-full rounded-full transition-all duration-300 ${
-                      isAnchorDropped ? 'bg-amber-500 w-full' : 'bg-teal-500 w-1/3'
+                      isAnchorDropped ? 'bg-amber-500 w-full' : 'w-1/3 shadow-2xs'
                     }`}
                   />
                 </div>

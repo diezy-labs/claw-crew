@@ -24,6 +24,7 @@ import { PageHeaderNav } from '../common/PageHeaderNav';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { ItemCard } from '../common/ItemCard';
+import { SelectDropdown } from '../common/Dropdown';
 
 export const QuestsView: React.FC = () => {
   const {
@@ -407,36 +408,30 @@ export const QuestsView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1">
+                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1 text-xs">
                     3. Assigned Specialist Ship
                   </label>
-                  <select
+                  <SelectDropdown
                     value={newShipId}
-                    onChange={(e) => setNewShipId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                  >
-                    {ships.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setNewShipId(val)}
+                    options={ships.map((s) => ({ value: s.id, label: s.name }))}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1">
+                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1 text-xs">
                     Priority
                   </label>
-                  <select
+                  <SelectDropdown
                     value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
+                    onChange={(val) => setNewPriority(val as any)}
+                    options={[
+                      { value: 'low', label: 'Low' },
+                      { value: 'medium', label: 'Medium' },
+                      { value: 'high', label: 'High' },
+                      { value: 'urgent', label: 'Urgent' }
+                    ]}
+                  />
                 </div>
               </div>
 

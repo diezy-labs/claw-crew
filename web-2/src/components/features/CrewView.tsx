@@ -20,6 +20,7 @@ import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { ItemCard } from '../common/ItemCard';
 import { CardPopover } from '../common/CardPopover';
+import { SelectDropdown } from '../common/Dropdown';
 
 export const CrewView: React.FC = () => {
   const { crew, ships, addCrewMember, updateCrewMember, setActiveTab, createQuest } = useFleetStore();
@@ -464,32 +465,32 @@ export const CrewView: React.FC = () => {
                   <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                     AI Model Profile
                   </label>
-                  <select
-                    value={editForm.modelProfile || ''}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, modelProfile: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
-                  >
-                    <option value="Claude 3.7 Sonnet (Reasoning)">Claude 3.7 Sonnet (Reasoning)</option>
-                    <option value="Claude 3.7 Sonnet">Claude 3.7 Sonnet</option>
-                    <option value="Gemini 2.5 Pro">Gemini 2.5 Pro</option>
-                    <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
-                    <option value="GPT-4o">GPT-4o</option>
-                  </select>
+                  <SelectDropdown
+                    value={editForm.modelProfile || 'Claude 3.7 Sonnet (Reasoning)'}
+                    onChange={(val) => setEditForm((prev) => ({ ...prev, modelProfile: val }))}
+                    options={[
+                      'Claude 3.7 Sonnet (Reasoning)',
+                      'Claude 3.7 Sonnet',
+                      'Gemini 2.5 Pro',
+                      'Gemini 2.5 Flash',
+                      'GPT-4o'
+                    ]}
+                  />
                 </div>
 
                 <div>
                   <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                     Authority Level
                   </label>
-                  <select
+                  <SelectDropdown
                     value={editForm.authority || 'draft_only'}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, authority: e.target.value as any }))}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
-                  >
-                    <option value="read_only">Read Only (Inspection)</option>
-                    <option value="draft_only">Draft Only (Requires Approval)</option>
-                    <option value="full_autonomous">Full Autonomous (Authorized)</option>
-                  </select>
+                    onChange={(val) => setEditForm((prev) => ({ ...prev, authority: val as any }))}
+                    options={[
+                      { value: 'read_only', label: 'Read Only (Inspection)' },
+                      { value: 'draft_only', label: 'Draft Only (Requires Approval)' },
+                      { value: 'full_autonomous', label: 'Full Autonomous (Authorized)' }
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -498,30 +499,30 @@ export const CrewView: React.FC = () => {
                   <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                     Memory Scope
                   </label>
-                  <select
+                  <SelectDropdown
                     value={editForm.memoryScope || 'ship'}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, memoryScope: e.target.value as any }))}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
-                  >
-                    <option value="ship">Ship Scoped</option>
-                    <option value="fleet">Fleet Wide</option>
-                    <option value="private">Private Scoped</option>
-                  </select>
+                    onChange={(val) => setEditForm((prev) => ({ ...prev, memoryScope: val as any }))}
+                    options={[
+                      { value: 'ship', label: 'Ship Scoped' },
+                      { value: 'fleet', label: 'Fleet Wide' },
+                      { value: 'private', label: 'Private Scoped' }
+                    ]}
+                  />
                 </div>
 
                 <div>
                   <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
                     Active Status
                   </label>
-                  <select
+                  <SelectDropdown
                     value={editForm.status || 'active'}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value as any }))}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
-                  >
-                    <option value="active">Active</option>
-                    <option value="standby">Standby</option>
-                    <option value="busy">Busy / On Voyage</option>
-                  </select>
+                    onChange={(val) => setEditForm((prev) => ({ ...prev, status: val as any }))}
+                    options={[
+                      { value: 'active', label: 'Active (On Deck)' },
+                      { value: 'standby', label: 'Standby (Quarters)' },
+                      { value: 'busy', label: 'Busy / On Voyage' }
+                    ]}
+                  />
                 </div>
               </div>
             </div>

@@ -18,11 +18,13 @@ import {
   Palette,
   Menu,
   Activity,
-  QrCode
+  QrCode,
+  Monitor
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { SettingsCategory } from '../../types';
 import { PWAInstallButton } from './PWAInstallButton';
+import { TauriDesktopModal } from './TauriDesktopModal';
 import { Modal } from './Modal';
 import { Button } from './Button';
 
@@ -67,6 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [isTauriModalOpen, setIsTauriModalOpen] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
@@ -264,6 +267,17 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* PWA In-App Install Prompt */}
         <PWAInstallButton />
 
+        {/* Desktop Tauri v2 Preview Button */}
+        <button
+          type="button"
+          onClick={() => setIsTauriModalOpen(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-600 dark:text-neutral-300 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-500/40 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
+          title="Tauri v2 Desktop App Simulator & Project Scaffolding"
+        >
+          <Monitor className="w-3.5 h-3.5 text-teal-500" />
+          <span className="hidden xl:inline font-mono text-[11px]">Desktop (Tauri v2)</span>
+        </button>
+
         {/* Fleet Pulse Tray / Sidebar Toggle */}
         {showFleetPulse && (
           <button
@@ -395,6 +409,21 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Group 2: Preferences Shortcuts */}
                 <div className="py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAccountMenuOpen(false);
+                      setIsTauriModalOpen(true);
+                    }}
+                    className="w-full px-4 py-1.5 text-left text-xs text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Monitor className="w-3.5 h-3.5 text-teal-500" />
+                      <span>Desktop App (Tauri v2)</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-teal-600 dark:text-teal-400">Simulator</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => handleNavigateToSetting('appearance')}
@@ -590,6 +619,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           </form>
         )}
       </Modal>
+
+      {/* Tauri v2 Desktop Simulator & Scaffolding Modal */}
+      <TauriDesktopModal
+        isOpen={isTauriModalOpen}
+        onClose={() => setIsTauriModalOpen(false)}
+      />
     </header>
   );
 };

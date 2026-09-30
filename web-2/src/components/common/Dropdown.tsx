@@ -33,6 +33,7 @@ export interface DropdownProps {
   size?: 'xs' | 'sm' | 'md';
   className?: string;
   menuWidth?: string; // e.g. 'w-56', 'w-72', 'w-80'
+  matchTriggerWidth?: boolean;
   disabled?: boolean;
 }
 
@@ -50,11 +51,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
   size = 'sm',
   className = '',
   menuWidth = 'w-64',
+  matchTriggerWidth = false,
   disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [coords, setCoords] = useState<{ top?: number; bottom?: number; left?: number; right?: number; maxHeight?: number }>({});
+  const [coords, setCoords] = useState<{
+    top?: number;
+    bottom?: number;
+    left?: number;
+    right?: number;
+    maxHeight?: number;
+    width?: number;
+  }>({});
   
   const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -83,7 +92,16 @@ export const Dropdown: React.FC<DropdownProps> = ({
     const openUpwards =
       placement === 'top' || (placement === 'auto' && spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow);
 
-    const calculatedCoords: { top?: number; bottom?: number; left?: number; right?: number; maxHeight?: number } = {};
+    const calculatedCoords: {
+      top?: number;
+      bottom?: number;
+      left?: number;
+      right?: number;
+      maxHeight?: number;
+      width?: number;
+    } = {
+      width: rect.width
+    };
 
     if (openUpwards) {
       calculatedCoords.bottom = windowHeight - rect.top + 6;
@@ -96,7 +114,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
     if (align === 'right') {
       calculatedCoords.right = Math.max(12, windowWidth - rect.right);
     } else {
-      calculatedCoords.left = Math.max(12, Math.min(rect.left, windowWidth - 320));
+      calculatedCoords.left = Math.max(12, rect.left);
     }
 
     setCoords(calculatedCoords);
@@ -302,9 +320,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
             bottom: coords.bottom !== undefined ? `${coords.bottom}px` : undefined,
             left: coords.left !== undefined ? `${coords.left}px` : undefined,
             right: coords.right !== undefined ? `${coords.right}px` : undefined,
+            width: matchTriggerWidth && coords.width ? `${coords.width}px` : undefined,
+            maxWidth: 'calc(100vw - 24px)',
             maxHeight: coords.maxHeight !== undefined ? `${coords.maxHeight}px` : '380px'
           }}
-          className={`z-[9999] ${menuWidth} rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1e] p-2 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 overflow-y-auto scrollbar-thin animate-in fade-in zoom-in-95 duration-100`}
+          className={`z-[9999] ${matchTriggerWidth ? '' : menuWidth} rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#181a1e] p-1.5 shadow-2xl ring-1 ring-black/10 dark:ring-white/10 overflow-y-auto scrollbar-thin animate-in fade-in zoom-in-95 duration-100`}
         >
           {renderListContent()}
         </div>
@@ -327,7 +347,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
           type="button"
           disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
-          className={`inline-flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 font-medium text-neutral-800 dark:text-neutral-200 hover:border-teal-500/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 focus:outline-none transition-colors shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${sizeClasses}`}
+          className={`inline-flex items-center justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 font-medium text-neutral-800 dark:text-neutral-200 hover:border-teal-500/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 focus:outline-none transition-colors shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${sizeClasses}`}
         >
           <div className="flex items-center gap-1.5 min-w-0">
             {icon || selectedItem?.icon}
@@ -343,5 +363,79 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
       {portalContent}
     </div>
+  );
+};
+
+export interface SelectOption {
+  value: string;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
+}
+
+export interface SelectDropdownProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: (string | SelectOption)[];
+  placeholder?: string;
+  className?: string;
+  menuWidth?: string;
+  matchTriggerWidth?: boolean;
+  disabled?: boolean;
+}
+
+/**
+ * SelectDropdown — A standardized custom select component with matching rounded borders
+ * Replaces sharp, angular native HTML <select> popups with matching rounded-xl surfaces.
+ */
+export const SelectDropdown: React.FC<SelectDropdownProps> = ({
+  value,
+  onChange,
+  options,
+  placeholder = 'Select option...',
+  className = '',
+  menuWidth = 'w-64',
+  matchTriggerWidth = true,
+  disabled = false
+}) => {
+  const normalizedItems: DropdownItem[] = options.map((opt) => {
+    if (typeof opt === 'string') {
+      return { id: opt, label: opt };
+    }
+    return {
+      id: opt.value,
+      label: opt.label,
+      description: opt.description,
+      icon: opt.icon
+    };
+  });
+
+  const selectedItem = normalizedItems.find((i) => i.id === value);
+
+  return (
+    <Dropdown
+      items={normalizedItems}
+      selectedId={value}
+      onSelect={(id) => onChange(id)}
+      disabled={disabled}
+      matchTriggerWidth={matchTriggerWidth}
+      menuWidth={menuWidth}
+      className={`w-full ${className}`}
+      trigger={
+        <div
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 text-xs font-sans transition-all shadow-2xs cursor-pointer select-none focus:outline-none focus:ring-1 focus:ring-teal-500 hover:border-neutral-300 dark:hover:border-neutral-600 ${
+            disabled ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          <div className="flex items-center gap-2 truncate">
+            {selectedItem?.icon}
+            <span className="truncate">{selectedItem ? selectedItem.label : placeholder}</span>
+          </div>
+          <ChevronDown className="w-3.5 h-3.5 text-neutral-400 shrink-0 ml-2" />
+        </div>
+      }
+    />
   );
 };

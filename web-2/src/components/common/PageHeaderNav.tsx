@@ -50,15 +50,22 @@ export const PageHeaderNav = <T extends string = string>({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   const stickyClasses = sticky
-    ? 'sticky top-0 z-20 bg-[var(--bg-canvas)]/95 backdrop-blur-md border-b border-neutral-200/80 dark:border-neutral-800/80 shadow-2xs'
-    : 'border-b border-neutral-200/80 dark:border-neutral-800/80';
+    ? 'sticky top-0 z-20 backdrop-blur-md border-b shadow-2xs'
+    : 'border-b';
+
+  const hasSubNav = Boolean(chips || navContent);
+  const rowPaddingClasses = hasSubNav ? 'pt-2.5 sm:pt-3 pb-2' : 'pt-4 sm:pt-5 pb-3 sm:pb-4';
 
   return (
     <div
-      className={`-mx-4 sm:-mx-6 px-4 sm:px-6 transition-all shrink-0 ${stickyClasses} ${containerClassName}`}
+      style={{
+        backgroundColor: 'var(--bg-canvas, #121315)',
+        borderColor: 'var(--border-subtle, #2c3036)'
+      }}
+      className={`-mx-4 sm:-mx-6 px-4 sm:px-6 transition-colors shrink-0 ${stickyClasses} ${containerClassName}`}
     >
       {/* Top Header Row: Icon, Title, Badge, Description, Search, Actions */}
-      <div className={`flex items-center justify-between gap-3 pt-2.5 sm:pt-3 pb-2 min-w-0 ${className}`}>
+      <div className={`flex items-center justify-between gap-3 ${rowPaddingClasses} min-w-0 ${className}`}>
         {/* Left: Icon, Title, Badge & optional inline description */}
         <div className="min-w-0 flex-1">
           {search && isMobileSearchOpen ? (
@@ -71,7 +78,12 @@ export const PageHeaderNav = <T extends string = string>({
                   value={search.value}
                   onChange={(e) => search.onChange(e.target.value)}
                   autoFocus
-                  className="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  style={{
+                    backgroundColor: 'var(--bg-surface, #191b1f)',
+                    borderColor: 'var(--border-subtle, #2c3036)',
+                    color: 'var(--text-primary, #f3f4f1)'
+                  }}
+                  className="w-full pl-8 pr-7 py-1.5 text-xs rounded-lg border placeholder:text-neutral-400 focus:outline-none"
                 />
                 {search.value && (
                   <button
@@ -94,17 +106,24 @@ export const PageHeaderNav = <T extends string = string>({
           ) : (
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
               {icon && (
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
+                <div
+                  style={{
+                    backgroundColor: 'rgba(var(--brand-primary-rgb, 13, 148, 136), 0.14)',
+                    color: 'var(--brand-primary, #2dd4bf)',
+                    borderColor: 'rgba(var(--brand-primary-rgb, 13, 148, 136), 0.3)'
+                  }}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border shadow-2xs"
+                >
                   {icon}
                 </div>
               )}
-              <div className="min-w-0 flex items-baseline gap-2 flex-wrap sm:flex-nowrap">
-                <h1 className="text-base sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+              <div className="min-w-0 flex-1 flex items-baseline gap-2 overflow-hidden">
+                <h1 className="text-base sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight whitespace-nowrap shrink-0">
                   {title}
                 </h1>
                 {badge && <div className="shrink-0">{badge}</div>}
                 {description && (
-                  <span className="hidden xl:inline-block text-xs text-neutral-400 dark:text-neutral-500 truncate max-w-sm ml-1 font-normal">
+                  <span className="hidden md:inline-block text-xs text-neutral-400 dark:text-neutral-500 truncate min-w-0 flex-1 ml-1 font-normal">
                     · {description}
                   </span>
                 )}
