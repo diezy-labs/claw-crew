@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   BookOpen,
   Search,
@@ -16,6 +16,24 @@ export const LogbookView: React.FC = () => {
   const { logbook } = useFleetStore();
   const [search, setSearch] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('all');
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      if (currentScrollTop > 15) {
+        if (currentScrollTop > lastScrollTop.current + 6) {
+          setIsHeaderVisible(false);
+        } else if (currentScrollTop < lastScrollTop.current - 8) {
+          setIsHeaderVisible(true);
+        }
+      } else {
+        setIsHeaderVisible(true);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
 
   const filtered = logbook.filter((entry) => {
     const matchSearch =
@@ -38,8 +56,14 @@ export const LogbookView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header */}
-      <div className="p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+      {/* Top Header - Auto-collapses on mobile scroll down */}
+      <div
+        className={`transition-all duration-300 shrink-0 ${
+          isHeaderVisible
+            ? 'max-h-28 p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
+            : 'max-h-0 py-0 px-4 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-6 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
+        } flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
+      >
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
@@ -77,7 +101,10 @@ export const LogbookView: React.FC = () => {
       </div>
 
       {/* Timeline List */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div
+        onScroll={handleViewportScroll}
+        className="flex-1 overflow-y-auto p-4 sm:p-6"
+      >
         <div className="max-w-4xl mx-auto space-y-3">
           {filtered.map((entry) => (
             <div

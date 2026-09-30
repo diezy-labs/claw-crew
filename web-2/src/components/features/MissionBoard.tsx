@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   LayoutGrid,
   PlusCircle,
@@ -55,6 +55,24 @@ export const MissionBoard: React.FC = () => {
   const [newShipId, setNewShipId] = useState('ship-dev');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
   const [newBudget, setNewBudget] = useState(2.00);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      if (currentScrollTop > 15) {
+        if (currentScrollTop > lastScrollTop.current + 6) {
+          setIsHeaderVisible(false);
+        } else if (currentScrollTop < lastScrollTop.current - 8) {
+          setIsHeaderVisible(true);
+        }
+      } else {
+        setIsHeaderVisible(true);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
 
   const columns: {
     status: QuestStatus;
@@ -101,8 +119,14 @@ export const MissionBoard: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Board Header & Controls */}
-      <div className="p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+      {/* Board Header & Controls - Auto-collapses on mobile scroll down */}
+      <div
+        className={`transition-all duration-300 shrink-0 ${
+          isHeaderVisible
+            ? 'max-h-28 p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
+            : 'max-h-0 py-0 px-4 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-6 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
+        } flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
+      >
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
@@ -186,7 +210,10 @@ export const MissionBoard: React.FC = () => {
                 </div>
 
                 {/* Cards Container */}
-                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+                <div
+                  onScroll={handleViewportScroll}
+                  className="flex-1 overflow-y-auto space-y-2.5 pr-1"
+                >
                   {colQuests.length === 0 ? (
                     <div className="p-4 rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 text-center text-xs text-neutral-400">
                       No quests in {col.title.toLowerCase()}

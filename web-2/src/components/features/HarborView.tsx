@@ -207,8 +207,8 @@ export const HarborView: React.FC = () => {
         </div>
       </div>
 
-      {/* Sticky Top Navigation with < and > arrows (Sticks to top when scrolling down) */}
-      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-[var(--bg-canvas)]/95 backdrop-blur-md border-b border-neutral-200/80 dark:border-neutral-800/80 shadow-2xs shrink-0 transition-all">
+      {/* Sticky Top Navigation with < and > arrows (Sticks flush below navbar on mobile scroll) */}
+      <div className="sticky -top-4 sm:top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-[var(--bg-canvas)]/95 backdrop-blur-md border-b border-neutral-200/80 dark:border-neutral-800/80 shadow-2xs shrink-0 transition-all">
         <SubMenuScroller className="gap-2 text-xs" containerClassName="w-full">
           <button
             onClick={() => setActiveHarborTab('providers')}

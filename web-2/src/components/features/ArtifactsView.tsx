@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   FileText,
   Search,
@@ -28,6 +28,24 @@ export const ArtifactsView: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      if (currentScrollTop > 15) {
+        if (currentScrollTop > lastScrollTop.current + 6) {
+          setIsHeaderVisible(false);
+        } else if (currentScrollTop < lastScrollTop.current - 8) {
+          setIsHeaderVisible(true);
+        }
+      } else {
+        setIsHeaderVisible(true);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
 
   const filtered = artifacts.filter((a) => {
     const matchSearch =
@@ -51,8 +69,14 @@ export const ArtifactsView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Bar - Compact on mobile with icon and title only */}
-      <div className="p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+      {/* Top Bar - Auto-collapses on mobile scroll down */}
+      <div
+        className={`transition-all duration-300 shrink-0 ${
+          isHeaderVisible
+            ? 'max-h-24 p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
+            : 'max-h-0 py-0 px-3 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-5 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
+        } flex flex-col sm:flex-row sm:items-center justify-between gap-3`}
+      >
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
@@ -100,7 +124,10 @@ export const ArtifactsView: React.FC = () => {
       </div>
 
       {/* Grid of Artifacts */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div
+        onScroll={handleViewportScroll}
+        className="flex-1 overflow-y-auto p-4 sm:p-6"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
           {filtered.map((art) => {
             const ship = ships.find((s) => s.id === art.shipId);

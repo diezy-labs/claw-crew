@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Settings,
   User,
@@ -94,6 +94,25 @@ export const SettingsView: React.FC = () => {
     setTimeout(() => setSavedSuccessMsg(null), 3000);
   };
 
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollTop = useRef(0);
+
+  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      if (currentScrollTop > 15) {
+        if (currentScrollTop > lastScrollTop.current + 6) {
+          setIsHeaderVisible(false);
+        } else if (currentScrollTop < lastScrollTop.current - 8) {
+          setIsHeaderVisible(true);
+        }
+      } else {
+        setIsHeaderVisible(true);
+      }
+    }
+    lastScrollTop.current = currentScrollTop;
+  };
+
   // Filter categories by search
   const filteredCategories = categories.map((catGroup) => ({
     ...catGroup,
@@ -107,8 +126,14 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header - Minimalist on mobile */}
-      <div className="p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shrink-0">
+      {/* Top Header - Auto-collapses on mobile scroll down */}
+      <div
+        className={`transition-all duration-300 shrink-0 ${
+          isHeaderVisible
+            ? 'max-h-24 p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
+            : 'max-h-0 py-0 px-3 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-5 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
+        } flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3`}
+      >
         <div>
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
@@ -194,6 +219,7 @@ export const SettingsView: React.FC = () => {
 
         {/* Right Active Category Content (Shown full width on mobile when selected) */}
         <div
+          onScroll={handleViewportScroll}
           className={`flex-1 overflow-y-auto p-4 sm:p-7 max-w-4xl space-y-6 ${
             mobileSection === 'content' ? 'block' : 'hidden md:block'
           }`}
