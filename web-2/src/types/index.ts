@@ -9,12 +9,14 @@ export type NavigationTab =
   | 'captains-journal'
   | 'mission-board'
   | 'ships'
+  | 'squads'
   | 'crew'
   | 'artifacts'
   | 'approvals'
   | 'treasury'
   | 'logbook'
   | 'harbor'
+  | 'training-officer'
   | 'fleet-code'
   | 'crows-nest'
   | 'engine-room'
@@ -174,13 +176,27 @@ export type QuestStatus =
   | 'blocked'
   | 'anchored';
 
+export interface Squad {
+  id: string;
+  name: string;
+  shipId?: string; // Optional assigned department Ship
+  purpose: string;
+  crewIds: string[];
+  leaderCrewId?: string;
+  status: 'active' | 'standby' | 'paused';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CrewMember {
   id: string;
   name: string;
   shipId: string;
+  squadId?: string; // Squad mapping (empty or 'none' / undefined for non-squad)
   role: string;
   purpose: string;
-  skills: string[];
+  skills: string[]; // references TrainingSkill IDs or names
+  steering?: string; // references SteeringDirective ID or guidance text
   tools: string[];
   modelProfile: string;
   authority: 'read_only' | 'draft_only' | 'gated_write';
@@ -210,9 +226,69 @@ export interface Ship {
   navigatorName: string;
   status: 'active' | 'attention' | 'anchored';
   charter: ShipCharter;
-  crewIds: string[];
+  squadIds?: string[]; // Squads mapped to this Ship (Department)
+  crewIds: string[];   // All crew members assigned directly or via squads
   activeVoyagesCount: number;
   monthlySpentUSD: number;
+}
+
+// Training Officer Data Models (Design Plan)
+export type TrainingConfigStatus =
+  | 'draft'
+  | 'pending_review'
+  | 'active'
+  | 'disabled'
+  | 'archived'
+  | 'paused'
+  | 'failed';
+
+export interface TrainingConfigBase {
+  id: string;
+  name: string;
+  description?: string;
+  status: TrainingConfigStatus;
+  version: number;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+  updatedBy: string;
+  tags?: string[];
+}
+
+export interface TrainingSkill extends TrainingConfigBase {
+  purpose: string;
+  instructions: string;
+  provider?: string;
+  inputSchema?: Record<string, any>;
+  outputFormat?: string;
+  accessScope: string[];
+}
+
+export interface GlobalSteering extends TrainingConfigBase {
+  directive: string;
+  priority: 'critical' | 'high' | 'standard';
+  enforcement: 'required' | 'advisory';
+  appliesTo: string[];
+  conflictHandling?: string;
+}
+
+export interface SteeringDirective extends TrainingConfigBase {
+  targetType: 'skill' | 'model' | 'workflow' | 'workspace' | 'role';
+  targetId: string;
+  guidance: string;
+  priority: number;
+  overridePolicy: 'inherit' | 'override' | 'append';
+}
+
+export interface TrainingHook extends TrainingConfigBase {
+  triggerEvent: string;
+  conditions?: Record<string, any>;
+  actionType: string;
+  actionConfig: Record<string, any>;
+  executionMode: 'automatic' | 'approval_required' | 'simulation';
+  failureHandling: 'retry' | 'notify' | 'queue_for_review' | 'stop';
+  lastRunAt?: string;
+  lastRunStatus?: 'success' | 'failed' | 'skipped';
 }
 
 export interface MapStep {

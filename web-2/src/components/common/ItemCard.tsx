@@ -6,6 +6,7 @@ export interface ItemCardProps {
   description?: React.ReactNode;
   icon?: React.ReactNode;
   badge?: React.ReactNode;
+  meta?: React.ReactNode;
   tags?: string[];
   footer?: React.ReactNode;
   actions?: React.ReactNode;
@@ -32,6 +33,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   description,
   icon,
   badge,
+  meta,
   tags,
   footer,
   actions,
@@ -87,7 +89,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       <div className={compact ? 'space-y-2' : 'space-y-2.5'}>
         {/* Header: Title + Subtitle + Badge/Actions */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-2.5 min-w-0">
+          <div className="flex items-start gap-2.5 min-w-0 flex-1">
             {icon && (
               <div className={`rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20 mt-0.5 ${
                 compact ? 'w-6 h-6' : 'w-7 h-7'
@@ -95,7 +97,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
                 {icon}
               </div>
             )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className={`font-bold text-neutral-900 dark:text-neutral-100 truncate leading-snug ${
                 compact ? 'text-xs' : 'text-sm'
               }`}>
@@ -117,6 +119,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             {actions}
           </div>
         </div>
+
+        {/* Optional Meta info bar */}
+        {meta && (
+          <div className="text-[11px] text-neutral-500 dark:text-neutral-400 pt-0.5">
+            {meta}
+          </div>
+        )}
 
         {/* Description */}
         {description && (

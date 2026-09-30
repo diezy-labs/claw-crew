@@ -8,25 +8,47 @@ export interface ModalProps {
   onClose: () => void;
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
+  description?: React.ReactNode;
   icon?: React.ReactNode;
   badge?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
+  maxWidth?:
+    | 'sm'
+    | 'md'
+    | 'lg'
+    | 'xl'
+    | '2xl'
+    | '3xl'
+    | '4xl'
+    | 'max-w-sm'
+    | 'max-w-md'
+    | 'max-w-lg'
+    | 'max-w-xl'
+    | 'max-w-2xl'
+    | 'max-w-3xl'
+    | 'max-w-4xl';
   className?: string;
   showCloseButton?: boolean;
   preventBackdropClose?: boolean;
   variant?: 'center' | 'sheet-right';
 }
 
-const maxWidthMap = {
+const maxWidthMap: Record<string, string> = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-xl',
   '2xl': 'max-w-2xl',
   '3xl': 'max-w-3xl',
-  '4xl': 'max-w-4xl'
+  '4xl': 'max-w-4xl',
+  'max-w-sm': 'max-w-sm',
+  'max-w-md': 'max-w-md',
+  'max-w-lg': 'max-w-lg',
+  'max-w-xl': 'max-w-xl',
+  'max-w-2xl': 'max-w-2xl',
+  'max-w-3xl': 'max-w-3xl',
+  'max-w-4xl': 'max-w-4xl'
 };
 
 export const Modal: React.FC<ModalProps> = ({
@@ -34,6 +56,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   subtitle,
+  description,
   icon,
   badge,
   children,
@@ -132,9 +155,9 @@ export const Modal: React.FC<ModalProps> = ({
                   )}
                   {badge && <div className="shrink-0">{badge}</div>}
                 </div>
-                {subtitle && (
+                {(subtitle || description) && (
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed">
-                    {subtitle}
+                    {subtitle || description}
                   </p>
                 )}
               </div>

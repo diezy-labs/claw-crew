@@ -17,8 +17,7 @@ import {
   OctagonAlert,
   Moon,
   Sun,
-  Settings,
-  Terminal
+  Settings
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
@@ -158,13 +157,6 @@ export const CommandPalette: React.FC = () => {
       onSelect: () => setActiveTab('crows-nest')
     },
     {
-      id: 'engine-room',
-      label: 'Engine Room (Local Terminal, Processes & Services)',
-      category: 'Control',
-      icon: Terminal,
-      onSelect: () => setActiveTab('engine-room')
-    },
-    {
       id: 'shipyard',
       label: 'Shipyard Capacity & Upgrades',
       category: 'Control',
@@ -288,7 +280,7 @@ export const CommandPalette: React.FC = () => {
             </span>
           </div>
           <span className="font-mono text-[10px] text-teal-600 dark:text-teal-400">
-            Galleon Fleet
+            Fleet AI
           </span>
         </div>
       </div>

@@ -5,6 +5,11 @@ import {
   NavigationTab,
   Ship,
   CrewMember,
+  Squad,
+  TrainingSkill,
+  GlobalSteering,
+  SteeringDirective,
+  TrainingHook,
   Quest,
   Artifact,
   CaptainApproval,
@@ -29,7 +34,12 @@ interface FleetState {
   workspaces: string[];
   projects: string[];
   ships: Ship[];
+  squads: Squad[];
   crew: CrewMember[];
+  trainingSkills: TrainingSkill[];
+  globalSteering: GlobalSteering[];
+  steeringDirectives: SteeringDirective[];
+  trainingHooks: TrainingHook[];
   quests: Quest[];
   artifacts: Artifact[];
   approvals: CaptainApproval[];
@@ -48,6 +58,25 @@ interface FleetState {
   isAnchorDropped: boolean;
   isFleetPulseOpen: boolean;
   isRemoteAccessModalOpen: boolean;
+
+  // Squad Actions
+  addSquad: (squad: Omit<Squad, 'id' | 'createdAt' | 'updatedAt'>) => string;
+  updateSquad: (id: string, updates: Partial<Squad>) => void;
+  deleteSquad: (id: string) => void;
+
+  // Training Officer Actions
+  addTrainingSkill: (skill: Omit<TrainingSkill, 'id' | 'createdAt' | 'updatedAt' | 'version'>) => string;
+  updateTrainingSkill: (id: string, updates: Partial<TrainingSkill>) => void;
+  deleteTrainingSkill: (id: string) => void;
+  addGlobalSteering: (order: Omit<GlobalSteering, 'id' | 'createdAt' | 'updatedAt' | 'version'>) => string;
+  updateGlobalSteering: (id: string, updates: Partial<GlobalSteering>) => void;
+  deleteGlobalSteering: (id: string) => void;
+  addSteeringDirective: (steering: Omit<SteeringDirective, 'id' | 'createdAt' | 'updatedAt' | 'version'>) => string;
+  updateSteeringDirective: (id: string, updates: Partial<SteeringDirective>) => void;
+  deleteSteeringDirective: (id: string) => void;
+  addTrainingHook: (hook: Omit<TrainingHook, 'id' | 'createdAt' | 'updatedAt' | 'version'>) => string;
+  updateTrainingHook: (id: string, updates: Partial<TrainingHook>) => void;
+  deleteTrainingHook: (id: string) => void;
 
   // Actions
   setRemoteAccessModalOpen: (open: boolean) => void;
@@ -99,17 +128,54 @@ interface FleetState {
   convertJournalToQuest: (sessionId: string) => void;
 }
 
+const initialSquads: Squad[] = [
+  {
+    id: 'squad-dev',
+    name: 'Squad Developer',
+    shipId: 'ship-dev',
+    purpose: 'Core software engineering, AST refactoring, and automated test execution.',
+    crewIds: ['crew-repo-analyst', 'crew-eng-planner'],
+    leaderCrewId: 'crew-eng-planner',
+    status: 'active',
+    createdAt: '2026-03-01T08:00:00Z',
+    updatedAt: '2026-03-28T14:30:00Z'
+  },
+  {
+    id: 'squad-qa',
+    name: 'Squad Engineer',
+    shipId: 'ship-dev',
+    purpose: 'Quality assurance, security verification, and release gate auditing.',
+    crewIds: ['crew-qa-reviewer'],
+    leaderCrewId: 'crew-qa-reviewer',
+    status: 'active',
+    createdAt: '2026-03-05T09:00:00Z',
+    updatedAt: '2026-03-29T10:15:00Z'
+  },
+  {
+    id: 'squad-market',
+    name: 'Squad Marketing',
+    shipId: 'ship-market',
+    purpose: 'Market research, audience positioning, and high-impact editorial communication.',
+    crewIds: ['crew-market-analyst', 'crew-brand-reviewer'],
+    leaderCrewId: 'crew-brand-reviewer',
+    status: 'active',
+    createdAt: '2026-03-10T11:00:00Z',
+    updatedAt: '2026-03-30T09:00:00Z'
+  }
+];
+
 const initialShips: Ship[] = [
   {
     id: 'ship-dev',
     name: 'Developer Delivery Ship',
     fleetId: 'fleet-diezy',
-    tagline: 'Persistent specialist team for delivery quality, repository health, and release readiness.',
+    tagline: 'Persistent specialist department for delivery quality, repository health, and release readiness.',
     homeScope: 'engineering',
     navigatorName: 'Horizon (Orchestrator)',
     status: 'active',
     activeVoyagesCount: 1,
     monthlySpentUSD: 4.10,
+    squadIds: ['squad-dev', 'squad-qa'],
     crewIds: ['crew-repo-analyst', 'crew-eng-planner', 'crew-qa-reviewer'],
     charter: {
       purpose: 'Maintain delivery quality, repository health, and release readiness under read-first policy.',
@@ -125,12 +191,13 @@ const initialShips: Ship[] = [
     id: 'ship-market',
     name: 'Marketing Launch Ship',
     fleetId: 'fleet-diezy',
-    tagline: 'Audience research, product launch positioning, and content calendar preparation.',
+    tagline: 'Audience research, product launch positioning, and content calendar preparation department.',
     homeScope: 'marketing',
     navigatorName: 'Beacon (Navigator)',
     status: 'active',
     activeVoyagesCount: 0,
     monthlySpentUSD: 0.88,
+    squadIds: ['squad-market'],
     crewIds: ['crew-market-analyst', 'crew-brand-reviewer'],
     charter: {
       purpose: 'Develop market intelligence and high-converting launch copy with strict human verification.',
@@ -152,6 +219,7 @@ const initialShips: Ship[] = [
     status: 'active',
     activeVoyagesCount: 0,
     monthlySpentUSD: 1.25,
+    squadIds: [],
     crewIds: ['crew-tech-evaluator'],
     charter: {
       purpose: 'Provide rigorous evidence-backed decision briefs and comparative trade-off analyses.',
@@ -170,9 +238,11 @@ const initialCrew: CrewMember[] = [
     id: 'crew-repo-analyst',
     name: 'Repository Analyst',
     shipId: 'ship-dev',
+    squadId: 'squad-dev',
     role: 'Static Analysis & Codebase Cartographer',
     purpose: 'Maps repository architecture, dependencies, git history, and technical debt risks.',
     skills: ['AST Parsing', 'Dependency Graphing', 'Commit Chronology', 'Risk Scoring'],
+    steering: 'Cite approved sources and separate evidence from inference.',
     tools: ['local_filesystem', 'git_log_parser', 'repo_scanner'],
     modelProfile: 'Claude 3.7 Sonnet (Reasoning)',
     authority: 'read_only',
@@ -185,9 +255,11 @@ const initialCrew: CrewMember[] = [
     id: 'crew-eng-planner',
     name: 'Engineering Planner',
     shipId: 'ship-dev',
+    squadId: 'squad-dev',
     role: 'Work Breakdown & Dependency Strategist',
     purpose: 'Formulates phased implementation plans, test suites, and rollback strategies.',
     skills: ['Architecture Breakdown', 'Milestone Estimation', 'Interface Specification'],
+    steering: 'Prioritize severity classification before proposing remediation.',
     tools: ['quest_map_builder', 'markdown_architect'],
     modelProfile: 'Gemini 2.5 Pro (Balanced)',
     authority: 'draft_only',
@@ -200,9 +272,11 @@ const initialCrew: CrewMember[] = [
     id: 'crew-qa-reviewer',
     name: 'QA & Risk Reviewer',
     shipId: 'ship-dev',
+    squadId: 'squad-qa',
     role: 'Safety & Test Verification Specialist',
     purpose: 'Audits edge cases, race conditions, test coverage, and external side-effects.',
     skills: ['Regression Hunting', 'Security Rule Linting', 'Failure Boundary Audit'],
+    steering: 'Protect confidential operational data at all failure boundaries.',
     tools: ['test_runner', 'linter_checker'],
     modelProfile: 'Claude 3.5 Haiku (Fast & Precise)',
     authority: 'gated_write',
@@ -215,9 +289,11 @@ const initialCrew: CrewMember[] = [
     id: 'crew-market-analyst',
     name: 'Market Researcher',
     shipId: 'ship-market',
+    squadId: 'squad-market',
     role: 'Competitive Landscape & Audience Analyst',
     purpose: 'Tracks AI agent tools, BYOK user trends, and developer community expectations.',
     skills: ['Signal Extraction', 'Feature Comparison Matrix', 'Audience Persona Mapping'],
+    steering: 'Return all metrics with source benchmark citations.',
     tools: ['web_reader', 'sentiment_analyzer'],
     modelProfile: 'Gemini 2.5 Flash',
     authority: 'read_only',
@@ -230,9 +306,11 @@ const initialCrew: CrewMember[] = [
     id: 'crew-brand-reviewer',
     name: 'Brand & Tone Reviewer',
     shipId: 'ship-market',
+    squadId: 'squad-market',
     role: 'Narrative Alignment & Copy Polish',
     purpose: 'Ensures the Pirate King / Fleet narrative balances calm professional authority with memorable identity.',
     skills: ['Editorial Consistency', 'Zero-Pill Compliance', 'Value Proposition Polish'],
+    steering: 'Use concise, brand-consistent language for user-facing copy.',
     tools: ['style_guide_checker'],
     modelProfile: 'Claude 3.5 Sonnet',
     authority: 'draft_only',
@@ -245,9 +323,11 @@ const initialCrew: CrewMember[] = [
     id: 'crew-tech-evaluator',
     name: 'Technical Evaluator',
     shipId: 'ship-research',
+    // squadId intentionally undefined -> Non-Squad crew member
     role: 'Benchmarking & Systems Architect',
     purpose: 'Assesses Go engine concurrency vs Rust host sandbox security trade-offs.',
     skills: ['Memory Profile Audit', 'Latency Benchmark', 'Security Tiering'],
+    steering: 'Preserve concise operational language and dense technical charts.',
     tools: ['bench_profiler', 'matrix_evaluator'],
     modelProfile: 'DeepSeek R1 / Local Ollama',
     authority: 'read_only',
@@ -255,6 +335,296 @@ const initialCrew: CrewMember[] = [
     status: 'active',
     lastVoyage: '1d ago',
     costLast30Days: 1.25
+  }
+];
+
+const initialTrainingSkills: TrainingSkill[] = [
+  {
+    id: 'skill-briefing',
+    name: 'Incident Briefing Officer',
+    purpose: 'Synthesize system alerts and compile incident remediation checklists.',
+    instructions: 'Examine logs, identify root cause signatures, and generate clear incident summaries with severity tags.',
+    provider: 'Claude 3.7 Sonnet',
+    accessScope: ['engineering', 'operations'],
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-15T10:00:00Z',
+    createdBy: 'Operator Horizon',
+    updatedAt: '2026-03-25T12:00:00Z',
+    updatedBy: 'Captain Sovereign',
+    tags: ['Incident', 'Triage', 'SOP']
+  },
+  {
+    id: 'skill-manifest',
+    name: 'Cargo Manifest Reviewer',
+    purpose: 'Inspect artifact outputs, schema compliance, and deliverables before merge.',
+    instructions: 'Validate artifact contracts, markdown frontmatter, and output schema adherence.',
+    provider: 'Gemini 2.5 Pro',
+    accessScope: ['fleet-wide'],
+    status: 'active',
+    version: 2,
+    createdAt: '2026-03-12T08:30:00Z',
+    createdBy: 'Admiralty Desk',
+    updatedAt: '2026-03-28T16:00:00Z',
+    updatedBy: 'Quartermaster',
+    tags: ['Artifact', 'Quality', 'Validation']
+  },
+  {
+    id: 'skill-analyst',
+    name: 'Fleet Status Analyst',
+    purpose: 'Continuously assess fleet health, budget run-rates, and pending gates.',
+    instructions: 'Query active voyage metrics, calculate USD spend deltas, and highlight blocked missions.',
+    provider: 'Claude 3.5 Haiku',
+    accessScope: ['executive', 'operations'],
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-18T09:00:00Z',
+    createdBy: 'Captain Sovereign',
+    updatedAt: '2026-03-29T11:45:00Z',
+    updatedBy: 'Captain Sovereign',
+    tags: ['Analytics', 'Telemetry', 'Budget']
+  },
+  {
+    id: 'skill-research',
+    name: 'Research Briefing Officer',
+    purpose: 'Compile deep multi-source competitive landscapes and architectural tradeoffs.',
+    instructions: 'Cite approved sources and strictly separate evidence from inference in structured briefing format.',
+    provider: 'DeepSeek R1 / Ollama',
+    accessScope: ['research', 'marketing'],
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-20T14:00:00Z',
+    createdBy: 'Sextant Lead',
+    updatedAt: '2026-03-30T08:00:00Z',
+    updatedBy: 'Sextant Lead',
+    tags: ['Research', 'Benchmarking']
+  },
+  {
+    id: 'skill-navigator',
+    name: 'Knowledge Base Navigator',
+    purpose: 'Traverse repository documentation, ADRs, and historical quest logbooks.',
+    instructions: 'Provide exact document citations, cross-link past decisions, and retrieve relevant SOPs.',
+    provider: 'Gemini 2.5 Flash',
+    accessScope: ['fleet-wide'],
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-22T10:15:00Z',
+    createdBy: 'Operator Beacon',
+    updatedAt: '2026-03-27T15:20:00Z',
+    updatedBy: 'Operator Beacon',
+    tags: ['RAG', 'Docs', 'Navigation']
+  }
+];
+
+const initialGlobalSteering: GlobalSteering[] = [
+  {
+    id: 'gs-confidential',
+    name: 'Protect confidential operational data',
+    directive: 'Never emit credentials, API keys, private tokens, or proprietary source code into unvetted public destinations.',
+    priority: 'critical',
+    enforcement: 'required',
+    appliesTo: ['all_models', 'all_crew', 'external_connectors'],
+    conflictHandling: 'Takes absolute precedence over task velocity or model requests.',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-01T00:00:00Z',
+    createdBy: 'Admiralty Desk',
+    updatedAt: '2026-03-15T00:00:00Z',
+    updatedBy: 'Captain Sovereign'
+  },
+  {
+    id: 'gs-sources',
+    name: 'Use approved sources for factual claims',
+    directive: 'Ground all quantitative assertions in validated benchmark artifacts or verifiable repository commits.',
+    priority: 'high',
+    enforcement: 'required',
+    appliesTo: ['research', 'engineering', 'documentation'],
+    conflictHandling: 'Overrides speculative extrapolation unless tagged explicitly as hypothesis.',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-05T00:00:00Z',
+    createdBy: 'Captain Sovereign',
+    updatedAt: '2026-03-20T00:00:00Z',
+    updatedBy: 'Captain Sovereign'
+  },
+  {
+    id: 'gs-structured',
+    name: 'Return structured output for fleet workflows',
+    directive: 'All deliverables intended for downstream automated consumption must adhere to typed JSON or standardized Markdown schema.',
+    priority: 'standard',
+    enforcement: 'required',
+    appliesTo: ['workflows', 'artifacts'],
+    conflictHandling: 'Applies unless conversational narrative output is explicitly requested.',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-10T00:00:00Z',
+    createdBy: 'Operator Horizon',
+    updatedAt: '2026-03-22T00:00:00Z',
+    updatedBy: 'Operator Horizon'
+  },
+  {
+    id: 'gs-escalate',
+    name: 'Escalate uncertain or high-risk requests',
+    directive: 'When an operation touches production deployments, monetary budgets, or destructive commands, trigger Captain’s Approval gate.',
+    priority: 'critical',
+    enforcement: 'required',
+    appliesTo: ['all_crew', 'ships'],
+    conflictHandling: 'Mandatory fail-safe; cannot be bypassed by sub-agent prompt.',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-02T00:00:00Z',
+    createdBy: 'Admiralty Desk',
+    updatedAt: '2026-03-18T00:00:00Z',
+    updatedBy: 'Admiralty Desk'
+  },
+  {
+    id: 'gs-concise',
+    name: 'Preserve concise operational language',
+    directive: 'Favor dense, high-signal nautical precision. Avoid AI boilerplate, redundant apologies, and conversational filler.',
+    priority: 'standard',
+    enforcement: 'advisory',
+    appliesTo: ['chat', 'crew_responses', 'briefings'],
+    conflictHandling: 'Advisory guidance for conversational clarity.',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-08T00:00:00Z',
+    createdBy: 'Operator Beacon',
+    updatedAt: '2026-03-25T00:00:00Z',
+    updatedBy: 'Operator Beacon'
+  }
+];
+
+const initialSteeringDirectives: SteeringDirective[] = [
+  {
+    id: 'sd-research',
+    name: 'Research Briefing Officer Course',
+    targetType: 'skill',
+    targetId: 'skill-research',
+    guidance: 'Cite approved sources and separate evidence from inference. Include confidence ratings on secondary market signals.',
+    priority: 1,
+    overridePolicy: 'append',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-15T00:00:00Z',
+    createdBy: 'Captain Sovereign',
+    updatedAt: '2026-03-26T00:00:00Z',
+    updatedBy: 'Captain Sovereign'
+  },
+  {
+    id: 'sd-incident',
+    name: 'Incident Response Triage Steering',
+    targetType: 'workflow',
+    targetId: 'incident_response',
+    guidance: 'Prioritize severity classification before proposing remediation. Freeze state before destructive cleanups.',
+    priority: 1,
+    overridePolicy: 'override',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-16T00:00:00Z',
+    createdBy: 'Operator Horizon',
+    updatedAt: '2026-03-28T00:00:00Z',
+    updatedBy: 'Operator Horizon'
+  },
+  {
+    id: 'sd-creative',
+    name: 'Creative Assistant Brand Alignment',
+    targetType: 'role',
+    targetId: 'brand_reviewer',
+    guidance: 'Use concise, brand-consistent language for user-facing copy. Balance pirate maritime metaphor with clean engineering authority.',
+    priority: 2,
+    overridePolicy: 'inherit',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-18T00:00:00Z',
+    createdBy: 'Operator Beacon',
+    updatedAt: '2026-03-29T00:00:00Z',
+    updatedBy: 'Operator Beacon'
+  },
+  {
+    id: 'sd-treasury',
+    name: 'Treasury Financial Data Formatting',
+    targetType: 'workspace',
+    targetId: 'treasury',
+    guidance: 'Return all financial values with currency, period, and source context. Never round sub-cent model rates prematurely.',
+    priority: 2,
+    overridePolicy: 'append',
+    status: 'active',
+    version: 1,
+    createdAt: '2026-03-20T00:00:00Z',
+    createdBy: 'Quartermaster',
+    updatedAt: '2026-03-29T00:00:00Z',
+    updatedBy: 'Quartermaster'
+  }
+];
+
+const initialTrainingHooks: TrainingHook[] = [
+  {
+    id: 'hook-skill-created',
+    name: 'Skill Created Auditor',
+    triggerEvent: 'skill_created',
+    actionType: 'validate_and_audit',
+    actionConfig: { autoValidateSchema: true, logToAudit: true },
+    executionMode: 'automatic',
+    failureHandling: 'notify',
+    status: 'active',
+    lastRunAt: '2h ago',
+    lastRunStatus: 'success',
+    version: 1,
+    createdAt: '2026-03-10T00:00:00Z',
+    createdBy: 'System Architect',
+    updatedAt: '2026-03-25T00:00:00Z',
+    updatedBy: 'System Architect'
+  },
+  {
+    id: 'hook-steering-updated',
+    name: 'Directive Conflict Scanner',
+    triggerEvent: 'steering_updated',
+    actionType: 'check_conflicts',
+    actionConfig: { alertOperatorOnCollision: true },
+    executionMode: 'automatic',
+    failureHandling: 'queue_for_review',
+    status: 'active',
+    lastRunAt: '6h ago',
+    lastRunStatus: 'success',
+    version: 1,
+    createdAt: '2026-03-12T00:00:00Z',
+    createdBy: 'System Architect',
+    updatedAt: '2026-03-27T00:00:00Z',
+    updatedBy: 'System Architect'
+  },
+  {
+    id: 'hook-policy-fail',
+    name: 'Policy Violation Router',
+    triggerEvent: 'policy_validation_failed',
+    actionType: 'route_to_review_queue',
+    actionConfig: { attachDiagnosticContext: true, notifyCaptain: true },
+    executionMode: 'approval_required',
+    failureHandling: 'stop',
+    status: 'active',
+    lastRunAt: '1d ago',
+    lastRunStatus: 'success',
+    version: 1,
+    createdAt: '2026-03-14T00:00:00Z',
+    createdBy: 'Admiralty Desk',
+    updatedAt: '2026-03-28T00:00:00Z',
+    updatedBy: 'Admiralty Desk'
+  },
+  {
+    id: 'hook-global-order',
+    name: 'Global Order Broadcaster',
+    triggerEvent: 'global_steering_enabled',
+    actionType: 'reindex_and_publish',
+    actionConfig: { broadcastChannel: 'fleet_pulse' },
+    executionMode: 'automatic',
+    failureHandling: 'retry',
+    status: 'active',
+    lastRunAt: '3d ago',
+    lastRunStatus: 'success',
+    version: 1,
+    createdAt: '2026-03-15T00:00:00Z',
+    createdBy: 'Quartermaster',
+    updatedAt: '2026-03-29T00:00:00Z',
+    updatedBy: 'Quartermaster'
   }
 ];
 
@@ -782,7 +1152,12 @@ export const useFleetStore = create<FleetState>((set, get) => ({
   workspaces: ['Product Platform', 'Autonomous Agents', 'Core Infrastructure'],
   projects: ['v1.4 Release Readiness', 'Claw Crew Agent Phase 2', 'BYOK Treasury Optimizer'],
   ships: initialShips,
+  squads: initialSquads,
   crew: initialCrew,
+  trainingSkills: initialTrainingSkills,
+  globalSteering: initialGlobalSteering,
+  steeringDirectives: initialSteeringDirectives,
+  trainingHooks: initialTrainingHooks,
   quests: initialQuests,
   artifacts: initialArtifacts,
   approvals: initialApprovals,
@@ -1186,39 +1561,281 @@ export const useFleetStore = create<FleetState>((set, get) => ({
       id
     };
 
-    set((state) => ({
-      crew: [...state.crew, newMember],
-      ships: state.ships.map((s) => (s.id === newMember.shipId ? { ...s, crewIds: [...s.crewIds, id] } : s)),
-      notifications: [
-        {
-          id: 'notif-' + Date.now(),
-          title: 'Crew Berth Assigned',
-          description: `${newMember.name} joined ${state.ships.find((s) => s.id === newMember.shipId)?.name || 'the Fleet'}.`,
-          type: 'quest',
-          read: false,
-          createdAt: 'Just now',
-          actionLinkTab: 'crew'
-        },
-        ...state.notifications
-      ]
-    }));
+    set((state) => {
+      // If member has squad assigned, update the squad's crewIds list
+      const updatedSquads = newMember.squadId
+        ? state.squads.map((sq) =>
+            sq.id === newMember.squadId && !sq.crewIds.includes(id)
+              ? { ...sq, crewIds: [...sq.crewIds, id] }
+              : sq
+          )
+        : state.squads;
+
+      return {
+        crew: [...state.crew, newMember],
+        squads: updatedSquads,
+        ships: state.ships.map((s) => (s.id === newMember.shipId ? { ...s, crewIds: [...s.crewIds, id] } : s)),
+        notifications: [
+          {
+            id: 'notif-' + Date.now(),
+            title: 'Crew Berth Assigned',
+            description: `${newMember.name} joined ${state.ships.find((s) => s.id === newMember.shipId)?.name || 'the Fleet'}.`,
+            type: 'quest',
+            read: false,
+            createdAt: 'Just now',
+            actionLinkTab: 'crew'
+          },
+          ...state.notifications
+        ]
+      };
+    });
   },
 
   updateCrewMember: (id, updates) => {
+    set((state) => {
+      // If squadId changed, update squad mappings
+      let updatedSquads = state.squads;
+      if (updates.squadId !== undefined) {
+        updatedSquads = state.squads.map((sq) => {
+          if (sq.id === updates.squadId && !sq.crewIds.includes(id)) {
+            return { ...sq, crewIds: [...sq.crewIds, id] };
+          }
+          if (sq.id !== updates.squadId && sq.crewIds.includes(id)) {
+            return { ...sq, crewIds: sq.crewIds.filter((cId) => cId !== id) };
+          }
+          return sq;
+        });
+      }
+
+      return {
+        crew: state.crew.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+        squads: updatedSquads,
+        notifications: [
+          {
+            id: 'notif-' + Date.now(),
+            title: 'Specialist Updated',
+            description: `Updated profile & bounds for ${state.crew.find((c) => c.id === id)?.name || 'Specialist'}.`,
+            type: 'quest',
+            read: false,
+            createdAt: 'Just now',
+            actionLinkTab: 'crew'
+          },
+          ...state.notifications
+        ]
+      };
+    });
+  },
+
+  // Squad Actions
+  addSquad: (squadData) => {
+    const id = 'squad-' + Date.now();
+    const newSquad: Squad = {
+      ...squadData,
+      id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    set((state) => {
+      // Update crew members that are part of this squad
+      const updatedCrew = state.crew.map((c) =>
+        newSquad.crewIds.includes(c.id) ? { ...c, squadId: id, shipId: newSquad.shipId || c.shipId } : c
+      );
+      // Update parent ship if specified
+      const updatedShips = newSquad.shipId
+        ? state.ships.map((s) =>
+            s.id === newSquad.shipId
+              ? {
+                  ...s,
+                  squadIds: Array.from(new Set([...(s.squadIds || []), id])),
+                  crewIds: Array.from(new Set([...s.crewIds, ...newSquad.crewIds]))
+                }
+              : s
+          )
+        : state.ships;
+
+      return {
+        squads: [...state.squads, newSquad],
+        crew: updatedCrew,
+        ships: updatedShips,
+        notifications: [
+          {
+            id: 'notif-' + Date.now(),
+            title: 'Squad Formed',
+            description: `${newSquad.name} commissioned with ${newSquad.crewIds.length} specialists.`,
+            type: 'quest',
+            read: false,
+            createdAt: 'Just now',
+            actionLinkTab: 'squads'
+          },
+          ...state.notifications
+        ]
+      };
+    });
+    return id;
+  },
+
+  updateSquad: (id, updates) => {
+    set((state) => {
+      // If crewIds updated, sync with crew squadId
+      let updatedCrew = state.crew;
+      if (updates.crewIds) {
+        updatedCrew = state.crew.map((c) => {
+          if (updates.crewIds?.includes(c.id)) {
+            return { ...c, squadId: id };
+          }
+          if (c.squadId === id && !updates.crewIds?.includes(c.id)) {
+            return { ...c, squadId: undefined };
+          }
+          return c;
+        });
+      }
+
+      return {
+        squads: state.squads.map((sq) =>
+          sq.id === id ? { ...sq, ...updates, updatedAt: new Date().toISOString() } : sq
+        ),
+        crew: updatedCrew,
+        notifications: [
+          {
+            id: 'notif-' + Date.now(),
+            title: 'Squad Updated',
+            description: `Updated directives for ${state.squads.find((s) => s.id === id)?.name || 'Squad'}.`,
+            type: 'quest',
+            read: false,
+            createdAt: 'Just now',
+            actionLinkTab: 'squads'
+          },
+          ...state.notifications
+        ]
+      };
+    });
+  },
+
+  deleteSquad: (id) => {
     set((state) => ({
-      crew: state.crew.map((c) => (c.id === id ? { ...c, ...updates } : c)),
-      notifications: [
-        {
-          id: 'notif-' + Date.now(),
-          title: 'Specialist Updated',
-          description: `Updated profile & bounds for ${state.crew.find((c) => c.id === id)?.name || 'Specialist'}.`,
-          type: 'quest',
-          read: false,
-          createdAt: 'Just now',
-          actionLinkTab: 'crew'
-        },
-        ...state.notifications
-      ]
+      squads: state.squads.filter((sq) => sq.id !== id),
+      crew: state.crew.map((c) => (c.squadId === id ? { ...c, squadId: undefined } : c)),
+      ships: state.ships.map((s) => ({
+        ...s,
+        squadIds: (s.squadIds || []).filter((sqId) => sqId !== id)
+      }))
+    }));
+  },
+
+  // Training Officer Actions
+  addTrainingSkill: (skillData) => {
+    const id = 'skill-' + Date.now();
+    const newSkill: TrainingSkill = {
+      ...skillData,
+      id,
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    set((state) => ({
+      trainingSkills: [...state.trainingSkills, newSkill]
+    }));
+    return id;
+  },
+
+  updateTrainingSkill: (id, updates) => {
+    set((state) => ({
+      trainingSkills: state.trainingSkills.map((sk) =>
+        sk.id === id ? { ...sk, ...updates, version: sk.version + 1, updatedAt: new Date().toISOString() } : sk
+      )
+    }));
+  },
+
+  deleteTrainingSkill: (id) => {
+    set((state) => ({
+      trainingSkills: state.trainingSkills.filter((sk) => sk.id !== id)
+    }));
+  },
+
+  addGlobalSteering: (orderData) => {
+    const id = 'gs-' + Date.now();
+    const newOrder: GlobalSteering = {
+      ...orderData,
+      id,
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    set((state) => ({
+      globalSteering: [...state.globalSteering, newOrder]
+    }));
+    return id;
+  },
+
+  updateGlobalSteering: (id, updates) => {
+    set((state) => ({
+      globalSteering: state.globalSteering.map((gs) =>
+        gs.id === id ? { ...gs, ...updates, version: gs.version + 1, updatedAt: new Date().toISOString() } : gs
+      )
+    }));
+  },
+
+  deleteGlobalSteering: (id) => {
+    set((state) => ({
+      globalSteering: state.globalSteering.filter((gs) => gs.id !== id)
+    }));
+  },
+
+  addSteeringDirective: (dirData) => {
+    const id = 'sd-' + Date.now();
+    const newDir: SteeringDirective = {
+      ...dirData,
+      id,
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    set((state) => ({
+      steeringDirectives: [...state.steeringDirectives, newDir]
+    }));
+    return id;
+  },
+
+  updateSteeringDirective: (id, updates) => {
+    set((state) => ({
+      steeringDirectives: state.steeringDirectives.map((sd) =>
+        sd.id === id ? { ...sd, ...updates, version: sd.version + 1, updatedAt: new Date().toISOString() } : sd
+      )
+    }));
+  },
+
+  deleteSteeringDirective: (id) => {
+    set((state) => ({
+      steeringDirectives: state.steeringDirectives.filter((sd) => sd.id !== id)
+    }));
+  },
+
+  addTrainingHook: (hookData) => {
+    const id = 'hook-' + Date.now();
+    const newHook: TrainingHook = {
+      ...hookData,
+      id,
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    set((state) => ({
+      trainingHooks: [...state.trainingHooks, newHook]
+    }));
+    return id;
+  },
+
+  updateTrainingHook: (id, updates) => {
+    set((state) => ({
+      trainingHooks: state.trainingHooks.map((h) =>
+        h.id === id ? { ...h, ...updates, version: h.version + 1, updatedAt: new Date().toISOString() } : h
+      )
+    }));
+  },
+
+  deleteTrainingHook: (id) => {
+    set((state) => ({
+      trainingHooks: state.trainingHooks.filter((h) => h.id !== id)
     }));
   },
 
@@ -1228,12 +1845,13 @@ export const useFleetStore = create<FleetState>((set, get) => ({
       id,
       name: shipData.name || 'New Specialist Vessel',
       fleetId: 'fleet-diezy',
-      tagline: shipData.tagline || 'Persistent squad container for autonomous fleet missions.',
+      tagline: shipData.tagline || 'Persistent department container for autonomous fleet missions.',
       homeScope: shipData.homeScope || 'engineering',
       navigatorName: shipData.navigatorName || 'Orion Navigator',
       status: 'active',
       activeVoyagesCount: 0,
       monthlySpentUSD: 0,
+      squadIds: shipData.squadIds || [],
       crewIds: shipData.crewIds || [],
       charter: shipData.charter || {
         purpose: shipData.tagline || 'Autonomous mission execution under fleet governance policy.',
