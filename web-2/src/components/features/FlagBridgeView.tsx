@@ -56,7 +56,7 @@ export const FlagBridgeView: React.FC = () => {
 
   const pendingApprovals = approvals.filter((a) => a.status === 'pending');
   const underwayQuests = quests.filter((q) => q.status === 'underway');
-  const totalSpent = treasuryLedger.reduce((sum, item) => sum + item.costUSD, 0);
+  const totalSpent = (treasuryLedger || []).reduce((sum, item) => sum + (item?.costUSD || 0), 0);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -74,37 +74,44 @@ export const FlagBridgeView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 gap-6 max-w-6xl mx-auto w-full animate-view-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5 shrink-0">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-mono text-teal-600 dark:text-teal-400">
-            <Compass className="w-4 h-4 text-teal-500 animate-spin-slow shrink-0" />
-            <span>FLAG BRIDGE</span>
-            <span className="text-neutral-400 dark:text-neutral-600">&middot;</span>
-            <span className="text-neutral-500 dark:text-neutral-400 font-sans font-medium">Quartermaster Control Room</span>
+      {/* Header - Statis (Scrolls with Page), Compact on Mobile with Icon & Title only */}
+      <div className="flex items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4 sm:pb-5 shrink-0">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
+              <Compass className="w-4 h-4 text-teal-500 animate-spin-slow shrink-0" />
+            </div>
+            <div>
+              <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-teal-600 dark:text-teal-400">
+                <span>FLAG BRIDGE</span>
+                <span className="text-neutral-400 dark:text-neutral-600">&middot;</span>
+                <span className="text-neutral-500 dark:text-neutral-400 font-sans font-medium">Quartermaster Control Room</span>
+              </div>
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
+                Flag Bridge
+              </h1>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-            Flag Bridge
-          </h1>
-          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 max-w-2xl">
+          <p className="hidden sm:block text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 max-w-2xl pl-10.5">
             See, steer, and decide across your Fleet.
           </p>
         </div>
 
         {/* Top Control Actions */}
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             onClick={() => handleAskQM('Give me an executive briefing on Fleet readiness')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs"
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Ask QM</span>
+            <span className="hidden sm:inline">Ask QM</span>
+            <span className="sm:hidden">QM</span>
           </button>
 
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
             title="Refresh Fleet signals"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -112,8 +119,8 @@ export const FlagBridgeView: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs Navigation Sub-header with < and > arrows */}
-      <div className="pb-3 pt-1 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
+      {/* Sticky Top Navigation with < and > arrows (Sticks to top when scrolling down) */}
+      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-[var(--bg-canvas)]/95 backdrop-blur-md border-b border-neutral-200/80 dark:border-neutral-800/80 shadow-2xs shrink-0 transition-all">
         <SubMenuScroller className="gap-1.5" containerClassName="w-full">
           {[
             { id: 'overview', label: 'Overview' },
@@ -633,7 +640,7 @@ export const FlagBridgeView: React.FC = () => {
             <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-100 dark:border-neutral-800">
               <div className="text-xs text-neutral-400">Total Spent</div>
               <div className="text-xl font-bold font-mono text-neutral-900 dark:text-neutral-100 mt-1">
-                ${totalSpent.toFixed(2)}
+                ${(totalSpent || 0).toFixed(2)}
               </div>
             </div>
             <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-100 dark:border-neutral-800">

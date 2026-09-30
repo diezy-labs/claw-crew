@@ -24,7 +24,8 @@ import {
   Save,
   Lock,
   ArrowUpRight,
-  FolderOpen
+  FolderOpen,
+  ChevronLeft
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { SettingsCategory, TerminologyMode, DensityMode, UpdateChannel } from '../../types';
@@ -42,6 +43,7 @@ export const SettingsView: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
+  const [mobileSection, setMobileSection] = useState<'menu' | 'content'>('menu');
 
   const categories: {
     group: string;
@@ -105,42 +107,46 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header */}
-      <div className="p-4 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+      {/* Top Header - Minimalist on mobile */}
+      <div className="p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shrink-0">
         <div>
           <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+            <Settings className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
               Settings
             </h1>
-            <span className="text-xs font-mono text-neutral-400">
+            <span className="hidden sm:inline text-xs font-mono text-neutral-400">
               Preferences &amp; Application Controls
             </span>
           </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
             Manage your personal preferences, data location, desktop runtime, and advanced configuration.
           </p>
         </div>
 
         {/* Search settings input */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="text"
-              placeholder="Search settings (e.g. theme, memory, backup)..."
+              placeholder="Search settings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 w-64"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>
         </div>
       </div>
 
-      {/* Main Settings Body */}
+      {/* Main Settings Body with Mobile Master-Detail Navigation */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Categories Sidebar */}
-        <div className="w-64 shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-[#121315]/50 overflow-y-auto p-3 space-y-4 select-none text-xs">
+        {/* Left Categories Sidebar (Hides on mobile when sub-menu/detail is active) */}
+        <div
+          className={`w-full md:w-64 shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-[#121315]/50 overflow-y-auto p-3 space-y-4 select-none text-xs ${
+            mobileSection === 'menu' ? 'block' : 'hidden md:block'
+          }`}
+        >
           {filteredCategories.map((group) => (
             <div key={group.group} className="space-y-1">
               <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider px-2">
@@ -153,15 +159,21 @@ export const SettingsView: React.FC = () => {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveSettingsCategory(item.id)}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-2.5 ${
+                      onClick={() => {
+                        setActiveSettingsCategory(item.id);
+                        setMobileSection('content');
+                      }}
+                      className={`w-full text-left px-2.5 py-2 rounded-lg transition-colors flex items-center justify-between cursor-pointer ${
                         isActive
                           ? 'bg-neutral-200/90 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
                           : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900 hover:text-neutral-900 dark:hover:text-white'
                       }`}
                     >
-                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-teal-600 dark:text-teal-400' : 'text-neutral-400'}`} />
-                      <span className="truncate">{item.label}</span>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-teal-600 dark:text-teal-400' : 'text-neutral-400'}`} />
+                        <span className="truncate">{item.label}</span>
+                      </div>
+                      <span className="md:hidden text-neutral-400 text-xs">&rsaquo;</span>
                     </button>
                   );
                 })}
@@ -180,8 +192,27 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Active Category Content */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-7 max-w-4xl space-y-6">
+        {/* Right Active Category Content (Shown full width on mobile when selected) */}
+        <div
+          className={`flex-1 overflow-y-auto p-4 sm:p-7 max-w-4xl space-y-6 ${
+            mobileSection === 'content' ? 'block' : 'hidden md:block'
+          }`}
+        >
+          {/* Mobile Back to Menu button */}
+          <div className="md:hidden pb-3 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setMobileSection('menu')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/90 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer shadow-2xs"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Back to Settings</span>
+            </button>
+            <span className="text-[11px] font-mono text-teal-600 dark:text-teal-400 font-bold uppercase truncate max-w-[150px]">
+              {categories.flatMap((g) => g.items).find((i) => i.id === activeSettingsCategory)?.label}
+            </span>
+          </div>
+
           {savedSuccessMsg && (
             <div className="p-3 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-700 dark:text-teal-300 text-xs flex items-center justify-between animate-in fade-in">
               <span className="flex items-center gap-1.5 font-medium">

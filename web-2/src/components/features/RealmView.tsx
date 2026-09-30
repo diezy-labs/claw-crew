@@ -91,7 +91,10 @@ export const RealmView: React.FC = () => {
     if (selectedScope.startsWith('ship:')) {
       const shipId = selectedScope.split(':')[1];
       const targetShip = ships.find((s) => s.id === shipId) || ships[0];
-      const shipCrew = crew.filter((c) => targetShip.crewIds.includes(c.id));
+      if (!targetShip) return [];
+
+      const targetCrewIds = targetShip.crewIds || [];
+      const shipCrew = crew.filter((c) => targetCrewIds.includes(c.id));
 
       const colors = ['#14B8A6', '#3B82F6', '#8B5CF6', '#F59E0B'];
       const hats = ['#0F766E', '#1D4ED8', '#6D28D9', '#B45309'];
@@ -126,7 +129,7 @@ export const RealmView: React.FC = () => {
           id: member.id,
           name: member.name,
           role: member.role,
-          avatarLetter: member.name[0],
+          avatarLetter: member.name?.[0] || 'C',
           coatColor: colors[idx % colors.length],
           hatColor: hats[idx % hats.length],
           hairColor: idx % 2 === 0 ? '#451A03' : '#78350F',
@@ -144,12 +147,13 @@ export const RealmView: React.FC = () => {
     if (selectedScope.startsWith('crew:')) {
       const crewId = selectedScope.split(':')[1];
       const singleCrew = crew.find((c) => c.id === crewId) || crew[0];
+      if (!singleCrew) return [];
       return [
         {
           id: singleCrew.id,
           name: singleCrew.name,
           role: singleCrew.role,
-          avatarLetter: singleCrew.name[0],
+          avatarLetter: singleCrew.name?.[0] || 'C',
           coatColor: '#0EA5E9',
           hatColor: '#0369A1',
           hairColor: '#78350F',
@@ -510,8 +514,8 @@ export const RealmView: React.FC = () => {
                 {selectedScope === 'quartermaster'
                   ? '👑 Quartermaster (1-on-1)'
                   : selectedScope.startsWith('ship:')
-                  ? `⚓ ${ships.find((s) => s.id === selectedScope.split(':')[1])?.name || 'Ship'}`
-                  : `👤 ${crew.find((c) => c.id === selectedScope.split(':')[1])?.name || 'Crew'}`}
+                  ? `⚓ ${ships.find((s) => s.id === (selectedScope.split(':')[1] || ''))?.name || 'Ship'}`
+                  : `👤 ${crew.find((c) => c.id === (selectedScope.split(':')[1] || ''))?.name || 'Crew'}`}
               </span>
               <ChevronDown className="w-3 h-3 text-neutral-400" />
             </button>

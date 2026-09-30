@@ -20,11 +20,13 @@ import {
   ShieldAlert,
   ArrowRight,
   Menu,
-  Activity
+  Activity,
+  QrCode,
+  Wifi
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { SettingsCategory, NavigationTab } from '../../types';
-import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PWAInstallButton } from '../common/PWAInstallButton';
 
 export const ContextBar: React.FC = () => {
   const {
@@ -48,7 +50,9 @@ export const ContextBar: React.FC = () => {
     toggleSidebarCollapsed,
     setMobileSidebarOpen,
     isFleetPulseOpen,
-    toggleFleetPulse
+    toggleFleetPulse,
+    isRemoteAccessModalOpen,
+    setRemoteAccessModalOpen
   } = useFleetStore();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -187,9 +191,9 @@ export const ContextBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Middle: Sub-Menu Scroller with '<' and '>' arrows that auto-hide at boundaries */}
+      {/* Middle: Clean horizontal sub-navigation without overlapping buttons */}
       <div className="flex-1 max-w-xl mx-2 min-w-0 hidden md:block">
-        <SubMenuScroller className="px-1 gap-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
           {currentSection.items.map((item) => {
             const isActive = activeTab === item.id || (item.id === 'quarterdeck' && activeTab === 'quartermaster');
             return (
@@ -206,7 +210,7 @@ export const ContextBar: React.FC = () => {
               </button>
             );
           })}
-        </SubMenuScroller>
+        </div>
       </div>
 
       {/* Right controls */}
@@ -284,6 +288,19 @@ export const ContextBar: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Remote Access & Multi-Platform Hub (QR Code & LAN) */}
+        <button
+          onClick={() => setRemoteAccessModalOpen(true)}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 hover:bg-teal-500/20 text-xs font-medium transition-colors cursor-pointer"
+          title="Multi-Platform & Remote Access Hub (Scan QR for Mobile)"
+        >
+          <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+          <span className="hidden xl:inline font-mono text-[11px] font-semibold text-teal-600 dark:text-teal-300">Remote Hub</span>
+        </button>
+
+        {/* PWA In-App Install Prompt */}
+        <PWAInstallButton />
 
         {/* Fleet Pulse Tray / Sidebar Toggle */}
         <button

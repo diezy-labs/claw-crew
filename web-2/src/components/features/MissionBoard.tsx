@@ -36,6 +36,19 @@ export const MissionBoard: React.FC = () => {
   const [selectedShipFilter, setSelectedShipFilter] = useState('all');
   const [isNewQuestModalOpen, setIsNewQuestModalOpen] = useState(false);
 
+  // Close quest drawer on Escape key press
+  React.useEffect(() => {
+    if (!selectedQuestId && !isNewQuestModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedQuestId(null);
+        setIsNewQuestModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedQuestId, setSelectedQuestId, isNewQuestModalOpen]);
+
   // New Quest form state
   const [newTitle, setNewTitle] = useState('');
   const [newObjective, setNewObjective] = useState('');
@@ -282,10 +295,13 @@ export const MissionBoard: React.FC = () => {
                 <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                   Quest Map &amp; Controls
                 </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-600 dark:text-teal-400">
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-600 dark:text-teal-400 font-semibold">
                   {selectedQuest.status.toUpperCase()}
                 </span>
               </div>
+              <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded select-none">
+                Click outside to close
+              </span>
             </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
@@ -425,12 +441,10 @@ export const MissionBoard: React.FC = () => {
               </button>
             )}
 
-            <button
-              onClick={() => setSelectedQuestId(null)}
-              className="px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            >
-              Close
-            </button>
+            {/* Tap outside indicator instead of close button */}
+            <span className="text-[11px] font-mono text-neutral-400 select-none shrink-0">
+              Tap outside to dismiss &bull; Esc
+            </span>
           </div>
         </div>
       </div>

@@ -91,18 +91,36 @@
   height: 0 !important;
 }
 
-/* Wave crest travel animation (10% perimeter oceanic beam) */
-@keyframes waveCrestTravel {
-  0% {
-    stroke-dashoffset: 0;
+/* Ocean Wave Spark Pulse (Gentle, slow, rhythmic oceanic glow on chat toolbox outline) */
+@keyframes oceanWavePulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.2), 0 0 20px rgba(6, 182, 212, 0.12), inset 0 0 8px rgba(14, 165, 233, 0.08);
+    border-color: rgba(56, 189, 248, 0.35);
   }
-  100% {
-    stroke-dashoffset: -100;
+  50% {
+    box-shadow: 0 0 24px rgba(14, 165, 233, 0.5), 0 0 45px rgba(6, 182, 212, 0.28), inset 0 0 16px rgba(14, 165, 233, 0.18);
+    border-color: rgba(56, 189, 248, 0.8);
   }
 }
 
-.animate-wave-crest {
-  animation: waveCrestTravel 5s linear infinite;
+@keyframes oceanSparkDrift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-ocean-wave {
+  animation: oceanWavePulse 5s ease-in-out infinite;
+}
+
+.ocean-spark-glow {
+  animation: oceanWavePulse 4.8s ease-in-out infinite;
 }
 
 /* Radar Navigator Wave Animation (Origin at bottom toolbox chat, expanding & fading out across chat) */

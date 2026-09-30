@@ -46,8 +46,10 @@ interface FleetState {
   isMobileSidebarOpen: boolean;
   isAnchorDropped: boolean;
   isFleetPulseOpen: boolean;
+  isRemoteAccessModalOpen: boolean;
 
   // Actions
+  setRemoteAccessModalOpen: (open: boolean) => void;
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
   setActiveTab: (tab: NavigationTab) => void;
@@ -78,6 +80,7 @@ interface FleetState {
   promoteArtifactToTreasure: (id: string) => void;
   saveArtifact: (artifact: Omit<Artifact, 'id' | 'createdAt'>) => void;
   addCrewMember: (crewData: Omit<CrewMember, 'id'>) => void;
+  updateCrewMember: (id: string, updates: Partial<CrewMember>) => void;
   createShip: (shipData: Partial<Ship>) => string;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
@@ -793,7 +796,9 @@ export const useFleetStore = create<FleetState>((set, get) => ({
   isMobileSidebarOpen: false,
   isAnchorDropped: false,
   isFleetPulseOpen: false,
+  isRemoteAccessModalOpen: false,
 
+  setRemoteAccessModalOpen: (open) => set({ isRemoteAccessModalOpen: open }),
   setActiveSettingsCategory: (cat) => set({ activeSettingsCategory: cat }),
   toggleSidebarCollapsed: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
@@ -1164,6 +1169,24 @@ export const useFleetStore = create<FleetState>((set, get) => ({
           id: 'notif-' + Date.now(),
           title: 'Crew Berth Assigned',
           description: `${newMember.name} joined ${state.ships.find((s) => s.id === newMember.shipId)?.name || 'the Fleet'}.`,
+          type: 'quest',
+          read: false,
+          createdAt: 'Just now',
+          actionLinkTab: 'crew'
+        },
+        ...state.notifications
+      ]
+    }));
+  },
+
+  updateCrewMember: (id, updates) => {
+    set((state) => ({
+      crew: state.crew.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+      notifications: [
+        {
+          id: 'notif-' + Date.now(),
+          title: 'Specialist Updated',
+          description: `Updated profile & bounds for ${state.crew.find((c) => c.id === id)?.name || 'Specialist'}.`,
           type: 'quest',
           read: false,
           createdAt: 'Just now',

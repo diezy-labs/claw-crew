@@ -17,7 +17,7 @@ import { useFleetStore } from '../../store/fleetStore';
 import { CrewMember } from '../../types';
 
 export const CrewView: React.FC = () => {
-  const { crew, ships, addCrewMember, setActiveTab, createQuest } = useFleetStore();
+  const { crew, ships, addCrewMember, updateCrewMember, setActiveTab, createQuest } = useFleetStore();
 
   const [selectedShipFilter, setSelectedShipFilter] = useState('all');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -27,6 +27,10 @@ export const CrewView: React.FC = () => {
   // New crew draft in wizard
   const [wizardRoleName, setWizardRoleName] = useState('Refactor Specialist');
   const [wizardPurpose, setWizardPurpose] = useState('Analyze technical debt and generate isolated AST diff refactors.');
+
+  // Editing existing crew modal state
+  const [editingCrew, setEditingCrew] = useState<CrewMember | null>(null);
+  const [editForm, setEditForm] = useState<Partial<CrewMember>>({});
 
   const filteredCrew = crew.filter((c) => {
     return selectedShipFilter === 'all' || c.shipId === selectedShipFilter;
@@ -62,18 +66,25 @@ export const CrewView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-6xl mx-auto w-full animate-view-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Header - Compact on mobile with icon and title only */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4 shrink-0">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Crew Members
-            </h1>
-            <span className="text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-              {crew.length} / 15 Berths Active
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
+              <Users className="w-4 h-4 text-teal-500 shrink-0" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
+                  Crew Members
+                </h1>
+                <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+                  {crew.length} / 15 Berths Active
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
             Persistent AI specialists with scoped tools, memory, artifact contracts, and authority.
           </p>
         </div>
@@ -94,10 +105,11 @@ export const CrewView: React.FC = () => {
 
           <button
             onClick={() => setIsWizardOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Make Me a Squad</span>
+            <span className="hidden sm:inline">Make Me a Squad</span>
+            <span className="sm:hidden">New Squad</span>
           </button>
         </div>
       </div>
@@ -109,7 +121,21 @@ export const CrewView: React.FC = () => {
           return (
             <div
               key={member.id}
-              className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-3.5 text-xs shadow-xs hover:border-teal-500/40 transition-colors"
+              onClick={() => {
+                setEditingCrew(member);
+                setEditForm({
+                  name: member.name,
+                  role: member.role,
+                  purpose: member.purpose,
+                  skills: member.skills,
+                  modelProfile: member.modelProfile,
+                  authority: member.authority,
+                  memoryScope: member.memoryScope,
+                  status: member.status
+                });
+              }}
+              className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-3.5 text-xs shadow-xs hover:border-teal-500/60 hover:shadow-md transition-all cursor-pointer group"
+              title="Click to view and edit specialist details"
             >
               {/* Header */}
               <div className="flex items-start justify-between">
@@ -345,7 +371,7 @@ export const CrewView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setWizardStep(wizardStep + 1)}
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90"
+                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer"
                 >
                   Continue
                 </button>
@@ -353,11 +379,182 @@ export const CrewView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleFinishWizard}
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90"
+                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90 cursor-pointer"
                 >
                   Recruit &amp; Launch First Quest
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Specialist Edit & Update Modal / Popup (Click outside to close, NO close X button) */}
+      {editingCrew && (
+        <div
+          onClick={() => setEditingCrew(null)}
+          className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-2xl border border-teal-500/40 bg-white dark:bg-[#181a1e] p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
+                <h2 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
+                  Edit Specialist: {editingCrew.name}
+                </h2>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                Update specialist identity, model parameters, skills, and autonomous authority boundaries.
+              </p>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Specialist Name
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name || ''}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Role / Title
+                </label>
+                <input
+                  type="text"
+                  value={editForm.role || ''}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, role: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Operational Purpose & Mandate
+                </label>
+                <textarea
+                  rows={2}
+                  value={editForm.purpose || ''}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, purpose: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  Specialist Skills (comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={editForm.skills?.join(', ') || ''}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      skills: e.target.value
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                    }))
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    AI Model Profile
+                  </label>
+                  <select
+                    value={editForm.modelProfile || ''}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, modelProfile: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
+                  >
+                    <option value="Claude 3.7 Sonnet (Reasoning)">Claude 3.7 Sonnet (Reasoning)</option>
+                    <option value="Claude 3.7 Sonnet">Claude 3.7 Sonnet</option>
+                    <option value="Gemini 2.5 Pro">Gemini 2.5 Pro</option>
+                    <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
+                    <option value="GPT-4o">GPT-4o</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Authority Level
+                  </label>
+                  <select
+                    value={editForm.authority || 'draft_only'}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, authority: e.target.value as any }))}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
+                  >
+                    <option value="read_only">Read Only (Inspection)</option>
+                    <option value="draft_only">Draft Only (Requires Approval)</option>
+                    <option value="full_autonomous">Full Autonomous (Authorized)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Memory Scope
+                  </label>
+                  <select
+                    value={editForm.memoryScope || 'ship'}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, memoryScope: e.target.value as any }))}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
+                  >
+                    <option value="ship">Ship Scoped</option>
+                    <option value="fleet">Fleet Wide</option>
+                    <option value="private">Private Scoped</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Active Status
+                  </label>
+                  <select
+                    value={editForm.status || 'active'}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value as any }))}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 text-xs"
+                  >
+                    <option value="active">Active</option>
+                    <option value="standby">Standby</option>
+                    <option value="busy">Busy / On Voyage</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingCrew(null)}
+                className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-medium cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (editingCrew) {
+                    updateCrewMember(editingCrew.id, editForm);
+                    setEditingCrew(null);
+                  }
+                }}
+                className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+              >
+                Save &amp; Update Specialist
+              </button>
             </div>
           </div>
         </div>

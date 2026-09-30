@@ -1,69 +1,98 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { ContextBar } from './ContextBar';
 import { RightRail } from './RightRail';
 import { CommandPalette } from './CommandPalette';
+import { RemoteAccessModal } from '../features/RemoteAccessModal';
 import { useFleetStore } from '../../store/fleetStore';
 import { useSimulation } from '../../hooks/useSimulation';
 
-// Lazy loading feature views for optimal performance and initial bundle size
-const QuarterdeckView = lazy(() =>
-  import('../features/QuarterdeckView').then((m) => ({ default: m.QuarterdeckView }))
-);
-const RealmView = lazy(() =>
-  import('../features/RealmView').then((m) => ({ default: m.RealmView }))
-);
-const FlagBridgeView = lazy(() =>
-  import('../features/FlagBridgeView').then((m) => ({ default: m.FlagBridgeView }))
-);
-const QuestsView = lazy(() =>
-  import('../features/QuestsView').then((m) => ({ default: m.QuestsView }))
-);
-const CaptainsJournalView = lazy(() =>
-  import('../features/CaptainsJournalView').then((m) => ({ default: m.CaptainsJournalView }))
-);
-const QuartermasterOffice = lazy(() =>
-  import('../features/QuartermasterOffice').then((m) => ({ default: m.QuartermasterOffice }))
-);
-const MissionBoard = lazy(() =>
-  import('../features/MissionBoard').then((m) => ({ default: m.MissionBoard }))
-);
-const ShipsView = lazy(() =>
-  import('../features/ShipsView').then((m) => ({ default: m.ShipsView }))
-);
-const CrewView = lazy(() =>
-  import('../features/CrewView').then((m) => ({ default: m.CrewView }))
-);
-const ArtifactsView = lazy(() =>
-  import('../features/ArtifactsView').then((m) => ({ default: m.ArtifactsView }))
-);
-const ApprovalsView = lazy(() =>
-  import('../features/ApprovalsView').then((m) => ({ default: m.ApprovalsView }))
-);
-const TreasuryView = lazy(() =>
-  import('../features/TreasuryView').then((m) => ({ default: m.TreasuryView }))
-);
-const LogbookView = lazy(() =>
-  import('../features/LogbookView').then((m) => ({ default: m.LogbookView }))
-);
-const HarborView = lazy(() =>
-  import('../features/HarborView').then((m) => ({ default: m.HarborView }))
-);
-const FleetCodeView = lazy(() =>
-  import('../features/FleetCodeView').then((m) => ({ default: m.FleetCodeView }))
-);
-const CrowsNestView = lazy(() =>
-  import('../features/CrowsNestView').then((m) => ({ default: m.CrowsNestView }))
-);
-const ShipyardView = lazy(() =>
-  import('../features/ShipyardView').then((m) => ({ default: m.ShipyardView }))
-);
-const SettingsView = lazy(() =>
-  import('../features/SettingsView').then((m) => ({ default: m.SettingsView }))
-);
+import { QuarterdeckView } from '../features/QuarterdeckView';
+import { RealmView } from '../features/RealmView';
+import { FlagBridgeView } from '../features/FlagBridgeView';
+import { QuestsView } from '../features/QuestsView';
+import { CaptainsJournalView } from '../features/CaptainsJournalView';
+import { QuartermasterOffice } from '../features/QuartermasterOffice';
+import { MissionBoard } from '../features/MissionBoard';
+import { ShipsView } from '../features/ShipsView';
+import { CrewView } from '../features/CrewView';
+import { ArtifactsView } from '../features/ArtifactsView';
+import { ApprovalsView } from '../features/ApprovalsView';
+import { TreasuryView } from '../features/TreasuryView';
+import { LogbookView } from '../features/LogbookView';
+import { HarborView } from '../features/HarborView';
+import { FleetCodeView } from '../features/FleetCodeView';
+import { CrowsNestView } from '../features/CrowsNestView';
+import { ShipyardView } from '../features/ShipyardView';
+import { SettingsView } from '../features/SettingsView';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  activeTab: string;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error rendering Fleet View:', error, errorInfo);
+  }
+
+  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+    if (prevProps.activeTab !== this.props.activeTab && this.state.hasError) {
+      this.setState({ hasError: false, error: null });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 text-xl font-bold font-mono">
+            ⚠
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+              Fleet View Recovered
+            </h3>
+            <p className="text-xs text-neutral-400 max-w-md">
+              {this.state.error?.message || 'An unexpected state occurred while rendering this surface.'}
+            </p>
+          </div>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Reload Surface
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export const AppShell: React.FC = () => {
-  const { activeTab, setActiveTab, toggleSidebarCollapsed } = useFleetStore();
+  const {
+    activeTab,
+    setActiveTab,
+    toggleSidebarCollapsed,
+    isRemoteAccessModalOpen,
+    setRemoteAccessModalOpen
+  } = useFleetStore();
   useSimulation();
 
   React.useEffect(() => {
@@ -139,20 +168,11 @@ export const AppShell: React.FC = () => {
         {/* Dynamic Canvas + Optional Right Rail */}
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-hidden flex flex-col">
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center p-8 text-neutral-400 font-mono text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
-                    <span>Loading Fleet surface...</span>
-                  </div>
-                </div>
-              }
-            >
+            <ViewErrorBoundary activeTab={activeTab}>
               <div key={activeTab} className="flex-1 flex flex-col overflow-hidden animate-view-fade-in">
                 {renderActiveView()}
               </div>
-            </Suspense>
+            </ViewErrorBoundary>
           </main>
 
           {/* Right Rail Fleet Pulse (Shown on wide screens) */}
@@ -162,6 +182,12 @@ export const AppShell: React.FC = () => {
 
       {/* Global Command Palette */}
       <CommandPalette />
+
+      {/* Global Remote Access & Multi-Platform QR Modal */}
+      <RemoteAccessModal
+        isOpen={isRemoteAccessModalOpen}
+        onClose={() => setRemoteAccessModalOpen(false)}
+      />
     </div>
   );
 };
