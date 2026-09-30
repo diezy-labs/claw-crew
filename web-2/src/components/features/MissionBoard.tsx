@@ -121,7 +121,6 @@ export const MissionBoard: React.FC = () => {
   };
 
   return (
-<<<<<<< HEAD
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-7xl mx-auto w-full animate-view-fade-in scrollbar-none">
       {/* Reusable Standard Header */}
       <PageHeader
@@ -139,59 +138,6 @@ export const MissionBoard: React.FC = () => {
           placeholder: 'Filter quests...'
         }}
         actions={
-=======
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Board Header & Controls - Auto-collapses on mobile scroll down */}
-      <div
-        className={`transition-all duration-300 shrink-0 ${
-          isHeaderVisible
-            ? 'max-h-28 p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
-            : 'max-h-0 py-0 px-4 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-6 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
-        } flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
-      >
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Mission Board
-            </h1>
-            <span className="text-xs font-mono text-neutral-400">
-              ({filteredQuests.length} Quests)
-            </span>
-          </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Fleet-wide work intake, priority, Map progression, and routing to Ships.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Filter quests..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-teal-500 w-48"
-            />
-          </div>
-
-          {/* Ship filter */}
-          <select
-            value={selectedShipFilter}
-            onChange={(e) => setSelectedShipFilter(e.target.value)}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Ships</option>
-            {ships.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-
-          {/* New Quest Button */}
->>>>>>> 2e922019e513ae8198c4bf6e1addb10f2c027867
           <button
             onClick={() => setIsNewQuestModalOpen(true)}
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"

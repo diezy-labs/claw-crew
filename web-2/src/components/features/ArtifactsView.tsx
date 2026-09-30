@@ -31,24 +31,6 @@ export const ArtifactsView: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const currentScrollTop = e.currentTarget.scrollTop;
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      if (currentScrollTop > 15) {
-        if (currentScrollTop > lastScrollTop.current + 6) {
-          setIsHeaderVisible(false);
-        } else if (currentScrollTop < lastScrollTop.current - 8) {
-          setIsHeaderVisible(true);
-        }
-      } else {
-        setIsHeaderVisible(true);
-      }
-    }
-    lastScrollTop.current = currentScrollTop;
-  };
 
   const filtered = artifacts.filter((a) => {
     const matchSearch =
@@ -78,7 +60,6 @@ export const ArtifactsView: React.FC = () => {
   ];
 
   return (
-<<<<<<< HEAD
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
       {/* Reusable Standard Header */}
       <PageHeader
@@ -119,29 +100,6 @@ export const ArtifactsView: React.FC = () => {
                 <span>{type.label}</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-200/80 dark:bg-neutral-700/80 text-neutral-700 dark:text-neutral-300">
                   {count}
-=======
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Bar - Auto-collapses on mobile scroll down */}
-      <div
-        className={`transition-all duration-300 shrink-0 ${
-          isHeaderVisible
-            ? 'max-h-24 p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
-            : 'max-h-0 py-0 px-3 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-5 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
-        } flex flex-col sm:flex-row sm:items-center justify-between gap-3`}
-      >
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
-              <FileText className="w-4 h-4 text-teal-500 shrink-0" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                  Artifact Gallery
-                </h1>
-                <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-                  {artifacts.length} Deliverables
->>>>>>> 2e922019e513ae8198c4bf6e1addb10f2c027867
                 </span>
               </button>
             );
@@ -150,15 +108,7 @@ export const ArtifactsView: React.FC = () => {
       </PageStickyNav>
 
       {/* Grid of Artifacts */}
-<<<<<<< HEAD
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-=======
-      <div
-        onScroll={handleViewportScroll}
-        className="flex-1 overflow-y-auto p-4 sm:p-6"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
->>>>>>> 2e922019e513ae8198c4bf6e1addb10f2c027867
           {filtered.map((art) => {
             const ship = ships.find((s) => s.id === art.shipId);
             const producer = crew.find((c) => c.id === art.producerCrewId);
