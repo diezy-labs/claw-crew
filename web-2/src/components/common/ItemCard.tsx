@@ -115,6 +115,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             className="flex items-center gap-1.5 shrink-0"
             onClick={(e) => actions && e.stopPropagation()}
           >
+            {meta}
             {badge}
             {actions}
           </div>

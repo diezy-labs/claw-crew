@@ -629,11 +629,10 @@ export const TrainingOfficerView: React.FC = () => {
               key={st}
               type="button"
               onClick={() => setStatusFilter(st)}
-              className={`px-2 py-0.5 rounded-lg text-xs capitalize cursor-pointer transition-colors ${
-                statusFilter === st
-                  ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-semibold'
-                  : 'hover:text-neutral-800 dark:hover:text-neutral-200'
-              }`}
+              className={`px-2 py-0.5 rounded-lg text-xs capitalize cursor-pointer transition-colors ${statusFilter === st
+                ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-semibold'
+                : 'hover:text-neutral-800 dark:hover:text-neutral-200'
+                }`}
             >
               {st}
             </button>
@@ -669,13 +668,12 @@ export const TrainingOfficerView: React.FC = () => {
                   subtitle={skill.purpose}
                   badge={
                     <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
-                        skill.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                          : skill.status === 'draft'
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${skill.status === 'active'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : skill.status === 'draft'
                           ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                           : 'bg-neutral-500/10 text-neutral-500 border border-neutral-500/20'
-                      }`}
+                        }`}
                     >
                       {skill.status}
                     </span>
@@ -740,13 +738,12 @@ export const TrainingOfficerView: React.FC = () => {
                   badge={
                     <div className="flex items-center gap-1.5">
                       <span
-                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
-                          order.priority === 'critical'
-                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                            : order.priority === 'high'
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${order.priority === 'critical'
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                          : order.priority === 'high'
                             ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                             : 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20'
-                        }`}
+                          }`}
                       >
                         {order.priority}
                       </span>
@@ -876,13 +873,12 @@ export const TrainingOfficerView: React.FC = () => {
                   subtitle={`Trigger: ${hook.triggerEvent} → Action: ${hook.actionType}`}
                   badge={
                     <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
-                        hook.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                          : hook.status === 'paused'
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${hook.status === 'active'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : hook.status === 'paused'
                           ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                           : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                      }`}
+                        }`}
                     >
                       {hook.status}
                     </span>
@@ -954,11 +950,10 @@ export const TrainingOfficerView: React.FC = () => {
                   key={c.id}
                   type="button"
                   onClick={() => setMentorContext(c.id as any)}
-                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
-                    mentorContext === c.id
-                      ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400'
-                      : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300'
-                  }`}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${mentorContext === c.id
+                    ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400'
+                    : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300'
+                    }`}
                 >
                   {c.label}
                 </button>
