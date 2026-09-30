@@ -24,6 +24,8 @@ import {
   QrCode
 } from 'lucide-react';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeader } from '../common/PageHeader';
+import { PageStickyNav } from '../common/PageStickyNav';
 import { useFleetStore } from '../../store/fleetStore';
 
 export const HarborView: React.FC = () => {
@@ -159,56 +161,45 @@ export const HarborView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Header - Statis (Scrolls with Page), Compact on Mobile with Icon & Title only */}
-      <div className="flex items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4 shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
-              <Anchor className="w-4 h-4 text-teal-500 shrink-0" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                  Harbor
-                </h1>
-                <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-                  Intelligence &amp; Mesh Connectors
-                </span>
-              </div>
-            </div>
-          </div>
-          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
-            Connect the intelligence models, local endpoints, git repositories, A2A mesh peers, and WebAssembly tools your Fleet can use.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button
-            onClick={() => setRemoteAccessModalOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 font-semibold text-xs hover:bg-teal-500/20 transition-all cursor-pointer shadow-xs"
-            title="Scan QR to open on Mobile or Laptop"
-          >
-            <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span className="hidden sm:inline">Remote Access Hub &amp; QR</span>
-            <span className="sm:hidden">Remote Hub</span>
-          </button>
-
-          {activeHarborTab === 'a2a_mesh' && (
+      {/* Standard Reusable PageHeader */}
+      <PageHeader
+        icon={<Anchor className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Harbor"
+        badge={
+          <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+            Intelligence &amp; Mesh Connectors
+          </span>
+        }
+        description="Connect the intelligence models, local endpoints, git repositories, A2A mesh peers, and WebAssembly tools your Fleet can use."
+        actions={
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
-              onClick={handleScanMdnsPeers}
-              disabled={isScanningPeers}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+              onClick={() => setRemoteAccessModalOpen(true)}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 font-semibold text-xs hover:bg-teal-500/20 transition-all cursor-pointer shadow-xs"
+              title="Scan QR to open on Mobile or Laptop"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isScanningPeers ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Scan mDNS Peers</span>
-              <span className="sm:hidden">Scan</span>
+              <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <span className="hidden sm:inline">Remote Access Hub &amp; QR</span>
+              <span className="sm:hidden">Remote Hub</span>
             </button>
-          )}
-        </div>
-      </div>
 
-      {/* Sticky Top Navigation with < and > arrows (Sticks flush below navbar on mobile scroll) */}
-      <div className="sticky -top-4 sm:top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-[var(--bg-canvas)]/95 backdrop-blur-md border-b border-neutral-200/80 dark:border-neutral-800/80 shadow-2xs shrink-0 transition-all">
+            {activeHarborTab === 'a2a_mesh' && (
+              <button
+                onClick={handleScanMdnsPeers}
+                disabled={isScanningPeers}
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isScanningPeers ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Scan mDNS Peers</span>
+                <span className="sm:hidden">Scan</span>
+              </button>
+            )}
+          </div>
+        }
+      />
+
+      {/* Floating Sticky Sub-Tabs with Navigation Arrows (< >) */}
+      <PageStickyNav>
         <SubMenuScroller className="gap-2 text-xs" containerClassName="w-full">
           <button
             onClick={() => setActiveHarborTab('providers')}
@@ -256,7 +247,7 @@ export const HarborView: React.FC = () => {
             <span>Wasm Plugins ({plugins.length})</span>
           </button>
         </SubMenuScroller>
-      </div>
+      </PageStickyNav>
 
       {/* Tab 1: Model Intelligence (BYOK / BYOM) */}
       {activeHarborTab === 'providers' && (

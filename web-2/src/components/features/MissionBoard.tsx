@@ -58,24 +58,6 @@ export const MissionBoard: React.FC = () => {
   const [newShipId, setNewShipId] = useState('ship-dev');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
   const [newBudget, setNewBudget] = useState(2.00);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const currentScrollTop = e.currentTarget.scrollTop;
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      if (currentScrollTop > 15) {
-        if (currentScrollTop > lastScrollTop.current + 6) {
-          setIsHeaderVisible(false);
-        } else if (currentScrollTop < lastScrollTop.current - 8) {
-          setIsHeaderVisible(true);
-        }
-      } else {
-        setIsHeaderVisible(true);
-      }
-    }
-    lastScrollTop.current = currentScrollTop;
-  };
 
   const columns: {
     status: QuestStatus;
@@ -224,7 +206,6 @@ export const MissionBoard: React.FC = () => {
 
                 {/* Cards Container */}
                 <div
-                  onScroll={handleViewportScroll}
                   className="flex-1 overflow-y-auto space-y-2.5 pr-1"
                 >
                   {colQuests.length === 0 ? (

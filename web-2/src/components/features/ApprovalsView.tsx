@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { CaptainApproval } from '../../types';
+import { PageHeader } from '../common/PageHeader';
 
 export const ApprovalsView: React.FC = () => {
   const { approvals, handleApproval, ships, crew } = useFleetStore();
@@ -35,27 +36,17 @@ export const ApprovalsView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in">
-      {/* Header - Compact on mobile with icon and title only */}
-      <div className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 ring-1 ring-amber-500/20">
-            <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                Captain’s Approval
-              </h1>
-              <span className="hidden sm:inline-flex text-xs font-mono text-amber-500 px-2 py-0.5 rounded bg-amber-500/10">
-                {pendingList.length} Action{pendingList.length === 1 ? '' : 's'} Pending
-              </span>
-            </div>
-          </div>
-        </div>
-        <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
-          Review and authorize external actions before autonomous agents affect external systems or codebases.
-        </p>
-      </div>
+      {/* Standard Reusable PageHeader */}
+      <PageHeader
+        icon={<ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />}
+        title="Captain’s Approval"
+        badge={
+          <span className="hidden sm:inline-flex text-xs font-mono text-amber-500 px-2 py-0.5 rounded bg-amber-500/10">
+            {pendingList.length} Action{pendingList.length === 1 ? '' : 's'} Pending
+          </span>
+        }
+        description="Review and authorize external actions before autonomous agents affect external systems or codebases."
+      />
 
       {/* Pending Approvals Queue */}
       <div className="space-y-4">

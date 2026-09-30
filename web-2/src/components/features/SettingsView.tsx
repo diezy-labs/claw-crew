@@ -28,6 +28,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
+import { PageHeader } from '../common/PageHeader';
 import { SettingsCategory, TerminologyMode, DensityMode, UpdateChannel } from '../../types';
 
 export const SettingsView: React.FC = () => {
@@ -94,25 +95,6 @@ export const SettingsView: React.FC = () => {
     setTimeout(() => setSavedSuccessMsg(null), 3000);
   };
 
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const currentScrollTop = e.currentTarget.scrollTop;
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      if (currentScrollTop > 15) {
-        if (currentScrollTop > lastScrollTop.current + 6) {
-          setIsHeaderVisible(false);
-        } else if (currentScrollTop < lastScrollTop.current - 8) {
-          setIsHeaderVisible(true);
-        }
-      } else {
-        setIsHeaderVisible(true);
-      }
-    }
-    lastScrollTop.current = currentScrollTop;
-  };
-
   // Filter categories by search
   const filteredCategories = categories.map((catGroup) => ({
     ...catGroup,
@@ -126,42 +108,23 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header - Auto-collapses on mobile scroll down */}
-      <div
-        className={`transition-all duration-300 shrink-0 ${
-          isHeaderVisible
-            ? 'max-h-24 p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs opacity-100'
-            : 'max-h-0 py-0 px-3 border-b-0 opacity-0 overflow-hidden pointer-events-none sm:max-h-none sm:p-5 sm:border-b sm:border-neutral-200 sm:dark:border-neutral-800 sm:bg-white/40 sm:dark:bg-[#141619]/40 sm:opacity-100 sm:pointer-events-auto'
-        } flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3`}
-      >
-        <div>
-          <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Settings
-            </h1>
-            <span className="hidden sm:inline text-xs font-mono text-neutral-400">
+      {/* Standard Reusable PageHeader */}
+      <div className="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#141619]/60 shrink-0">
+        <PageHeader
+          icon={<Settings className="w-4 h-4 text-teal-500 shrink-0" />}
+          title="Settings"
+          badge={
+            <span className="hidden sm:inline-flex text-xs font-mono text-neutral-400">
               Preferences &amp; Application Controls
             </span>
-          </div>
-          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Manage your personal preferences, data location, desktop runtime, and advanced configuration.
-          </p>
-        </div>
-
-        {/* Search settings input */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Search settings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            />
-          </div>
-        </div>
+          }
+          description="Manage your personal preferences, data location, desktop runtime, and advanced configuration."
+          search={{
+            value: searchQuery,
+            onChange: setSearchQuery,
+            placeholder: 'Search settings...'
+          }}
+        />
       </div>
 
       {/* Main Settings Body with Mobile Master-Detail Navigation */}
@@ -219,7 +182,6 @@ export const SettingsView: React.FC = () => {
 
         {/* Right Active Category Content (Shown full width on mobile when selected) */}
         <div
-          onScroll={handleViewportScroll}
           className={`flex-1 overflow-y-auto p-4 sm:p-7 max-w-4xl space-y-6 ${
             mobileSection === 'content' ? 'block' : 'hidden md:block'
           }`}

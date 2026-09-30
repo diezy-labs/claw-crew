@@ -45,28 +45,7 @@ export const QuestsView: React.FC = () => {
   const [activeTabFilter, setActiveTabFilter] = useState<QuestTab>('active');
   const [mapStudioMode, setMapStudioMode] = useState<'guided' | 'advanced'>('guided');
   const [search, setSearch] = useState('');
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isNewQuestModalOpen, setIsNewQuestModalOpen] = useState(false);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const lastScrollTop = useRef(0);
-
-  const handleViewportScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const currentScrollTop = e.currentTarget.scrollTop;
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      if (currentScrollTop > 15) {
-        if (currentScrollTop > lastScrollTop.current + 6) {
-          // Scrolling down: collapse header so subtabs attach directly under navbar
-          setIsHeaderVisible(false);
-        } else if (currentScrollTop < lastScrollTop.current - 8) {
-          // Scrolling up: reveal header
-          setIsHeaderVisible(true);
-        }
-      } else {
-        setIsHeaderVisible(true);
-      }
-    }
-    lastScrollTop.current = currentScrollTop;
-  };
 
   // New Quest Form state
   const [newTitle, setNewTitle] = useState('');

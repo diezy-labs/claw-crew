@@ -10,6 +10,7 @@ import {
   Layers
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
+import { PageHeader } from '../common/PageHeader';
 
 export const TreasuryView: React.FC = () => {
   const { treasuryLedger, ships } = useFleetStore();
@@ -20,27 +21,17 @@ export const TreasuryView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in">
-      {/* Header - Compact on mobile with icon and title only */}
-      <div className="border-b border-neutral-200 dark:border-neutral-800 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
-            <Coins className="w-4 h-4 text-teal-500 shrink-0" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                Treasury
-              </h1>
-              <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-                BYOK / BYOM
-              </span>
-            </div>
-          </div>
-        </div>
-        <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
-          Provider Cost &amp; Budget Ledger. Pay your chosen AI providers directly with zero platform credit markup.
-        </p>
-      </div>
+      {/* Standard Reusable PageHeader */}
+      <PageHeader
+        icon={<Coins className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Treasury"
+        badge={
+          <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+            BYOK / BYOM
+          </span>
+        }
+        description="Provider Cost & Budget Ledger. Pay your chosen AI providers directly with zero platform credit markup."
+      />
 
       {/* Main Budget Card */}
       <div className="p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-xs space-y-4">
