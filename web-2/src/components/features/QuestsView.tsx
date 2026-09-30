@@ -41,6 +41,7 @@ export const QuestsView: React.FC = () => {
   const [activeTabFilter, setActiveTabFilter] = useState<QuestTab>('active');
   const [mapStudioMode, setMapStudioMode] = useState<'guided' | 'advanced'>('guided');
   const [search, setSearch] = useState('');
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isNewQuestModalOpen, setIsNewQuestModalOpen] = useState(false);
 
   // New Quest Form state
@@ -106,33 +107,72 @@ export const QuestsView: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
       {/* Top Header */}
-      <div className="p-4 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-        <div>
+      <div className="px-4 py-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex items-center justify-between gap-3 shrink-0">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
               Quests
             </h1>
-            <span className="text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+            <span className="hidden sm:inline-block text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
               Workspace &amp; Project SOPs
             </span>
           </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
             What work are we planning, running, and improving for {selectedWorkspace} / {selectedProject}?
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Mobile search: icon toggle */}
+          <div className="sm:hidden relative">
+            {isMobileSearchOpen ? (
+              <div className="flex items-center gap-1.5 animate-in fade-in duration-100">
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-2.5 pr-2 py-1 text-xs rounded-lg border border-teal-500 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 w-28 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileSearchOpen(false);
+                    setSearch('');
+                  }}
+                  className="p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 text-xs cursor-pointer"
+                  title="Close search"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsMobileSearchOpen(true)}
+                className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-300 hover:border-teal-500/50 transition-colors cursor-pointer shadow-xs"
+                title="Search quests"
+                aria-label="Search quests"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Desktop search bar */}
+          <div className="hidden sm:block relative">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="text"
               placeholder="Search quests..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 w-32 sm:w-44"
+              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 w-44"
             />
           </div>
 
+          {/* Quest Button */}
           <button
             onClick={() => setIsNewQuestModalOpen(true)}
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
@@ -268,29 +308,21 @@ export const QuestsView: React.FC = () => {
               </button>
             </div>
 
-            {/* Map Studio mode toggle */}
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 text-[11px] shrink-0 font-medium">
-              <button
-                onClick={() => setMapStudioMode('guided')}
-                className={`px-2 py-1 rounded ${
-                  mapStudioMode === 'guided'
-                    ? 'bg-white dark:bg-neutral-900 text-teal-600 dark:text-teal-400 font-semibold shadow-xs'
-                    : 'text-neutral-500'
-                }`}
-              >
-                Guided Map (Steps)
-              </button>
-              <button
-                onClick={() => setMapStudioMode('advanced')}
-                className={`px-2 py-1 rounded ${
-                  mapStudioMode === 'advanced'
-                    ? 'bg-white dark:bg-neutral-900 text-teal-600 dark:text-teal-400 font-semibold shadow-xs'
-                    : 'text-neutral-500'
-                }`}
-              >
-                Advanced Studio (Nodes)
-              </button>
-            </div>
+            {/* Unified Map Studio Navigation Arrow (Modern & Minimalist) */}
+            <button
+              type="button"
+              onClick={() => setMapStudioMode((prev) => (prev === 'guided' ? 'advanced' : 'guided'))}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 text-[11px] font-medium text-neutral-700 dark:text-neutral-200 hover:border-teal-500/40 hover:text-teal-600 dark:hover:text-teal-400 transition-all cursor-pointer shadow-2xs group shrink-0"
+              title={`Switch to ${mapStudioMode === 'guided' ? 'Advanced Studio (Nodes)' : 'Guided Map (Steps)'}`}
+            >
+              <Workflow className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                {mapStudioMode === 'guided' ? 'Guided Map' : 'Advanced Studio'}
+              </span>
+              <div className="flex items-center text-neutral-400 group-hover:text-teal-500 group-hover:translate-x-0.5 transition-all">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </button>
           </div>
 
           {/* Quests Viewport */}
