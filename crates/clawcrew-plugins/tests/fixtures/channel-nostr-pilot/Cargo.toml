@@ -1,0 +1,20 @@
+# Pilot channel plugin proving the WIT `channel-plugin` contract builds and
+# loads end to end. A workspace member (like channel-fixture) so the e2e harness
+# can build it via `cargo build --locked --package clawcrew-channel-nostr-pilot`
+# resolving from the root lockfile.
+[package]
+name = "clawcrew-channel-nostr-pilot"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+doc = false
+doctest = false
+test = false
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+wit-bindgen = "0.51"

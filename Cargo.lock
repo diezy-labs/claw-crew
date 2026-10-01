@@ -1764,6 +1764,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "clawcrew-channel-nostr-pilot"
+version = "0.0.0"
+dependencies = [
+ "serde_json",
+ "wit-bindgen 0.51.0",
+]
+
+[[package]]
 name = "clawcrew-channel-plugin-fixture"
 version = "0.0.0"
 dependencies = [

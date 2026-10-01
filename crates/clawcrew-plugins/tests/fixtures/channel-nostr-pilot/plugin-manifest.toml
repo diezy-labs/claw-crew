@@ -1,0 +1,29 @@
+# On-disk manifest for the nostr pilot channel plugin.
+#
+# Pilot proving the WIT `channel-plugin` contract end to end: it is INBOUND-FIRST
+# because the host withholds `wasi:http` from channels (no outbound). The guest
+# reads a scoped `relay_secret` to authenticate inbound webhooks and drains the
+# host inbound queue; it does not port full nostr relay logic.
+name = "channel-nostr-pilot"
+version = "0.0.0"
+description = "Pilot channel plugin proving the channel-plugin WIT contract end to end."
+wasm_path = "channel-nostr-pilot.wasm"
+capabilities = ["channel"]
+permissions = ["config_read"]
+
+# `config_read` grants both `config.get` and `secrets.get`. Channels have no
+# outbound-HTTP surface, so no `http_client` grant is requested.
+[config_schema]
+"$schema" = "https://json-schema.org/draft/2020-12/schema"
+type = "object"
+required = ["relay_url", "relay_secret"]
+additionalProperties = false
+
+[config_schema.properties.relay_url]
+type = "string"
+minLength = 1
+
+[config_schema.properties.relay_secret]
+type = "string"
+minLength = 1
+x-secret = true
