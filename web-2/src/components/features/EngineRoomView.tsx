@@ -37,6 +37,7 @@ import { EmptyState } from '../common/EmptyState';
 import { SearchBar } from '../common/SearchBar';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { CodeSnippet } from '../common/CodeSnippet';
+import { apiClient } from '../../utils/apiClient';
 
 export type EngineRoomTab =
   | 'terminal'
@@ -101,6 +102,8 @@ export const EngineRoomView: React.FC = () => {
   const [logFilterLevel, setLogFilterLevel] = useState<string>('all');
   const [logSearchQuery, setLogSearchQuery] = useState('');
   const [sessionToKill, setSessionToKill] = useState<ActiveSession | null>(null);
+  const [systemMetrics, setSystemMetrics] = useState<any>(null);
+  const [isRefreshingProcs, setIsRefreshingProcs] = useState(false);
 
   // Terminal scroll reference
   const terminalBottomRef = useRef<HTMLDivElement | null>(null);
@@ -372,11 +375,44 @@ export const EngineRoomView: React.FC = () => {
     }
   }, [logs, autoScrollLogs, activeTab]);
 
-  const handleRunCommand = (cmdText?: string) => {
+  // Load real backend processes and system metrics
+  useEffect(() => {
+    apiClient.getEngineProcesses().then((data) => {
+      if (data && data.length > 0) {
+        setProcesses(data);
+      }
+    }).catch(console.error);
+
+    apiClient.getSystemMetrics().then((metrics) => {
+      if (metrics) setSystemMetrics(metrics);
+    }).catch(console.error);
+  }, []);
+
+  const handleRefreshProcesses = async () => {
+    setIsRefreshingProcs(true);
+    try {
+      const data = await apiClient.getEngineProcesses();
+      if (data && data.length > 0) setProcesses(data);
+      const metrics = await apiClient.getSystemMetrics();
+      if (metrics) setSystemMetrics(metrics);
+    } catch (err) {
+      console.error('Failed to refresh processes:', err);
+    } finally {
+      setIsRefreshingProcs(false);
+    }
+  };
+
+  const handleRunCommand = async (cmdText?: string) => {
     const textToRun = cmdText || commandInput.trim();
     if (!textToRun) return;
 
     const time = new Date().toTimeString().slice(0, 8);
+
+    if (textToRun.toLowerCase() === 'clear' || textToRun.toLowerCase() === 'cls') {
+      setTerminalLines([]);
+      setCommandInput('');
+      return;
+    }
 
     // Add input line
     const inputLine: TerminalLine = {
@@ -386,60 +422,40 @@ export const EngineRoomView: React.FC = () => {
       timestamp: time
     };
 
-    // Calculate response
-    let responseText = '';
-    let responseType: TerminalLine['type'] = 'output';
-    let exitCode = 0;
+    setTerminalLines((prev) => [...prev, inputLine]);
+    setCommandInput('');
 
-    const lower = textToRun.toLowerCase();
+    try {
+      const res = await apiClient.executeTerminalCommand(textToRun);
+      const outputLine: TerminalLine = {
+        id: `out-${Date.now()}`,
+        type: res.exitCode === 0 ? 'success' : 'error',
+        content: res.stdout,
+        timestamp: new Date().toTimeString().slice(0, 8)
+      };
 
-    if (lower === 'clear' || lower === 'cls') {
-      setTerminalLines([]);
-      setCommandInput('');
-      return;
-    } else if (lower.includes('check-services')) {
-      responseType = 'success';
-      responseText = `✔ galleon-gateway (:8080)   [Active · Uptime 4h 12m]\n✔ mesh-discovery-mdns        [Active · 2 peers in mesh]\n✔ ollama-bridge-proxy        [Active · Model: deepseek-r1:14b]\n✔ landlock-fs-sandbox        [Enforced · Zero breaches]\n✔ vector-memory-engine       [Active · 1,420 chunks]`;
-    } else if (lower.includes('ps') || lower.includes('top')) {
-      responseText = `PID   USER       %CPU %MEM   VSZ   RSS TTY      STAT START   TIME COMMAND\n1042  captain     0.4  0.8 14200  8400 pts/0    Ss+  08:00   0:02 /bin/bash\n1420  galleon     1.8  1.9 54200 18400 ?        Ssl  08:00   0:14 galleon-core\n1682  galleon     0.3  0.6 22100  9200 ?        S    08:00   0:01 mesh-mdns\n1890  galleon     0.8  1.2 38400 14800 ?        Sl   08:00   0:08 ollama-proxy\n2040  root        0.1  0.3 12000  4100 ?        S    08:00   0:00 landlock-guard\n2812  galleon     0.5  2.1 78400 24100 ?        Sl   08:00   0:04 vector-engine`;
-    } else if (lower.includes('git status')) {
-      responseType = 'success';
-      responseText = `On branch feat/ai-studio-sync\nYour branch is up to date with 'origin/feat/ai-studio-sync'.\n\nChanges not staged for commit:\n  (use "git add <file>..." to update what will be committed)\n\tnothing to commit, working tree clean`;
-    } else if (lower.includes('mesh status') || lower.includes('mesh')) {
-      responseType = 'success';
-      responseText = `LOCAL MESH TOPOLOGY:\n  - Local Node: horizon-orchestrator.sovereign.local [127.0.0.1:8080]\n  - Peer 1: Orion Defense Fleet Node [192.168.1.14:8080] · Latency: 1.2ms · Verified\n  - Peer 2: Adiet Workstation Node   [127.0.0.1:8080]    · Latency: 0.4ms · Anchor\nAll signatures verified via Ed25519 root authority.`;
-    } else if (lower.includes('free') || lower.includes('memory') || lower.includes('mem')) {
-      responseText = `               total        used        free      shared  buff/cache   available\nMem:           15.4Gi       2.8Gi       8.2Gi       210Mi       4.4Gi      12.1Gi\nSwap:           2.0Gi          0B       2.0Gi`;
-    } else if (lower.includes('ss') || lower.includes('netstat') || lower.includes('ports')) {
-      responseText = `Netid State  Recv-Q Send-Q    Local Address:Port   Peer Address:PortProcess\ntcp   LISTEN 0      128             0.0.0.0:8080        0.0.0.0:*    users:(("galleon-gateway",pid=1420))\ntcp   LISTEN 0      128           127.0.0.1:11434       0.0.0.0:*    users:(("ollama",pid=1890))\nudp   UNCONN 0      0               0.0.0.0:5353        0.0.0.0:*    users:(("mesh-mdns",pid=1682))`;
-    } else if (lower.includes('doctor') || lower.includes('diagnostic')) {
-      responseType = 'success';
-      responseText = `[DOCTOR] Running Galleon sovereign environment audit...\n[1/4] Checking kernel Landlock LSM support... OK (ABI v3)\n[2/4] Verifying WASI memory quotas... OK (Sandboxed)\n[3/4] Probing gateway latency... 12ms (Target < 50ms)\n[4/4] Validating cryptographic keys... Valid (Ed25519)\nResult: Environment 100% healthy. Ready for operational missions.`;
-    } else {
-      responseText = `[galleon-exec] Executed: ${textToRun}\nProcess exited cleanly with status code 0. (Scoped sandbox)`;
+      setTerminalLines((prev) => [...prev, outputLine]);
+
+      setCommandHistory((prev) => [
+        {
+          id: `cmd-${Date.now()}`,
+          command: textToRun,
+          actor: 'Captain',
+          exitCode: res.exitCode,
+          duration: res.duration || '14ms',
+          timestamp: time
+        },
+        ...prev
+      ]);
+    } catch (err: any) {
+      const errLine: TerminalLine = {
+        id: `out-${Date.now()}`,
+        type: 'error',
+        content: `Command error: ${err?.message || 'Host execution failed'}`,
+        timestamp: new Date().toTimeString().slice(0, 8)
+      };
+      setTerminalLines((prev) => [...prev, errLine]);
     }
-
-    const outputLine: TerminalLine = {
-      id: `out-${Date.now()}`,
-      type: responseType,
-      content: responseText,
-      timestamp: time
-    };
-
-    setTerminalLines((prev) => [...prev, inputLine, outputLine]);
-
-    // Record in history
-    setCommandHistory((prev) => [
-      {
-        id: `cmd-${Date.now()}`,
-        command: textToRun,
-        actor: 'Captain',
-        exitCode,
-        duration: '12ms',
-        timestamp: time
-      },
-      ...prev
-    ]);
 
     // Add log
     setLogs((prev) => [
@@ -844,6 +860,45 @@ export const EngineRoomView: React.FC = () => {
       {/* TAB 4: PROCESS MONITOR */}
       {activeTab === 'processes' && (
         <div className="space-y-4">
+          {/* Host Telemetry Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Host Environment</span>
+              <div className="text-sm font-bold font-mono text-neutral-800 dark:text-neutral-200 truncate">
+                {systemMetrics?.platform ? `${systemMetrics.platform.toUpperCase()} (${systemMetrics.arch})` : 'PTY Linux / Win32'}
+              </div>
+              <div className="text-[10px] text-neutral-400 truncate">{systemMetrics?.nodeVersion || 'Tauri Core Host'}</div>
+            </div>
+
+            <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">CPU Utilization</span>
+              <div className="text-sm font-bold font-mono text-emerald-500">
+                {systemMetrics?.cpuUsage ? `${systemMetrics.cpuUsage}%` : '1.8%'}
+              </div>
+              <div className="text-[10px] text-neutral-400">Load across active cores</div>
+            </div>
+
+            <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Memory Footprint</span>
+              <div className="text-sm font-bold font-mono text-neutral-800 dark:text-neutral-200">
+                {systemMetrics?.memoryUsage
+                  ? `${systemMetrics.memoryUsage.usedMB} / ${systemMetrics.memoryUsage.totalMB} MB`
+                  : '54.2 MB'}
+              </div>
+              <div className="text-[10px] text-neutral-400">
+                {systemMetrics?.memoryUsage ? `${systemMetrics.memoryUsage.percent}% allocated` : 'Nominal'}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Daemon Uptime</span>
+              <div className="text-sm font-bold font-mono text-teal-500">
+                {systemMetrics?.uptime || '4h 12m'}
+              </div>
+              <div className="text-[10px] text-neutral-400">{processes.length} daemons running</div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 font-mono">
               Core Daemons &amp; Background Services ({processes.length})
@@ -851,17 +906,11 @@ export const EngineRoomView: React.FC = () => {
             <Button
               variant="outline"
               size="xs"
-              icon={<RotateCcw className="w-3 h-3" />}
-              onClick={() => {
-                setProcesses((prev) =>
-                  prev.map((p) => ({
-                    ...p,
-                    cpu: Number((Math.random() * 2).toFixed(1))
-                  }))
-                );
-              }}
+              icon={<RotateCcw className={`w-3 h-3 ${isRefreshingProcs ? 'animate-spin text-teal-500' : ''}`} />}
+              disabled={isRefreshingProcs}
+              onClick={handleRefreshProcesses}
             >
-              Refresh Top
+              {isRefreshingProcs ? 'Refreshing...' : 'Refresh Top'}
             </Button>
           </div>
 

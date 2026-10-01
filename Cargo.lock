@@ -1807,6 +1807,7 @@ dependencies = [
  "directories",
  "ecb",
  "futures-util",
+ "galleon-channel-bluesky",
  "galleon-channel-signal",
  "glob",
  "hex",
@@ -2273,6 +2274,7 @@ dependencies = [
  "filetime",
  "fluent",
  "futures-util",
+ "galleon-i18n",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -4598,7 +4600,13 @@ version = "0.8.5"
 dependencies = [
  "anyhow",
  "async-trait",
+ "chrono",
  "clawcrew-api",
+ "galleon-channel-core",
+ "parking_lot",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -4628,6 +4636,20 @@ dependencies = [
  "serde_json",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "galleon-i18n"
+version = "0.8.5"
+dependencies = [
+ "clawcrew-config",
+ "clawcrew-log",
+ "directories",
+ "fluent",
+ "serde",
+ "serde_json",
+ "sys-locale",
+ "toml 1.1.2+spec-1.1.0",
 ]
 
 [[package]]

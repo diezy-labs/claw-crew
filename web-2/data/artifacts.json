@@ -1,0 +1,48 @@
+[
+  {
+    "id": "art-1",
+    "questId": "quest-ci-ws",
+    "shipId": "ship-dev",
+    "producerCrewId": "crew-repo-analyst",
+    "title": "WebSocket Read Deadline Remediation Patch",
+    "type": "ci-triage",
+    "summary": "Modifies pkg/transport/ws_listener.go to inject SetReadDeadline before terminating reader loop, preventing CI runner thread lock.",
+    "content": "// Remediation in pkg/transport/ws_listener.go\nfunc (l *WebSocketListener) Close() error {\n    l.mu.Lock()\n    defer l.mu.Unlock()\n    if l.conn != nil {\n        _ = l.conn.SetReadDeadline(time.Now())\n        return l.conn.Close()\n    }\n    return nil\n}",
+    "discoveries": [
+      {
+        "id": "disc-1",
+        "type": "risk",
+        "title": "Goroutine leak under quick client disconnects",
+        "detail": "Socket read calls without deadlines block indefinitely on Windows and Linux runners.",
+        "evidenceSource": "pkg/transport/ws_listener.go:42"
+      }
+    ],
+    "evidenceCount": 3,
+    "voyageCostUSD": 0.12,
+    "status": "approved",
+    "createdAt": "30m ago"
+  },
+  {
+    "id": "art-2",
+    "questId": "quest-audit-gw",
+    "shipId": "ship-research",
+    "producerCrewId": "crew-tech-evaluator",
+    "title": "Model Provider Latency & Cost Matrix (March 2026)",
+    "type": "decision-brief",
+    "summary": "Quantified comparison between Anthropic Claude 3.7 Sonnet, Google Gemini 2.5 Pro/Flash, and local Ollama deepseek-r1.",
+    "content": "| Provider | Model | TTFT (ms) | Throughput (t/s) | Cost / 1k tokens |\n|---|---|---|---|---|\n| Anthropic | Claude 3.7 Sonnet | 420ms | 68 t/s | $0.003 |\n| Google | Gemini 2.5 Pro | 380ms | 94 t/s | $0.00125 |\n| Google | Gemini 2.5 Flash | 185ms | 135 t/s | $0.00015 |\n| Ollama (Local) | deepseek-r1:14b | 210ms | 45 t/s | $0.00000 |",
+    "discoveries": [
+      {
+        "id": "disc-2",
+        "type": "recommendation",
+        "title": "Use Gemini 2.5 Flash for triage and Claude 3.7 for patch writes",
+        "detail": "Reduces monthly token consumption by 72% while preserving AST correctness.",
+        "evidenceSource": "test/benchmark_eval.json"
+      }
+    ],
+    "evidenceCount": 5,
+    "voyageCostUSD": 0.04,
+    "status": "treasure",
+    "createdAt": "2h ago"
+  }
+]

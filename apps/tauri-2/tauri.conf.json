@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Fleet AI",
+  "version": "2.4.0",
+  "identifier": "com.galleon.sovereign",
+  "build": {
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../../web-2/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Fleet AI - Autonomous Fleet",
+        "width": 1280,
+        "height": 840,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "theme": "Dark",
+        "dragDropEnabled": true
+      }
+    ],
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "tooltip": "Fleet AI Deck",
+      "iconAsTemplate": true
+    },
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: ipc: ws:;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Autonomous Local-First Fleet Orchestration & Multi-Agent IDE",
+    "longDescription": "Sovereign AI development environment with decentralized agent crew coordination."
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
+  }
+}

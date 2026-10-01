@@ -28,11 +28,20 @@ import { PageHeaderNav } from '../common/PageHeaderNav';
 import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 import { useFleetStore } from '../../store/fleetStore';
+import { apiClient } from '../../utils/apiClient';
+import { initialHarborTools } from '../../utils/seedData';
 
 export const HarborView: React.FC = () => {
-  const { setRemoteAccessModalOpen } = useFleetStore();
+  const { setRemoteAccessModalOpen, harborProviders } = useFleetStore();
   const [activeHarborTab, setActiveHarborTab] = useState<'providers' | 'connectors' | 'a2a_mesh' | 'plugins'>('providers');
   const [isScanningPeers, setIsScanningPeers] = useState(false);
+  const [providers, setProviders] = useState<any[]>(harborProviders || []);
+
+  React.useEffect(() => {
+    apiClient.getHarborProviders().then((data) => {
+      if (data && data.length > 0) setProviders(data);
+    }).catch(console.error);
+  }, []);
   const [peerList, setPeerList] = useState([
     {
       id: 'peer-node-alpha',
@@ -97,61 +106,7 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  const providers = [
-    {
-      name: 'Anthropic Claude',
-      type: 'Cloud Model Provider',
-      status: 'Connected (Active)',
-      defaultModel: 'Claude 3.7 Sonnet (Hybrid Reasoning)',
-      keyMask: 'sk-ant-api03-••••••••',
-      activeUsage: 'Active on Developer Ship'
-    },
-    {
-      name: 'Google Gemini',
-      type: 'Cloud Model Provider',
-      status: 'Connected (Active)',
-      defaultModel: 'Gemini 2.5 Pro & Flash',
-      keyMask: 'AIzaSy••••••••',
-      activeUsage: 'Active on Market & Research Ships'
-    },
-    {
-      name: 'Ollama Local Endpoint',
-      type: 'Local Inference (Zero Cost)',
-      status: 'Running (http://127.0.0.1:11434)',
-      defaultModel: 'deepseek-r1:14b / qwen2.5:7b',
-      keyMask: 'No API Key Required',
-      activeUsage: 'Static AST & Code Audits'
-    },
-    {
-      name: 'OpenAI-Compatible Local Proxy',
-      type: 'Self-Hosted Gateway',
-      status: 'Standby',
-      defaultModel: 'Custom Endpoint',
-      keyMask: 'bearer-token-••••',
-      activeUsage: 'Configured for Private VPC'
-    }
-  ];
-
-  const tools = [
-    {
-      name: 'GitHub Repository Connector',
-      target: 'diezy-labs/claw-crew (Branch: feat/enhance-agent-phase2)',
-      auth: 'Read-only default + Captain Approval for issues/PRs',
-      status: 'Synced'
-    },
-    {
-      name: 'Local Filesystem Sandbox',
-      target: 'Tauri Host Landlock Sandboxing Active',
-      auth: 'Scoped to current repository directory',
-      status: 'Secure'
-    },
-    {
-      name: 'Webhook Event Listener',
-      target: 'https://ais-dev-gmtvncp5itg5m7aoliehtz-965837518617.asia-southeast1.run.app/api/webhooks',
-      auth: 'HMAC SHA-256 Signature Verification',
-      status: 'Active'
-    }
-  ];
+  const tools = initialHarborTools;
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);

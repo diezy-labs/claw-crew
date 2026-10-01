@@ -1,0 +1,14 @@
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\softbuffer-4fd2358a12c66769.d: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_dispatch.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_interface.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\mod.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\win32.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\error.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\util.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\../README.md
+
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\libsoftbuffer-4fd2358a12c66769.rmeta: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_dispatch.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_interface.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\mod.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\win32.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\error.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\util.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\../README.md
+
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\lib.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_dispatch.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backend_interface.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\mod.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\backends\win32.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\error.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\util.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\softbuffer-0.4.8\src\../README.md:
+
+# env-dep:CARGO_PKG_VERSION=0.4.8

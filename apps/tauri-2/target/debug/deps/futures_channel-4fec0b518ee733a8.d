@@ -1,0 +1,9 @@
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\futures_channel-4fec0b518ee733a8.d: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\lock.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\mpsc\mod.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\mpsc\queue.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\oneshot.rs
+
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\libfutures_channel-4fec0b518ee733a8.rmeta: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\lock.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\mpsc\mod.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\mpsc\queue.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\oneshot.rs
+
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\lib.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\lock.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\mpsc\mod.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\mpsc\queue.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\futures-channel-0.3.34\src\oneshot.rs:

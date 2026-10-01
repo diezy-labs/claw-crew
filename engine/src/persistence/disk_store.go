@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
 	"github.com/diezy-labs/claw-crew/engine/src/run"
@@ -228,6 +229,70 @@ func (s *DiskStore) LoadTasks(ctx context.Context, runID string) ([]*task.Task, 
 	}
 
 	return tasks, nil
+}
+
+// --- run.Store interface satisfaction (F1-1) ---
+// DiskStore implements run.Store so the DI graph can use disk-backed persistence
+// instead of the in-memory store; state then survives engine restarts.
+
+// Save persists a run (run.Store). Delegates to SaveRun.
+func (s *DiskStore) Save(ctx context.Context, r *run.Run) error {
+	return s.SaveRun(ctx, r)
+}
+
+// Get reads a run (run.Store). Delegates to GetRun.
+func (s *DiskStore) Get(ctx context.Context, id string) (*run.Run, error) {
+	return s.GetRun(ctx, id)
+}
+
+// UpdateStatus applies a validated monotonic state transition and persists it.
+// Mirrors MemoryStore.UpdateStatus so disk and memory stores behave identically.
+func (s *DiskStore) UpdateStatus(ctx context.Context, id string, status run.RunStatus, errMsg string) error {
+	r, err := s.GetRun(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !r.CanTransitionTo(status) {
+		return appErrors.New(appErrors.CodeFailedPrecondition, fmt.Sprintf("invalid run state transition from %s to %s", r.Status, status), appErrors.LayerRepository)
+	}
+	r.Status = status
+	if errMsg != "" {
+		r.ErrorMessage = errMsg
+	}
+	now := time.Now().UTC()
+	if status == run.StatusRunning && r.StartedAt == nil {
+		r.StartedAt = &now
+	}
+	if status == run.StatusCompleted || status == run.StatusFailed || status == run.StatusCancelled {
+		if r.CompletedAt == nil {
+			r.CompletedAt = &now
+		}
+	}
+	return s.SaveRun(ctx, r)
+}
+
+// List returns all persisted runs (run.Store).
+func (s *DiskStore) List(ctx context.Context) ([]*run.Run, error) {
+	runsRoot := filepath.Join(s.baseDir, "runs")
+	entries, err := os.ReadDir(runsRoot)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []*run.Run{}, nil
+		}
+		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to list runs dir", appErrors.LayerRepository)
+	}
+	list := make([]*run.Run, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		r, err := s.GetRun(ctx, entry.Name())
+		if err != nil || r == nil {
+			continue
+		}
+		list = append(list, r)
+	}
+	return list, nil
 }
 
 // ResumeInterruptedRuns scans disk on startup and recovers interrupted runs (TASK-7.2)

@@ -1,0 +1,10 @@
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\crc32fast-0f215f9b1bb9dfba.d: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\baseline.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\combine.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\specialized\mod.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\table.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\specialized\pclmulqdq.rs
+
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\libcrc32fast-0f215f9b1bb9dfba.rmeta: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\baseline.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\combine.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\specialized\mod.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\table.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\specialized\pclmulqdq.rs
+
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\lib.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\baseline.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\combine.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\specialized\mod.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\table.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\crc32fast-1.5.2\src\specialized\pclmulqdq.rs:

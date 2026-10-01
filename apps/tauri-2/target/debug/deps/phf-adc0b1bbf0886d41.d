@@ -1,0 +1,11 @@
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\phf-adc0b1bbf0886d41.d: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\map.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_map.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_set.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\set.rs
+
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\libphf-adc0b1bbf0886d41.rlib: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\map.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_map.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_set.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\set.rs
+
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\libphf-adc0b1bbf0886d41.rmeta: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\map.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_map.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_set.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\set.rs
+
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\lib.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\map.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_map.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\ordered_set.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\phf-0.13.1\src\set.rs:

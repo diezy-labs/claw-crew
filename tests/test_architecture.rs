@@ -6,6 +6,9 @@
 #[path = "architecture/no_duplicate_state.rs"]
 mod no_duplicate_state;
 
+#[path = "architecture/no_duplicate_risk_tier.rs"]
+mod no_duplicate_risk_tier;
+
 #[path = "architecture/config_save_isolation.rs"]
 mod config_save_isolation;
 

@@ -1,0 +1,10 @@
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\version_check-db8d578270946841.d: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\version.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\channel.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\date.rs
+
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\libversion_check-db8d578270946841.rlib: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\version.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\channel.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\date.rs
+
+C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\deps\libversion_check-db8d578270946841.rmeta: C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\lib.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\version.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\channel.rs C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\date.rs
+
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\lib.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\version.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\channel.rs:
+C:\Users\Yoga\ 6\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\version_check-0.9.5\src\date.rs:

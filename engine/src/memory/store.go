@@ -56,6 +56,20 @@ func (s *inMemoryVectorStore) Store(ctx context.Context, doc *Document) error {
 	return nil
 }
 
+// Delete removes a document by ID. It is the reversibility hook for learned-rule
+// proposals (memory.ProposalStore.Revert); deleting an absent ID is a no-op.
+func (s *inMemoryVectorStore) Delete(ctx context.Context, id string) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.documents, id)
+	return nil
+}
+
 func (s *inMemoryVectorStore) Search(ctx context.Context, queryEmbedding []float32, topK int) ([]*SearchResult, error) {
 	return s.SearchWithScope(ctx, queryEmbedding, topK, nil)
 }

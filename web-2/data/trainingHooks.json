@@ -1,0 +1,19 @@
+[
+  {
+    "id": "hook-1",
+    "name": "Pre-Voyage Policy Verification",
+    "triggerEvent": "voyage_start",
+    "actionType": "verify_budget",
+    "actionConfig": {
+      "maxBudgetUSD": 2.5
+    },
+    "executionMode": "automatic",
+    "failureHandling": "notify",
+    "status": "active",
+    "version": 1,
+    "createdAt": "2026-03-01T00:00:00Z",
+    "createdBy": "Captain",
+    "updatedAt": "2026-03-20T00:00:00Z",
+    "updatedBy": "Captain"
+  }
+]

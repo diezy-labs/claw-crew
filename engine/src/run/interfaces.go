@@ -12,6 +12,12 @@ type Store interface {
 	List(ctx context.Context) ([]*Run, error)
 }
 
+// ResumableStore is an optional capability: a disk-backed Store recovers runs
+// left mid-flight by an engine restart. In-memory stores do not implement it.
+type ResumableStore interface {
+	ResumeInterruptedRuns(ctx context.Context) ([]*Run, error)
+}
+
 // EventHub manages real-time SSE event subscriptions and fan-out
 type EventHub interface {
 	Subscribe(runID string) (<-chan *RunEvent, func())
@@ -29,4 +35,7 @@ type Service interface {
 	SubscribeEvents(runID string) (<-chan *RunEvent, func())
 	SubscribeEventsSince(runID, lastEventID string) (<-chan *RunEvent, func())
 	PublishEvent(runID string, eventType string, payload any, errStr string) *RunEvent
+	// ResumeInterrupted recovers runs left mid-flight by a restart (F1-3). No-op
+	// when the backing store is not resumable (e.g. in-memory).
+	ResumeInterrupted(ctx context.Context) ([]*Run, error)
 }
