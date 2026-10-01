@@ -1,6 +1,18 @@
-//! Fluent-based i18n for tool descriptions.
+//! `galleon-i18n` — Fluent-based i18n for tool descriptions and CLI strings.
+//!
+//! RF-B: extracted verbatim from `clawcrew-runtime::i18n` so channel feature-crates
+//! and the gateway can localize without depending on the 288k-LOC runtime crate.
+//! `clawcrew-runtime` re-exports this as its `i18n` module (`pub use galleon_i18n as i18n`),
+//! so every existing `clawcrew_runtime::i18n::*` caller keeps resolving unchanged.
+//!
 //! English descriptions are embedded via `include_str!` at compile time.
 //! Non-English locales are loaded from disk and override English per-key.
+
+// The locale registry generated from the repo-root `locales.toml` by
+// `cargo generate installers runtime-locales`. Moved here with the i18n body so
+// `include_str!("../locales/...")` and `generated_locales` resolve inside this
+// crate's own directory (keeps the crate publishable — no reach outside it).
+mod generated_locales;
 
 use fluent::{FluentArgs, FluentBundle, FluentResource};
 use std::collections::HashMap;
