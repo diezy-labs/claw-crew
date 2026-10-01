@@ -8,24 +8,25 @@
 //! (`process_envelope`), native polls / reactions / typing / health, and the
 //! full [`Channel`] + [`Attributable`] trait surface.
 //!
-//! Three couplings in the upstream body reach INTO `clawcrew-channels`-internal
-//! infrastructure that cannot follow a small feature-crate without dragging the
-//! whole runtime back in. They are the RF-B1 split's real seams, each kept here
-//! as a documented simplification rather than hallucinated or force-ported:
+//! Two couplings in the upstream body reached INTO `clawcrew-channels`-internal
+//! infrastructure. They were the RF-B1 split's real seams; both are now closed
+//! by sharing [`galleon_channel_core`] (which reuses the `clawcrew_config`
+//! peer-policy SSOT without dragging the runtime):
 //!
-//! 1. **Allowlist policy.** Upstream `is_sender_allowed` calls
-//!    `clawcrew-channels::allowlist::is_user_allowed`, which delegates to
-//!    `clawcrew_config::schema` peer-policy (grant/deny/`!name`/wildcard
-//!    semantics). Porting that drags `clawcrew-config`. Here the gate is the
-//!    `peer_resolver` list with exact match + `*` wildcard — correct for the
-//!    common allow case; the grant/deny/precedence policy is the documented
-//!    ceiling (`SIGNAL_ALLOWLIST_CEILING`).
-//! 2. **Approval prompt i18n.** Upstream `build_yesno_approval_prompt` pulls
-//!    localized strings from `clawcrew_runtime::i18n` (the Fluent catalogue in
-//!    the heavy runtime crate). Here the prompt is plain English of the
-//!    IDENTICAL wire shape (`<token> yes|no|always`), so token-echo parsing is
-//!    unchanged; localization is the ceiling.
-//! 3. **Structured logging + env proxy.** Upstream uses the `clawcrew_log`
+//! 1. **Allowlist policy — CLOSED.** `is_sender_allowed` now delegates to
+//!    [`galleon_channel_core::allowlist::is_user_allowed`], the full
+//!    grant/deny/`!name`/wildcard peer-policy (`clawcrew_config::schema`
+//!    semantics) rather than the earlier exact-match-plus-`*` stopgap.
+//! 2. **Approval prompt — SHARED, i18n is the remaining ceiling.** Token
+//!    generation, reply parsing and the prompt wire shape come from
+//!    [`galleon_channel_core::approval`]. The prompt text is plain English of
+//!    the IDENTICAL wire shape (`<token> yes|no|always`); localizing it needs
+//!    `clawcrew_runtime::i18n`, so **i18n stays the documented ceiling**
+//!    (`APPROVAL_I18N_CEILING` in core) — not closable without the runtime.
+//!
+//! One coupling remains fully a local simplification:
+//!
+//! * **Structured logging + env proxy.** Upstream uses the `clawcrew_log`
 //!    structured-event macro and `clawcrew_config` env-proxy fallback. Here
 //!    logging is dropped (a proof crate needs no event bus) and only an
 //!    EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`);
@@ -38,6 +39,9 @@ use clawcrew_api::channel::{
     ApprovalSource, AttributedApprovalResponse, Channel, ChannelApprovalRequest,
     ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
+// RF-B1 seam #1 (allowlist) + #2 (approval parse/token/prompt): shared from core.
+use galleon_channel_core::allowlist::{self, Match};
+use galleon_channel_core::approval::{build_yesno_prompt, new_approval_token, parse_approval_reply};
 use futures_util::StreamExt;
 use lru::LruCache;
 use parking_lot::Mutex as SyncMutex;
@@ -52,15 +56,6 @@ use uuid::Uuid;
 
 const GROUP_TARGET_PREFIX: &str = "group:";
 const RECENT_TARGETS_CAPACITY: usize = 1024;
-
-// ── allowlist reply keywords (ported from clawcrew-channels::util) ──
-const APPROVAL_REPLY_YES: &str = "yes";
-const APPROVAL_REPLY_YES_SHORT: &str = "y";
-const APPROVAL_REPLY_APPROVE: &str = "approve";
-const APPROVAL_REPLY_NO: &str = "no";
-const APPROVAL_REPLY_NO_SHORT: &str = "n";
-const APPROVAL_REPLY_DENY: &str = "deny";
-const APPROVAL_REPLY_ALWAYS: &str = "always";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum RecipientTarget {
@@ -161,42 +156,6 @@ pub struct PollAnswer {
     pub selected_titles: Vec<String>,
 }
 
-/// Parse a `<token> <action>` approval reply.
-///
-/// Ported from `clawcrew-channels::util::parse_approval_reply` — self-contained,
-/// depends only on `clawcrew-api`. The wire shape is unchanged, so prompts built
-/// by [`SignalChannel::build_yesno_prompt`] round-trip through this.
-fn parse_approval_reply(text: &str) -> Option<(String, ChannelApprovalResponse)> {
-    let lower = text.trim().to_lowercase();
-    let mut parts = lower.splitn(2, ' ');
-    let token = parts.next()?.to_string();
-    if token.len() != 6 || !token.chars().all(|c| c.is_ascii_alphanumeric()) {
-        return None;
-    }
-    let action_word = parts.next()?.split_whitespace().next()?;
-    let response = match action_word {
-        APPROVAL_REPLY_YES | APPROVAL_REPLY_YES_SHORT | APPROVAL_REPLY_APPROVE => {
-            ChannelApprovalResponse::Approve
-        }
-        APPROVAL_REPLY_NO | APPROVAL_REPLY_NO_SHORT | APPROVAL_REPLY_DENY => {
-            ChannelApprovalResponse::Deny
-        }
-        APPROVAL_REPLY_ALWAYS => ChannelApprovalResponse::AlwaysApprove,
-        _ => return None,
-    };
-    Some((token, response))
-}
-
-/// 6-char lowercase-alphanumeric approval token (ported from util).
-fn new_approval_token() -> String {
-    use rand::RngExt;
-    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
-    let mut rng = rand::rng();
-    (0..6)
-        .map(|_| CHARSET[rng.random_range(0..CHARSET.len())] as char)
-        .collect()
-}
-
 impl SignalChannel {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -270,13 +229,13 @@ impl SignalChannel {
             .map(String::from)
     }
 
-    /// SIGNAL_ALLOWLIST_CEILING: exact match + `*` wildcard against the
-    /// resolved peer list. ponytail: upstream `clawcrew-channels::allowlist`
-    /// grant/deny/`!name` peer-policy (via `clawcrew_config::schema`) is the
-    /// upgrade path — not ported to keep this crate off `clawcrew-config`.
+    /// Full grant/deny/`!name`/wildcard peer-policy via
+    /// [`galleon_channel_core::allowlist`]. Signal senders are E.164 numbers or
+    /// UUIDs, so the comparison is case-sensitive. This closed the former
+    /// exact-match-plus-`*` ceiling: a `!number` deny now outranks a `*` grant.
     fn is_sender_allowed(&self, sender: &str) -> bool {
         let peers = (self.peer_resolver)();
-        peers.iter().any(|p| p == "*" || p == sender)
+        allowlist::is_user_allowed(&peers, sender, Match::Sensitive)
     }
 
     fn is_e164(recipient: &str) -> bool {
@@ -540,26 +499,6 @@ impl SignalChannel {
             .collect()
     }
 
-    /// Plain-English yes/no/always approval prompt of the exact wire shape
-    /// [`parse_approval_reply`] expects.
-    /// ponytail: upstream localizes via `clawcrew_runtime::i18n`; the Fluent
-    /// catalogue is the upgrade path. Token/tool/args stay verbatim either way.
-    fn build_yesno_prompt(
-        token: &str,
-        tool_name: &str,
-        arguments_summary: &str,
-        position: Option<(u32, u32)>,
-    ) -> String {
-        let position_line = match position {
-            Some((_, total)) if total <= 1 => String::new(),
-            Some((index, total)) => format!("Tool call {index} of {total}\n"),
-            None => String::new(),
-        };
-        format!(
-            "APPROVAL REQUIRED [{token}]\n{position_line}Tool: {tool_name}\nArgs: {arguments_summary}\n\nReply `{token} {APPROVAL_REPLY_YES}`, `{token} {APPROVAL_REPLY_NO}`, or `{token} {APPROVAL_REPLY_ALWAYS}`."
-        )
-    }
-
     /// Send a native multiple-choice poll (signal-cli `sendPollCreate`).
     pub async fn send_poll(
         &self,
@@ -807,7 +746,7 @@ impl Channel for SignalChannel {
         request: &ChannelApprovalRequest,
     ) -> anyhow::Result<Option<AttributedApprovalResponse>> {
         let token = new_approval_token();
-        let text = Self::build_yesno_prompt(
+        let text = build_yesno_prompt(
             &token,
             &request.tool_name,
             &request.arguments_summary,
@@ -944,7 +883,7 @@ mod tests {
     #[test]
     fn approval_reply_roundtrips_the_prompt_token() {
         let token = new_approval_token();
-        let prompt = SignalChannel::build_yesno_prompt(&token, "shell", "ls -la", Some((2, 3)));
+        let prompt = build_yesno_prompt(&token, "shell", "ls -la", Some((2, 3)));
         assert!(prompt.contains(&format!("[{token}]")));
         assert!(prompt.contains("Tool call 2 of 3"));
         // The yes/no/always keywords in the prompt must parse back out.

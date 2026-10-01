@@ -1450,7 +1450,6 @@ mod tests {
             include_str!("discord/approval.rs"),
             include_str!("slack.rs"),
             include_str!("matrix.rs"),
-            include_str!("signal.rs"),
             include_str!("whatsapp.rs"),
             include_str!("whatsapp_web.rs"),
             include_str!("acp_channel.rs"),

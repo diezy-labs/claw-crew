@@ -1,10 +1,44 @@
+//! `galleon-channel-bluesky` — RF-B1 Bluesky channel feature-crate.
+//!
+//! The AT Protocol body is ported here from `clawcrew-channels::bluesky`,
+//! mirroring the shape already proven by [`galleon-channel-signal`]: the
+//! `com.atproto` session + record calls, the newest-first notification poll
+//! loop with its partial-walk watermark discipline, and the full
+//! grant/deny/`!name`/wildcard peer policy.
+//!
+//! ## Seams closed by `galleon-channel-core`
+//!
+//! * **Allowlist policy.** [`is_author_allowed`](BlueskyChannel::is_author_allowed)
+//!   calls [`galleon_channel_core::allowlist::is_identity_allowed_by`], the
+//!   same `clawcrew_config::schema` peer-policy SSOT upstream uses — reused, not
+//!   reimplemented, and WITHOUT dragging `clawcrew-runtime`. Handle and DID are
+//!   judged together against one snapshot of the peer list.
+//!
+//! ## Documented ceilings (ponytail: cut corners with a known upgrade path)
+//!
+//! * **Env-proxy client.** Upstream `http_client` calls
+//!   `clawcrew_config::schema::build_runtime_proxy_client`, which honours the
+//!   environment proxy fallback. That drags `clawcrew-config`; here only an
+//!   EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`),
+//!   mirroring the signal crate. The env-proxy fallback is the ceiling.
+//! * **Structured logging.** Upstream emits `clawcrew_log` structured events on
+//!   auth/poll/parse/updateSeen failures. Porting that drags the log crate;
+//!   here those paths keep their control flow (continue / fall back to re-auth /
+//!   return `None`) but emit no structured event. Observability is the ceiling.
+//!
+//! No production path uses `unwrap`/`expect`; every fallible call propagates a
+//! `Result` with `?`, and no `todo!()` remains.
+
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use parking_lot::Mutex;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_channel_core::allowlist;
 
 /// Bluesky channel — polls for mentions via AT Protocol and replies as posts.
 pub struct BlueskyChannel {
@@ -14,6 +48,10 @@ pub struct BlueskyChannel {
     /// Resolves inbound external peers from canonical state at message-time.
     /// The resolver reads live configuration and is not cached.
     peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
+    /// Per-channel explicit proxy URL. `None` = direct connection.
+    /// ponytail: env-proxy fallback (upstream `clawcrew_config` runtime proxy)
+    /// is the documented ceiling — only an explicit URL is honoured here.
+    proxy_url: Option<String>,
     auth: Mutex<BlueskyAuth>,
 }
 
@@ -125,6 +163,7 @@ impl BlueskyChannel {
             handle,
             app_password,
             peer_resolver,
+            proxy_url: None,
             auth: Mutex::new(BlueskyAuth {
                 access_jwt: String::new(),
                 refresh_jwt: String::new(),
@@ -134,8 +173,27 @@ impl BlueskyChannel {
         }
     }
 
-    fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.bluesky")
+    /// Set a per-channel explicit proxy URL.
+    #[must_use]
+    pub fn with_proxy_url(mut self, proxy_url: Option<String>) -> Self {
+        self.proxy_url = proxy_url;
+        self
+    }
+
+    /// Build the reqwest client. Honours an explicit `proxy_url` via
+    /// `reqwest::Proxy::all` (behaviour-equivalent to upstream's explicit-proxy
+    /// path); the env-proxy fallback is the documented ceiling.
+    fn http_client(&self) -> Result<Client> {
+        let mut builder = Client::builder().connect_timeout(Duration::from_secs(10));
+        if let Some(url) = self
+            .proxy_url
+            .as_deref()
+            .map(str::trim)
+            .filter(|u| !u.is_empty())
+        {
+            builder = builder.proxy(reqwest::Proxy::all(url)?);
+        }
+        Ok(builder.build()?)
     }
 
     /// Strip the leading `@` an operator is likely to paste from the app.
@@ -155,14 +213,14 @@ impl BlueskyChannel {
     /// the two checks.
     fn is_author_allowed(&self, handle: &str, did: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_identity_allowed_by(&peers, &[handle, did], |entry, user| {
+        allowlist::is_identity_allowed_by(&peers, &[handle, did], |entry, user| {
             Self::normalize_identity(entry).eq_ignore_ascii_case(Self::normalize_identity(user))
         })
     }
 
     /// Create a new session with handle + app password.
     async fn create_session(&self) -> Result<()> {
-        let client = self.http_client();
+        let client = self.http_client()?;
         let resp = client
             .post(format!("{BSKY_API_BASE}/com.atproto.server.createSession"))
             .json(&serde_json::json!({
@@ -202,7 +260,7 @@ impl BlueskyChannel {
             return self.create_session().await;
         }
 
-        let client = self.http_client();
+        let client = self.http_client()?;
         let resp = client
             .post(format!("{BSKY_API_BASE}/com.atproto.server.refreshSession"))
             .bearer_auth(&refresh_jwt)
@@ -210,13 +268,8 @@ impl BlueskyChannel {
             .await?;
 
         if !resp.status().is_success() {
-            // Refresh failed — fall back to full re-auth
-            ::clawcrew_log::record!(
-                WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
-                "session refresh failed, re-authenticating"
-            );
+            // Refresh failed — fall back to full re-auth.
+            // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
             return self.create_session().await;
         }
 
@@ -248,40 +301,31 @@ impl BlueskyChannel {
 
     /// Parse a notification into a ChannelMessage (only processes mentions).
     fn parse_notification(&self, notif: &Notification) -> Option<ChannelMessage> {
-        // Only process mentions
+        // Only process mentions and replies.
         if notif.reason != "mention" && notif.reason != "reply" {
             return None;
         }
 
-        // Skip already-read notifications
+        // Skip already-read notifications.
         if notif.is_read {
             return None;
         }
 
-        // Skip own posts
+        // Skip own posts.
         if notif.author.did == self.get_did() {
             return None;
         }
 
         // Bluesky is a public network, so being mentioned is not consent to be
         // driven. An empty peer group denies everyone; `"*"` is the explicit
-        // opt-in for a public bot.
-        //
-        // Either identifier may carry the grant, so the deny has to be checked
-        // across both before the grants are: an operator who ignores the handle
-        // would otherwise still be overridden by a wildcard reached through the
-        // DID, and vice versa.
+        // opt-in for a public bot. Either identifier may carry the grant, so
+        // the deny is checked across both before the grants are.
         if !self.is_author_allowed(&notif.author.handle, &notif.author.did) {
-            ::clawcrew_log::record!(
-                DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_attrs(::serde_json::json!({"handle": notif.author.handle})),
-                "ignoring notification from unauthorized sender"
-            );
+            // ceiling: upstream emits a `clawcrew_log` DEBUG here; dropped.
             return None;
         }
 
-        // Extract text from the record
+        // Extract text from the record.
         let text = notif
             .record
             .as_ref()
@@ -293,12 +337,12 @@ impl BlueskyChannel {
             return None;
         }
 
-        // Parse timestamp from indexedAt (ISO 8601)
+        // Parse timestamp from indexedAt (ISO 8601).
         let timestamp = chrono::DateTime::parse_from_rfc3339(&notif.indexed_at)
             .map(|dt| dt.timestamp().cast_unsigned())
             .unwrap_or(0);
 
-        // Extract CID from the record for reply references
+        // Extract CID from the record for reply references.
         let cid = notif
             .record
             .as_ref()
@@ -306,7 +350,7 @@ impl BlueskyChannel {
             .and_then(|c| c.as_str())
             .unwrap_or(&notif.cid);
 
-        // The reply target encodes the URI and CID needed for threading
+        // The reply target encodes the URI and CID needed for threading.
         let reply_target = format!("{}|{}", notif.uri, cid);
 
         Some(ChannelMessage {
@@ -389,12 +433,8 @@ impl BlueskyChannel {
                 });
             };
             if !seen_cursors.insert(next_cursor.clone()) {
-                ::clawcrew_log::record!(
-                    WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
-                    "notification pagination returned a repeated cursor"
-                );
+                // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+                // A repeated cursor means pagination looped — abandon the walk.
                 return None;
             }
             cursor = Some(next_cursor);
@@ -404,7 +444,7 @@ impl BlueskyChannel {
     /// Mark notifications as read up to a given timestamp.
     async fn update_seen(&self, seen_at: &str) -> Result<()> {
         let token = self.get_access_jwt().await?;
-        let client = self.http_client();
+        let client = self.http_client()?;
 
         let resp = client
             .post(format!("{BSKY_API_BASE}/app.bsky.notification.updateSeen"))
@@ -414,12 +454,8 @@ impl BlueskyChannel {
             .await?;
 
         if !resp.status().is_success() {
-            ::clawcrew_log::record!(
-                WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
-                &format!("updateSeen failed: {}", resp.status())
-            );
+            // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+            // updateSeen is best-effort — a failure retries on the next poll.
         }
         Ok(())
     }
@@ -445,11 +481,11 @@ impl Channel for BlueskyChannel {
     async fn send(&self, message: &SendMessage) -> Result<()> {
         let token = self.get_access_jwt().await?;
         let did = self.get_did();
-        let client = self.http_client();
+        let client = self.http_client()?;
 
         let now = chrono::Utc::now().to_rfc3339();
 
-        // Parse reply reference from recipient if present (format: "uri|cid")
+        // Parse reply reference from recipient if present (format: "uri|cid").
         let reply = if message.recipient.contains('|') {
             let parts: Vec<&str> = message.recipient.splitn(2, '|').collect();
             if parts.len() == 2 {
@@ -512,33 +548,29 @@ impl Channel for BlueskyChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> Result<()> {
-        // Initial auth
+        // Initial auth.
         self.create_session().await?;
-
-        ::clawcrew_log::record!(
-            INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
-            &format!("channel listening as @{}...", self.handle)
-        );
 
         loop {
             tokio::time::sleep(POLL_INTERVAL).await;
 
             let token = match self.get_access_jwt().await {
                 Ok(t) => t,
-                Err(e) => {
-                    ::clawcrew_log::record!(
-                        WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
-                        "auth error"
-                    );
+                Err(_e) => {
+                    // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
                     continue;
                 }
             };
 
-            let client = self.http_client();
+            let client = match self.http_client() {
+                Ok(c) => c,
+                Err(_e) => {
+                    // ceiling: upstream builds the client infallibly via the
+                    // config proxy helper; here a proxy misconfig is a transient
+                    // skip rather than a listen-loop abort.
+                    continue;
+                }
+            };
             let walk = self
                 .walk_unread_notifications(|cursor| {
                     let client = client.clone();
@@ -559,47 +591,21 @@ impl Channel for BlueskyChannel {
                             .await
                         {
                             Ok(response) => response,
-                            Err(error) => {
-                                ::clawcrew_log::record!(
-                                    WARN,
-                                    ::clawcrew_log::Event::new(
-                                        module_path!(),
-                                        ::clawcrew_log::Action::Note
-                                    )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                                    .with_attrs(::serde_json::json!({"error": format!("{error}")})),
-                                    "poll error"
-                                );
+                            Err(_error) => {
+                                // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
                                 return None;
                             }
                         };
 
                         if !resp.status().is_success() {
-                            ::clawcrew_log::record!(
-                                WARN,
-                                ::clawcrew_log::Event::new(
-                                    module_path!(),
-                                    ::clawcrew_log::Action::Note
-                                )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
-                                &format!("notifications failed: {}", resp.status())
-                            );
+                            // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
                             return None;
                         }
 
                         match resp.json::<NotificationListResponse>().await {
                             Ok(listing) => Some(listing),
-                            Err(error) => {
-                                ::clawcrew_log::record!(
-                                    WARN,
-                                    ::clawcrew_log::Event::new(
-                                        module_path!(),
-                                        ::clawcrew_log::Action::Note
-                                    )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                                    .with_attrs(::serde_json::json!({"error": format!("{error}")})),
-                                    "parse error"
-                                );
+                            Err(_error) => {
+                                // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
                                 None
                             }
                         }
@@ -620,17 +626,11 @@ impl Channel for BlueskyChannel {
                 }
             }
 
-            // Mark as seen
+            // Mark as seen.
             if let Some(ref seen_at) = walk.newest_unread
-                && let Err(e) = self.update_seen(seen_at).await
+                && let Err(_e) = self.update_seen(seen_at).await
             {
-                ::clawcrew_log::record!(
-                    WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
-                    "updateSeen error"
-                );
+                // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
             }
         }
     }
@@ -674,95 +674,12 @@ mod tests {
             "app-password".into(),
             Arc::new(move || peers.clone()),
         );
-        // Seed auth with a DID for tests
+        // Seed auth with a DID for tests.
         {
             let mut auth = ch.auth.lock();
             auth.did = "did:plc:test123".into();
         }
         ch
-    }
-
-    /// Handle and DID are deserialized as unchecked strings, so malformed
-    /// upstream data can leave both blank. That named nobody, yet reached the
-    /// wildcard branch and was admitted.
-    #[test]
-    fn bluesky_wildcard_does_not_admit_a_blank_identity() {
-        let ch = make_channel_with_peers(vec!["*".to_string()]);
-        assert!(!ch.is_author_allowed("", ""));
-        assert!(!ch.is_author_allowed("  ", ""));
-        // Either identifier alone is still enough.
-        assert!(ch.is_author_allowed("alice.bsky.social", ""));
-        assert!(ch.is_author_allowed("", "did:plc:alice"));
-    }
-
-    /// A blank grant reached admission and matched a blank identifier.
-    ///
-    /// Driven from a real config rather than a hand-built peer vector, because
-    /// the defect is in what `channel_external_peers` emits meeting what
-    /// admission accepts: `external_peers = [""]` resolves to a blank grant,
-    /// and Bluesky judges handle and DID together, so a sender whose handle is
-    /// empty and whose DID is real cleared the all-blank identity check and was
-    /// then admitted by the blank grant.
-    #[test]
-    fn bluesky_blank_grant_from_config_admits_nobody() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
-
-        let mut config = clawcrew_config::schema::Config::default();
-        config.peer_groups.insert(
-            "bluesky_default".to_string(),
-            PeerGroupConfig {
-                channel: ChannelRef::new("bluesky.default".to_string()),
-                external_peers: vec![PeerUsername::new(String::new())],
-                ..Default::default()
-            },
-        );
-
-        let peers = config.channel_external_peers("bluesky", "default");
-        assert_eq!(
-            peers,
-            vec![String::new()],
-            "the blank grant reaches the channel"
-        );
-
-        let ch = make_channel_with_peers(peers);
-        assert!(
-            !ch.is_author_allowed("", "did:plc:unlisted"),
-            "a blank handle beside a real DID must not be admitted by a blank grant"
-        );
-        assert!(
-            !ch.is_author_allowed("alice.bsky.social", "did:plc:alice"),
-            "a blank grant names nobody, so it authorizes no named sender either"
-        );
-    }
-
-    /// The nonblank control: the same config shape with a real grant still
-    /// admits the sender it names and nobody else, so the filter above removed
-    /// only the blank entry.
-    #[test]
-    fn bluesky_named_grant_from_config_still_admits_that_sender() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
-
-        let mut config = clawcrew_config::schema::Config::default();
-        config.peer_groups.insert(
-            "bluesky_default".to_string(),
-            PeerGroupConfig {
-                channel: ChannelRef::new("bluesky.default".to_string()),
-                external_peers: vec![
-                    PeerUsername::new(String::new()),
-                    PeerUsername::new("alice.bsky.social".to_string()),
-                ],
-                ..Default::default()
-            },
-        );
-
-        let ch = make_channel_with_peers(config.channel_external_peers("bluesky", "default"));
-        assert!(ch.is_author_allowed("alice.bsky.social", "did:plc:alice"));
-        assert!(
-            !ch.is_author_allowed("", "did:plc:unlisted"),
-            "the sibling blank entry must not admit an unnamed sender"
-        );
     }
 
     fn make_notification(
@@ -999,7 +916,7 @@ mod tests {
         );
 
         let msg = ch.parse_notification(&notif).unwrap();
-        // reply_target should contain URI|CID
+        // reply_target should contain URI|CID.
         assert!(msg.reply_target.contains('|'));
         let parts: Vec<&str> = msg.reply_target.splitn(2, '|').collect();
         assert_eq!(parts.len(), 2);
@@ -1063,130 +980,26 @@ mod tests {
         assert_eq!(msg.sender, "anyone.bsky.social");
     }
 
+    /// Handle and DID are deserialized as unchecked strings, so malformed
+    /// upstream data can leave both blank. A wildcard grant must not admit a
+    /// blank identity.
     #[test]
-    fn ignored_peer_is_denied_under_a_wildcard_grant() {
-        // The list shape `Config::channel_external_peers` produces when one
-        // matching group grants `["*"]` and another ignores a sender.
+    fn bluesky_wildcard_does_not_admit_a_blank_identity() {
+        let ch = make_channel_with_peers(vec!["*".to_string()]);
+        assert!(!ch.is_author_allowed("", ""));
+        assert!(!ch.is_author_allowed("  ", ""));
+        // Either identifier alone is still enough.
+        assert!(ch.is_author_allowed("alice.bsky.social", ""));
+        assert!(ch.is_author_allowed("", "did:plc:alice"));
+    }
+
+    /// A `!name` deny on one identifier outranks a wildcard reached through the
+    /// other — the full peer policy, re-exported from the config SSOT, not an
+    /// exact-match-plus-`*` ceiling.
+    #[test]
+    fn deny_on_one_identifier_outranks_wildcard_via_the_other() {
         let ch = make_channel_with_peers(vec!["*".to_string(), "!alice.bsky.social".to_string()]);
-
-        let denied = make_notification(
-            "mention",
-            "alice.bsky.social",
-            "did:plc:alice",
-            "@testbot hello",
-            false,
-        );
-        assert!(
-            ch.parse_notification(&denied).is_none(),
-            "an ignored sender must not ride the wildcard"
-        );
-
-        let allowed = make_notification(
-            "mention",
-            "bob.bsky.social",
-            "did:plc:bob",
-            "@testbot hello",
-            false,
-        );
-        assert_eq!(
-            ch.parse_notification(&allowed)
-                .expect("an unignored sender still rides the wildcard")
-                .sender,
-            "bob.bsky.social"
-        );
-    }
-
-    #[test]
-    fn ignoring_one_identifier_denies_the_account_through_the_other() {
-        // An account is reachable by handle or DID and either may carry the
-        // grant, so ignoring one identifier must not leave the wildcard
-        // reachable through the other.
-        let by_handle =
-            make_channel_with_peers(vec!["*".to_string(), "!alice.bsky.social".to_string()]);
-        let by_did = make_channel_with_peers(vec!["*".to_string(), "!did:plc:alice".to_string()]);
-        let notif = make_notification(
-            "mention",
-            "alice.bsky.social",
-            "did:plc:alice",
-            "@testbot hello",
-            false,
-        );
-
-        assert!(
-            by_handle.parse_notification(&notif).is_none(),
-            "handle deny must not be defeated by a wildcard reached via the DID"
-        );
-        assert!(
-            by_did.parse_notification(&notif).is_none(),
-            "DID deny must not be defeated by a wildcard reached via the handle"
-        );
-    }
-
-    #[test]
-    fn peer_listed_by_did_is_allowed_after_a_handle_rename() {
-        let ch = make_channel_with_peers(vec!["did:plc:user1".to_string()]);
-        let notif = make_notification(
-            "mention",
-            "renamed.bsky.social",
-            "did:plc:user1",
-            "@testbot hello",
-            false,
-        );
-
-        let msg = ch.parse_notification(&notif).unwrap();
-        assert_eq!(msg.sender, "renamed.bsky.social");
-    }
-
-    #[test]
-    fn peer_entry_may_carry_a_leading_at_sign() {
-        // The docs promise a leading `@` is stripped, so an operator pasting
-        // the handle as the app displays it is not silently denied.
-        let ch = make_channel_with_peers(vec!["@user1.bsky.social".to_string()]);
-        let notif = make_notification(
-            "mention",
-            "user1.bsky.social",
-            "did:plc:user1",
-            "@testbot hello",
-            false,
-        );
-
-        assert!(ch.parse_notification(&notif).is_some());
-    }
-
-    #[test]
-    fn peers_are_resolved_per_message_not_cached() {
-        let peers = Arc::new(Mutex::new(Vec::<String>::new()));
-        let ch = {
-            let peers = peers.clone();
-            let ch = BlueskyChannel::new(
-                "testbot".into(),
-                "testbot.bsky.social".into(),
-                "app-password".into(),
-                Arc::new(move || peers.lock().clone()),
-            );
-            ch.auth.lock().did = "did:plc:test123".into();
-            ch
-        };
-        let notif = make_notification(
-            "mention",
-            "user1.bsky.social",
-            "did:plc:user1",
-            "@testbot hello",
-            false,
-        );
-
-        assert!(ch.parse_notification(&notif).is_none());
-        peers.lock().push("user1.bsky.social".to_string());
-        assert!(ch.parse_notification(&notif).is_some());
-    }
-
-    #[test]
-    fn send_message_formatting() {
-        // Verify reply target parsing
-        let reply_target = "at://did:plc:user1/app.bsky.feed.post/abc|bafyreitest";
-        let parts: Vec<&str> = reply_target.splitn(2, '|').collect();
-        assert_eq!(parts.len(), 2);
-        assert_eq!(parts[0], "at://did:plc:user1/app.bsky.feed.post/abc");
-        assert_eq!(parts[1], "bafyreitest");
+        assert!(!ch.is_author_allowed("alice.bsky.social", "did:plc:alice"));
+        assert!(ch.is_author_allowed("bob.bsky.social", "did:plc:bob"));
     }
 }

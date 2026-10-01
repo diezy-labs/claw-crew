@@ -1807,6 +1807,7 @@ dependencies = [
  "directories",
  "ecb",
  "futures-util",
+ "galleon-channel-signal",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -4592,6 +4593,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-bluesky"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "tokio",
+]
+
+[[package]]
+name = "galleon-channel-core"
+version = "0.8.5"
+dependencies = [
+ "clawcrew-api",
+ "clawcrew-config",
+ "rand 0.10.2",
+]
+
+[[package]]
 name = "galleon-channel-signal"
 version = "0.8.5"
 dependencies = [
@@ -4599,6 +4619,7 @@ dependencies = [
  "async-trait",
  "clawcrew-api",
  "futures-util",
+ "galleon-channel-core",
  "lru 0.18.4",
  "parking_lot",
  "rand 0.10.2",

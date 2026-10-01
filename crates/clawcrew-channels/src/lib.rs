@@ -34,8 +34,11 @@ pub mod voice;
 // Feature-gated channels
 #[cfg(feature = "channel-amqp")]
 pub mod amqp;
+// RF-B1: the Bluesky channel now lives in its own feature-crate. Re-export it
+// under the historical `bluesky` path so `crate::bluesky::BlueskyChannel` and
+// the orchestrator's `pub use crate::bluesky::BlueskyChannel` keep resolving.
 #[cfg(feature = "channel-bluesky")]
-pub mod bluesky;
+pub use galleon_channel_bluesky as bluesky;
 #[cfg(feature = "channel-clawdtalk")]
 pub mod clawdtalk;
 #[cfg(feature = "channel-dingtalk")]
@@ -78,8 +81,11 @@ pub mod notion;
 pub mod qq;
 #[cfg(feature = "channel-reddit")]
 pub mod reddit;
+// RF-B1: the Signal channel now lives in its own feature-crate. Re-export it
+// under the historical `signal` path so `crate::signal::SignalChannel` and the
+// orchestrator's `pub use crate::signal::SignalChannel` keep resolving.
 #[cfg(feature = "channel-signal")]
-pub mod signal;
+pub use galleon_channel_signal as signal;
 #[cfg(feature = "channel-slack")]
 pub mod slack;
 #[cfg(feature = "channel-telegram")]

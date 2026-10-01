@@ -1,0 +1,46 @@
+[package]
+name = "galleon-channel-bluesky"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Bluesky channel feature-crate (RF-B1 split; AT Protocol session/record + notification-poll body ported from clawcrew-channels::bluesky)."
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[dependencies]
+# RF-B1: the ported AT Protocol body is a `com.atproto` HTTP client over
+# reqwest with serde record/notification types, so it carries the HTTP + serde
+# + chrono deps upstream `clawcrew-channels` uses for this channel. Seam #1
+# (allowlist peer-policy) comes from `galleon-channel-core`, which shares the
+# real `clawcrew_config` peer-policy SSOT WITHOUT dragging clawcrew-runtime.
+# The remaining ceilings are env-proxy client + structured logging (both need
+# clawcrew-config/clawcrew-log) — documented in lib.rs.
+galleon-channel-core.workspace = true
+clawcrew-api.workspace = true
+anyhow = "1.0"
+async-trait = "0.1"
+chrono = { version = "0.4", default-features = false, features = [
+  "clock",
+  "std",
+] }
+parking_lot = "0.12"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "rustls-tls-webpki-roots-no-provider",
+] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+# `sync` for the `listen` mpsc::Sender<ChannelMessage>; `time` for the poll sleep.
+tokio = { version = "1.50", default-features = false, features = ["sync", "time"] }
+
+[dev-dependencies]
+# `macros` + `rt` are what `#[tokio::test]` on the partial-walk regression needs;
+# dev-only, never enabled in the shipped lib.
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt",
+  "sync",
+  "time",
+] }
