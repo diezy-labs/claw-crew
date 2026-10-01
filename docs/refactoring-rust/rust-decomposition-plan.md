@@ -83,7 +83,8 @@ Maka plan dibagi dua jalur: **(A) pecah file** (maintainability, cepat, aman) da
 | RF-A5 | `apps/zerocode/src/chat.rs` (20.6k) → submodul | ⬜ |
 | RF-A6 | `src/main.rs` (13.3k) → modul, `main.rs` tinggal wiring | ⬜ |
 | RF-A7 | `gateway/src/lib.rs` (11.6k) + `providers/{reliable,compatible}.rs` | ⬜ |
-| RF-B1+ | channel Tier B lain: matrix, whatsapp-web, wechat, mattermost, lark | ⬜ |
+| RF-B(i18n) | extract `clawcrew-runtime::i18n` → crate `galleon-i18n` (body+locales+generated_locales; runtime re-export) | ✅ `7b7bd51f` (UNVERIFIED, build-deferred) |
+| RF-B1+ | channel Tier B lain: matrix, whatsapp-web, wechat, mattermost, lark | ⬜ (telegram/wechat/line/discord drag `clawcrew_runtime::i18n` → kini bisa pakai `galleon-i18n`; matrix masih drag `agent::loop_::DRAFT_PLACEHOLDER`) |
 | RF-B0 | peta dependency intra-crate runtime/channels (prasyarat B2) | ⬜ |
 | RF-B2 | pecah `clawcrew-runtime` (288k) → sub-crate (butuh RF-B0) | ⬜ |
 | RF-B3 | pecah `clawcrew-providers` (84k) per-vendor | ⬜ |
