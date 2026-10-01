@@ -77,11 +77,12 @@ Maka plan dibagi dua jalur: **(A) pecah file** (maintainability, cepat, aman) da
 | RF-B1 | signal + bluesky + core → `galleon-channel-*` (proof-of-pattern) | ✅ `3893a58a`,`9c8c61ee` |
 | RF-M2 | sccache + nextest + profil dev (`.cargo/config.toml`, `.config/nextest.toml`) | ⬛ sebagian (sisa: cranelift dev) |
 | RF-A1 | `clawcrew-config/src/schema.rs` (25k) → submodul by-domain | ⬜ (BUKAN pure-move: derive macro + 2 impl Config raksasa; tunda sampai build) |
-| RF-A2..A7 **(test-split tahap-1)** | pisah blok test inline file jumbo → `tests.rs` sibling (pure-move) | ✅ semua: slack `9fea70b7`; providers anthropic/reliable/compatible `4147dc2d`; runtime loop_/agent/dispatch/sop·engine/delegate `6e578609`; matrix `8377c09b`; zerocode·chat `89d0ac3b`; gateway·lib `c2738e2c`; bin·main `ceca7c2d` |
+| RF-A2..A7 **(test-split tahap-1)** | pisah blok test inline file jumbo → `tests.rs` sibling (pure-move) | ✅ **BUILD-VERIFIED HIJAU** (cargo check PASS semua): slack `9fea70b7`; providers anthropic/reliable/compatible `4147dc2d`; runtime loop_/agent/dispatch/sop·engine/delegate `6e578609`; matrix `8377c09b`; zerocode·chat `89d0ac3b`; gateway·lib `c2738e2c`; bin·main `ceca7c2d` |
 | RF-A2..A7 **(body-split tahap-2)** | pecah BODY file (post-test-split) jadi submodul by-tanggung-jawab | ⬜ (berisiko: butuh pub(crate)/visibility; tunda sampai build dibuka) |
-| RF-B(i18n) | extract `clawcrew-runtime::i18n` → crate `galleon-i18n` (body+locales+generated_locales; runtime re-export) | ✅ `7b7bd51f` (UNVERIFIED, build-deferred) |
-| RF-B1+ | channel Tier B lain: matrix, whatsapp-web, wechat, mattermost, lark | ⬜ (telegram/wechat/line/discord drag `clawcrew_runtime::i18n` → kini bisa pakai `galleon-i18n`; matrix masih drag `agent::loop_::DRAFT_PLACEHOLDER`) |
-| RF-B0 | peta dependency intra-crate runtime/channels (prasyarat B2) | ⬜ |
+| RF-B(i18n) | extract `clawcrew-runtime::i18n` → crate `galleon-i18n` (body+locales+generated_locales; runtime re-export) | ✅ `7b7bd51f` — **BUILD-VERIFIED HIJAU** (cargo check PASS; `generated_locales`/`include_str!` locales 0 error; 106 call-site resolve) |
+| fix(build) | `compat.rs:124` field `mcp_server: None,` nyasar di body `scaffold_app_manifest` (bug lane lain) → runtime fail → channels/gateway/zerocode inherited-fail | ✅ `cd055062` (hapus 1 baris; runtime+3 crate jadi exit 0) |
+| RF-B1+ | channel Tier B lain: matrix, whatsapp-web, wechat, mattermost, lark | ⬜ (temuan RF-B0 lihat bawah: coupling nyata ≠ cuma i18n — whatsapp triad drag util/identity_persist/login_events; wecom_ws drag orchestrator; discord=folder) |
+| RF-B0 | peta dependency intra-crate runtime/channels (prasyarat B2 **dan** B1+) | ⬛ sebagian — telusur coupling inline done (lihat §2c); subagent regen graph **gagal spawn** (storm), graph.json masih stale 16:26; regen+query penuh belum |
 | RF-B2 | pecah `clawcrew-runtime` (288k) → sub-crate (butuh RF-B0) | ⬜ |
 | RF-B3 | pecah `clawcrew-providers` (84k) per-vendor | ⬜ |
 | RF-M1 | baseline `cargo build --timings` | ⬜ |
@@ -89,6 +90,15 @@ Maka plan dibagi dua jalur: **(A) pecah file** (maintainability, cepat, aman) da
 | RF-M4 | ukur ulang `--timings` vs baseline tiap RF-B | ⬜ |
 
 Catatan: angka LOC file di tabel ini sudah memperhitungkan RF-A0 (mis. `orchestrator/mod.rs` kini 17.5k setelah 31k test dipisah). Build/test ditahan sampai Owner perintah.
+
+### 2c. Temuan coupling RF-B0 (telusur inline 2026-10-02, graph stale + grep terarah)
+Data nyata sebelum split channel mana pun — **coupling ≠ cuma i18n** (rekomendasi awal "whatsapp/wechat/discord mudah" terkoreksi):
+- **whatsapp triad** (`whatsapp.rs`+`whatsapp_web.rs`+`whatsapp_storage.rs`) butuh bawa serta `crate::identity_persist` + `crate::login_events` + sebagian `crate::util` (59KB, dipakai banyak channel) + `allowlist` (→ core). `whatsapp_storage` pure/mandiri; `whatsapp_web` → `clawcrew_runtime::i18n` (→ galleon-i18n) + `crate::whatsapp`. Blast-radius besar.
+- **wecom_ws** → `crate::allowlist` + **`crate::orchestrator`** (modul besar) + `util`. Bukan self-contained (beda dari signal/bluesky yang bersih).
+- **discord** = folder modul kompleks (`discord/` + `discord_slash_state.rs`), bukan file tunggal → berat, tunda.
+- **matrix** → drag `clawcrew_runtime::agent::loop_::DRAFT_PLACEHOLDER` (coupling jantung runtime); tunda sampai RF-B2.
+- **Konsekuensi:** `util` 59KB + `identity_persist` + `login_events` harus jadi fondasi bersama (`galleon-channel-core`) **dulu** sebelum channel non-trivial bisa di-split bersih → RF-B0 jadi prasyarat B1+ juga, bukan hanya B2. Regen graph penuh + query presisi masih TODO (subagent gagal; jalankan inline saat build dibuka).
+
 
 ## 3. Rencana — dua jalur, dikerjakan berurutan per crate
 
