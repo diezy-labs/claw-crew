@@ -1,0 +1,18 @@
+[package]
+name = "galleon-channel-signal"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Signal channel feature-crate (RF-B1 split proof-of-pattern; skeleton only)."
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[dependencies]
+# Signal is a cfg-gate-only channel upstream (`channel-signal = []`), so the
+# only hard dependency is the Channel trait surface itself.
+clawcrew-api.workspace = true
+anyhow = "1.0"
+async-trait = "0.1"
+# `listen` takes a tokio mpsc Sender; `sync` is the single feature we need.
+tokio = { version = "1.50", default-features = false, features = ["sync"] }

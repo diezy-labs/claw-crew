@@ -4592,6 +4592,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-signal"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "tokio",
+]
+
+[[package]]
 name = "gdk"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
