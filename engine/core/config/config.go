@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/diezy-labs/claw-crew/engine/core/logger"
@@ -16,6 +17,7 @@ type AppConfig struct {
 	LLMBaseURL   string        `json:"llm_base_url"`
 	LLMAPIKey    string        `json:"llm_api_key"`
 	LLMModel     string        `json:"llm_model"`
+	DataDir      string        `json:"data_dir"` // base dir for persistent stores (F1-1 DiskStore)
 	LoggerConfig logger.Config `json:"logger"`
 }
 
@@ -27,6 +29,7 @@ func LoadConfig() *AppConfig {
 	llmBaseURL := flag.String("llm-base-url", "", "Custom LLM API Base URL (OpenAI compatible)")
 	llmAPIKey := flag.String("llm-api-key", "", "LLM API Key")
 	llmModel := flag.String("llm-model", "gpt-4o-mini", "Default LLM model name")
+	dataDir := flag.String("data-dir", "", "Base directory for persistent stores (default: OS user config dir / galleon-fleet)")
 	logPath := flag.String("log-path", "", "Path to log file (default: OS app data)")
 	logLevel := flag.String("log-level", "info", "Logging level (debug, info, warn, error)")
 	consoleOut := flag.Bool("console-out", true, "Also emit log output to console")
@@ -40,6 +43,7 @@ func LoadConfig() *AppConfig {
 		LLMBaseURL:  *llmBaseURL,
 		LLMAPIKey:   *llmAPIKey,
 		LLMModel:    *llmModel,
+		DataDir:     *dataDir,
 		LoggerConfig: logger.Config{
 			Level:      *logLevel,
 			LogPath:    *logPath,
@@ -76,6 +80,18 @@ func LoadConfig() *AppConfig {
 	}
 	if envLog := os.Getenv("CLAWCREW_LOG_PATH"); envLog != "" {
 		cfg.LoggerConfig.LogPath = envLog
+	}
+
+	if envData := os.Getenv("GALLEON_ENGINE_DATA_DIR"); envData != "" {
+		cfg.DataDir = envData
+	}
+	if cfg.DataDir == "" {
+		// Default: <OS user config dir>/galleon-fleet; fall back to ./galleon-data.
+		if base, err := os.UserConfigDir(); err == nil {
+			cfg.DataDir = filepath.Join(base, "galleon-fleet")
+		} else {
+			cfg.DataDir = "galleon-data"
+		}
 	}
 
 	return cfg

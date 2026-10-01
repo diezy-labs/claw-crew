@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import {
   Monitor,
   Laptop,
@@ -53,19 +54,21 @@ export const TauriDesktopModal: React.FC<TauriDesktopModalProps> = ({ isOpen, on
     setTimeout(() => setCopiedFile(null), 2500);
   };
 
-  const handleSimulateIPC = (command: string) => {
-    if (command === 'get_fleet_metrics') {
-      setIpcLog((prev) => [
-        ...prev,
-        `> invoke("get_fleet_metrics")`,
-        `<= { active_ships: 3, assigned_crew: 8, running_voyages: 2, status: "Sovereign & Anchored" }`
-      ]);
-    } else if (command === 'ring_deck_bell') {
-      setIpcLog((prev) => [
-        ...prev,
-        `> invoke("ring_deck_bell")`,
-        `<= [Rust std::println] Ship Bell chimed by Sovereign Captain`
-      ]);
+  const handleSimulateIPC = async (command: string) => {
+    try {
+      if (command === 'get_fleet_metrics') {
+        setIpcLog((prev) => [...prev, `> invoke("get_fleet_metrics")`]);
+        // Call real rust backend
+        const result = await invoke("get_fleet_metrics");
+        setIpcLog((prev) => [...prev, `<= ${result}`]);
+      } else if (command === 'ring_deck_bell') {
+        setIpcLog((prev) => [...prev, `> invoke("ring_deck_bell")`]);
+        // Call real rust backend
+        await invoke("ring_deck_bell");
+        setIpcLog((prev) => [...prev, `<= [Rust std::println] Ship Bell chimed by Sovereign Captain`]);
+      }
+    } catch (err) {
+      setIpcLog((prev) => [...prev, `[ERROR] Please run this inside the Tauri Desktop App to use Native IPC!`]);
     }
   };
 
@@ -453,3 +456,4 @@ export const TauriDesktopModal: React.FC<TauriDesktopModalProps> = ({ isOpen, on
     </Modal>
   );
 };
+

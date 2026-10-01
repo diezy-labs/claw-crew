@@ -1,6 +1,7 @@
 /target
 /target-*/
 /engine/bin/
+apps/tauri-2/target/
 
 # Desktop installer build artifacts
 *.dmg

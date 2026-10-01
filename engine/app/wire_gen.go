@@ -7,12 +7,17 @@
 package app
 
 import (
+	"path/filepath"
+
 	"github.com/diezy-labs/claw-crew/engine/core/config"
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
+	"github.com/diezy-labs/claw-crew/engine/src/fleet"
 	"github.com/diezy-labs/claw-crew/engine/src/llm"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	qmorch "github.com/diezy-labs/claw-crew/engine/src/orchestrator"
+	"github.com/diezy-labs/claw-crew/engine/src/persistence"
 	"github.com/diezy-labs/claw-crew/engine/src/run"
 	"github.com/diezy-labs/claw-crew/engine/src/task"
 	"github.com/diezy-labs/claw-crew/engine/src/tool"
@@ -35,24 +40,41 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	vectorStore := memory.NewVectorStore()
 	crewRegistry := crew.NewRegistry()
 	grpcHandler := crew.NewGRPCHandler(orchestrator, vectorStore, crewRegistry)
-	memoryStore := run.NewMemoryStore()
+	memoryStore, err := persistence.NewDiskStore(filepath.Join(cfg.DataDir, "runs-store"))
+	if err != nil {
+		return nil, err
+	}
 	memoryEventHub := run.NewEventHub()
 	runService := run.NewService(memoryStore, memoryEventHub)
 	runHTTPHandler := run.NewHTTPHandler(runService)
-	taskStore := task.NewMemoryTaskStore()
+	taskStore, err := persistence.NewDiskTaskStore(cfg.DataDir)
+	if err != nil {
+		return nil, err
+	}
 	taskScheduler := task.NewScheduler()
 	taskService := task.NewService(taskStore, taskScheduler, runService)
 	taskHTTPHandler := task.NewHTTPHandler(taskService)
 	toolRegistry := tool.NewRegistry()
 	toolGate := tool.NewApprovalGate(runService)
-	toolService := tool.NewService(toolRegistry, toolGate, runService)
+	// F3-1: route native builtin tool execution through the Rust SystemGateway
+	// (:50052) so bash/read_file/write/git run inside the Landlock sandbox, not
+	// in-process. The client structurally satisfies tool.SystemGateway; a nil/
+	// unavailable gateway falls back to in-process execution inside the client.
+	toolService := tool.NewService(toolRegistry, toolGate, runService).WithSystemGateway(systemGatewayClient)
 	toolHTTPHandler := tool.NewHTTPHandler(toolService)
-	artifactRepo := artifact.NewMemoryRepository()
+	artifactRepo, err := persistence.NewDiskArtifactStore(cfg.DataDir)
+	if err != nil {
+		return nil, err
+	}
 	artifactService := artifact.NewService(artifactRepo, runService)
 	artifactHTTPHandler := artifact.NewHTTPHandler(artifactService)
 	workflowRegistry := workflow.NewRegistry()
 	workflowService := workflow.NewService(workflowRegistry, taskService)
 	workflowHTTPHandler := workflow.NewHTTPHandler(workflowService)
-	app := NewApp(cfg, server, metricsServer, grpcHandler, runHTTPHandler, taskHTTPHandler, toolHTTPHandler, artifactHTTPHandler, workflowHTTPHandler)
+	fleetService := fleet.NewService(provider)
+	objectiveProposer := qmorch.NewService(provider, fleetService)
+	fleetService.SetObjectiveProposer(objectiveProposer)
+	fleetHTTPHandler := fleet.NewHTTPHandler(fleetService)
+	app := NewApp(cfg, server, metricsServer, grpcHandler, runHTTPHandler, taskHTTPHandler, toolHTTPHandler, artifactHTTPHandler, workflowHTTPHandler, fleetHTTPHandler)
 	return app, nil
 }

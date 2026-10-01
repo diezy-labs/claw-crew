@@ -1,0 +1,20 @@
+[
+  {
+    "id": "notif-1",
+    "title": "Captain Approval Requested",
+    "description": "Developer Delivery Ship needs authorization to create a Pull Request on GitHub.",
+    "type": "approval",
+    "read": false,
+    "createdAt": "15m ago",
+    "actionLinkTab": "approvals"
+  },
+  {
+    "id": "notif-2",
+    "title": "Quest Underway",
+    "description": "Voyage in progress: Resolving WebSocket Goroutine Timeout (65% completed).",
+    "type": "quest",
+    "read": false,
+    "createdAt": "30m ago",
+    "actionLinkTab": "quests"
+  }
+]

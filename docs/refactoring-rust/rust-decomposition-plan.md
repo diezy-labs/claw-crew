@@ -85,6 +85,7 @@ Maka plan dibagi dua jalur: **(A) pecah file** (maintainability, cepat, aman) da
 | RF-B0 | peta dependency intra-crate runtime/channels (prasyarat B2 **dan** B1+) | ⬛ sebagian — telusur coupling inline done (lihat §2c); subagent regen graph **gagal spawn** (storm), graph.json masih stale 16:26; regen+query penuh belum |
 | RF-B2 | pecah `clawcrew-runtime` (288k) → sub-crate (butuh RF-B0) | ⬜ |
 | RF-B3 | pecah `clawcrew-providers` (84k) per-vendor | ⬜ |
+| RF-A6 | `src/main.rs` (13k, root bin) → sibling module | ⬛ sebagian — hanya `main_cli_args.rs` selesai (753 baris: `CompletionShell`/`EstopLevelArg`/`Cli`/`LogLevel`/`EvalCommands`/`Commands`/`LocalesCommands`/`DeprecatedPropsCommands`, pure clap-derive data, nol logic). ✅ edit selesai, build-verify PENDING. Wiring `#[path="main_cli_args.rs"] mod main_cli_args; pub(crate) use main_cli_args::*;` ditaruh di dekat `mod agent;` dst. main.rs 10759→10006. **SISA AREA BELUM dipindah** (interleaved dengan logic, bukan 1 blok rapi seperti diasumsikan plan awal — lihat catatan di bawah): quickstart wizard (TUI selector + `run_quickstart_cli`, ~baris 54-701 & 1721-3433 di file lama), security/wss cert helpers (~3616-4127), linux desktop discovery (~4607-5093), estop handling (~8853-9328), auth/paircode (~9331-10169), sop/gateway/models (~10172-10755). `async_main_inner` (~3754 baris, 1 fungsi) **sengaja TIDAK dipindah** — risiko tinggi dipecah sendirian. |
 | RF-M1 | baseline `cargo build --timings` | ⬜ |
 | RF-M3 | CI gate soft: file baru >2k baris → warning | ⬜ |
 | RF-M4 | ukur ulang `--timings` vs baseline tiap RF-B | ⬜ |
@@ -115,7 +116,7 @@ Teknik Rust: ubah `foo.rs` → folder `foo/` dengan `mod.rs` + submodul, pakai `
   - acceptance: idem per file.
 - [ ] **RF-A4** — `clawcrew-channels/src/orchestrator/mod.rs` (17k) & `matrix.rs` (11k) → submodul.
 - [ ] **RF-A5** — `apps/zerocode/src/chat.rs` (20k) → submodul (**setelah** S8/A1 build zerocode hijau).
-- [ ] **RF-A6** — `src/main.rs` (13k, root bin) → pindah logika ke modul `src/<area>/`; `main.rs` tinggal wiring.
+- [~] **RF-A6** — `src/main.rs` (13k, root bin) → pindah logika ke modul `src/<area>/`; `main.rs` tinggal wiring. Sebagian: `main_cli_args.rs` selesai (lihat tracker 2b), sisanya pending.
 - [ ] **RF-A7** — `clawcrew-gateway/src/lib.rs` (11k) & `providers/{reliable,compatible}.rs` → submodul.
 
 ### JALUR B — Pecah crate besar jadi crate kecil (menurunkan compile-time)

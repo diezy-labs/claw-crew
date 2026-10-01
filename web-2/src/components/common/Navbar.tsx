@@ -27,6 +27,7 @@ import { PWAInstallButton } from './PWAInstallButton';
 import { TauriDesktopModal } from './TauriDesktopModal';
 import { Modal } from './Modal';
 import { Button } from './Button';
+import { retroAudio } from '../../utils/retroAudio';
 
 export interface NavbarProps {
   children?: React.ReactNode;
@@ -64,7 +65,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     setMobileSidebarOpen,
     isFleetPulseOpen,
     toggleFleetPulse,
-    setRemoteAccessModalOpen
+    setRemoteAccessModalOpen,
+    ringDeckBell
   } = useFleetStore();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -172,6 +174,24 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Right controls */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Sovereign Ship Bell Trigger */}
+        <button
+          type="button"
+          onClick={async () => {
+            retroAudio.playBell();
+            try {
+              await ringDeckBell();
+            } catch (e) {
+              console.error('Failed to chime deck bell:', e);
+            }
+          }}
+          className="p-1.5 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors relative cursor-pointer group"
+          title="Chime Sovereign Ship Bell across Fleet quarters (IPC & Gateway)"
+          aria-label="Chime Sovereign Ship Bell"
+        >
+          <Bell className="w-4 h-4 fill-amber-500/20 text-amber-500 group-hover:rotate-12 transition-transform" />
+        </button>
+
         {/* Real-time Notifications Bell */}
         {showNotifications && (
           <div className="relative" ref={notifMenuRef}>

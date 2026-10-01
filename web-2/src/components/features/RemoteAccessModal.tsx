@@ -54,6 +54,23 @@ export const RemoteAccessModal: React.FC<RemoteAccessModalProps> = ({
   const [activeGuideTab, setActiveGuideTab] = useState<'mobile' | 'lan' | 'nginx' | 'docker'>('mobile');
   const [ollamaStatus, setOllamaStatus] = useState<{ available: boolean; host: string; models?: any[] } | null>(null);
   const modalCardRef = useRef<HTMLDivElement>(null);
+  const handleTestOllama = async () => {
+    try {
+      const res = await fetch('/api/providers/ollama/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: ollamaStatus?.models?.[0]?.name || 'llama3', prompt: 'Hello', stream: false })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert('Ollama Response: ' + data.response);
+      } else {
+        alert('Error: ' + res.statusText);
+      }
+    } catch (e) {
+      alert('Error testing Ollama: ' + e);
+    }
+  };
 
   // Close on Escape key press
   useEffect(() => {
@@ -477,3 +494,4 @@ export const RemoteAccessModal: React.FC<RemoteAccessModalProps> = ({
     </div>
   );
 };
+

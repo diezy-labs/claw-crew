@@ -43,23 +43,6 @@ impl TurnStatus {
         self.lifecycle_activity().state()
     }
 
-    /// Maps a Go Engine run status string into a native `TurnStatus` for UI rendering
-    pub fn from_engine_run_status(status: &str) -> Self {
-        match status {
-            "queued" | "planning" => TurnStatus::Working,
-            "running" => TurnStatus::Responding,
-            "cancelling" | "cancelled" => TurnStatus::Cancelling,
-            "waiting_approval" | "waiting_for_approval" => TurnStatus::WaitingForApproval,
-            "waiting_for_input" => TurnStatus::WaitingForInput,
-            "completed" | "failed" => TurnStatus::Idle,
-            unknown => {
-                // BUG-008 & BUG-012: Safely fallback without hiding unrecognized statuses silently
-                eprintln!("[WARN] unrecognized engine run status: '{unknown}', falling back to Idle");
-                TurnStatus::Idle
-            }
-        }
-    }
-
     /// Verb (no parens, no dots) — `None` for states that render without dots.
     pub(crate) fn verb(&self) -> Option<String> {
         match self {

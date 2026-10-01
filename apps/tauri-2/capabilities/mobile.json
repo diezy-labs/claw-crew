@@ -1,0 +1,8 @@
+{
+  "identifier": "mobile",
+  "description": "Mobile-specific permissions for ClawCrew",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ]
+}

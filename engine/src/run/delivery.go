@@ -21,6 +21,9 @@ func NewHTTPHandler(service Service) *HTTPHandler {
 	}
 }
 
+// Service exposes the underlying run service (used for startup resume, F1-3).
+func (h *HTTPHandler) Service() Service { return h.service }
+
 // RegisterHTTP registers run endpoints on the metrics/HTTP server
 func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/v1/runs", h.handleRunsRoot)

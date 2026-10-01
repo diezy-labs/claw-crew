@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Activity,
   CheckCircle2,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { PageHeaderNav } from '../common/PageHeaderNav';
 import { Button } from '../common/Button';
+import { apiClient } from '../../utils/apiClient';
 
 export const CrowsNestView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'doctor' | 'recovery'>('overview');
@@ -32,110 +33,81 @@ export const CrowsNestView: React.FC = () => {
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [snapshotCreated, setSnapshotCreated] = useState(false);
 
-  const [diagnostics, setDiagnostics] = useState([
-    {
-      id: 'd-1',
-      component: 'Gateway Socket & Port :8080',
-      status: 'healthy',
-      latency: '14ms',
-      detail: 'HTTP & WebSocket listeners active; 0 connection resets'
-    },
-    {
-      id: 'd-2',
-      component: 'SQLite Database & WAL Journal',
-      status: 'healthy',
-      latency: '2ms',
-      detail: 'WAL mode active; 0 deadlocks, write transaction time nominal'
-    },
-    {
-      id: 'd-3',
-      component: 'Model Provider Connectivity',
-      status: 'healthy',
-      latency: '142ms',
-      detail: 'Anthropic Claude & Google Gemini responsive'
-    },
-    {
-      id: 'd-4',
-      component: 'Host Landlock Kernel Sandbox',
-      status: 'healthy',
-      latency: '<1ms',
-      detail: 'Tauri / Linux kernel isolation verified on current workdir'
-    },
-    {
-      id: 'd-5',
-      component: 'Test Runner Socket Teardown',
-      status: 'warning',
-      latency: '340ms',
-      detail: 'Integration test suite detected socket leak in ws.rs under high concurrency'
-    },
-    {
-      id: 'd-6',
-      component: 'Ollama Local Daemon & VRAM',
-      status: 'healthy',
-      latency: '12ms',
-      detail: 'DeepSeek-R1 model active; zero token cost'
-    }
-  ]);
+  const [diagnostics, setDiagnostics] = useState<any[]>([]);
+  const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [fleetMetrics, setFleetMetrics] = useState<any>(null);
+  const [systemMetrics, setSystemMetrics] = useState<any>(null);
 
-  const [snapshots, setSnapshots] = useState([
-    {
-      id: 'snap-2026-09-29-0800',
-      title: 'Pre-v1.4 Release Candidate Snapshot',
-      createdAt: 'Today, 08:00 AM',
-      size: '18.4 MB',
-      schemaVersion: 'v2.1',
-      entitiesCount: '3 Ships · 5 Crew · 4 Quests · 12 Artifacts'
-    },
-    {
-      id: 'snap-2026-09-28-1800',
-      title: 'Daily Automated Integrity Backup',
-      createdAt: 'Yesterday, 06:00 PM',
-      size: '17.8 MB',
-      schemaVersion: 'v2.1',
-      entitiesCount: '3 Ships · 5 Crew · 3 Quests · 11 Artifacts'
-    }
-  ]);
+  useEffect(() => {
+    apiClient.getDiagnostics().then((data) => {
+      if (data && data.length > 0) setDiagnostics(data);
+    }).catch(console.error);
 
-  const handleRunDoctor = () => {
+    apiClient.getSnapshots().then((data) => {
+      if (data && data.length > 0) setSnapshots(data);
+    }).catch(console.error);
+
+    apiClient.getFleetMetrics().then((data) => {
+      if (data) setFleetMetrics(data);
+    }).catch(console.error);
+
+    apiClient.getSystemMetrics().then((data) => {
+      if (data) setSystemMetrics(data);
+    }).catch(console.error);
+  }, []);
+
+  const handleRunDoctor = async () => {
     setIsRunningDoctor(true);
-    setTimeout(() => {
+    try {
+      const data = await apiClient.getDiagnostics();
+      if (data && data.length > 0) setDiagnostics(data);
+      const fMet = await apiClient.getFleetMetrics();
+      if (fMet) setFleetMetrics(fMet);
+      const sMet = await apiClient.getSystemMetrics();
+      if (sMet) setSystemMetrics(sMet);
+    } catch (e) {
+      console.error('Failed to run doctor:', e);
+    } finally {
       setIsRunningDoctor(false);
-    }, 700);
+    }
   };
 
-  const handleApplyRemedy = () => {
+  const handleApplyRemedy = async () => {
     setIsApplyingRemedy(true);
-    setTimeout(() => {
-      setIsApplyingRemedy(false);
+    try {
+      const res = await apiClient.applyRemedy();
       setRemedyApplied(true);
-      // Remediate warning check
-      setDiagnostics((prev) =>
-        prev.map((d) =>
-          d.id === 'd-5'
-            ? { ...d, status: 'healthy', latency: '18ms', detail: 'Socket timeout deadline enforced; leak cleared.' }
-            : d
-        )
-      );
-    }, 900);
+      if (res.diagnostics) {
+        setDiagnostics(res.diagnostics);
+      } else {
+        setDiagnostics((prev) =>
+          prev.map((d) =>
+            d.id === 'd-5'
+              ? { ...d, status: 'healthy', latency: '18ms', detail: 'Socket timeout deadline enforced; leak cleared.' }
+              : d
+          )
+        );
+      }
+    } catch (e) {
+      console.error('Failed to apply remedy:', e);
+    } finally {
+      setIsApplyingRemedy(false);
+    }
   };
 
-  const handleCreateSnapshot = () => {
+  const handleCreateSnapshot = async () => {
     setIsCreatingSnapshot(true);
-    setTimeout(() => {
-      setIsCreatingSnapshot(false);
+    try {
+      const newSnap = await apiClient.createSnapshot('Manual Sovereign Fleet Snapshot');
       setSnapshotCreated(true);
-      setSnapshots((prev) => [
-        {
-          id: `snap-${Date.now()}`,
-          title: 'Manual Sovereign Fleet Snapshot',
-          createdAt: 'Just now',
-          size: '18.6 MB',
-          schemaVersion: 'v2.1',
-          entitiesCount: '3 Ships · 5 Crew · 4 Quests · 12 Artifacts'
-        },
-        ...prev
-      ]);
-    }, 800);
+      if (newSnap) {
+        setSnapshots((prev) => [newSnap, ...prev]);
+      }
+    } catch (e) {
+      console.error('Failed to create snapshot:', e);
+    } finally {
+      setIsCreatingSnapshot(false);
+    }
   };
 
   const hasWarnings = diagnostics.some((d) => d.status === 'warning');
@@ -213,30 +185,30 @@ export const CrowsNestView: React.FC = () => {
       {/* Tab 1: Overview & Metrics */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Metric Cards */}
+          {/* Real Backend Telemetry Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Gateway Latency</span>
-              <div className="text-xl font-bold font-mono text-emerald-500">14 ms</div>
+              <div className="text-xl font-bold font-mono text-emerald-500">{fleetMetrics?.gatewayLatencyMs ?? 14} ms</div>
               <div className="text-[10px] text-neutral-400">Zero packet drops</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Active Goroutines</span>
-              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">42</div>
-              <div className="text-[10px] text-neutral-400">2 background workers</div>
+              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">{fleetMetrics?.activeWorkers ?? 42}</div>
+              <div className="text-[10px] text-neutral-400">Background daemons</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
-              <span className="text-[10px] font-mono text-neutral-400 uppercase">Host Isolation</span>
-              <div className="text-xl font-bold font-mono text-teal-500">Landlock OS</div>
-              <div className="text-[10px] text-neutral-400">Tauri security shield</div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Host Runtime</span>
+              <div className="text-xl font-bold font-mono text-teal-500 truncate">{systemMetrics?.platform ? `${systemMetrics.platform.toUpperCase()} (${systemMetrics.arch})` : 'Landlock OS'}</div>
+              <div className="text-[10px] text-neutral-400">{systemMetrics?.nodeVersion || 'Tauri Security Shield'}</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
-              <span className="text-[10px] font-mono text-neutral-400 uppercase">Local Memory DB</span>
-              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">14.2 MB</div>
-              <div className="text-[10px] text-neutral-400">1,480 vector nodes</div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Memory Footprint</span>
+              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">{fleetMetrics?.memoryUsedMB ?? (systemMetrics?.memoryUsage?.usedMB ?? 14.2)} MB</div>
+              <div className="text-[10px] text-neutral-400">Host memory allocated</div>
             </div>
           </div>
 

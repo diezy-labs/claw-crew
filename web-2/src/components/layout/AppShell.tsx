@@ -89,6 +89,9 @@ class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 }
 
 export const AppShell: React.FC = () => {
+  React.useEffect(() => {
+    useFleetStore.getState().fetchRealData();
+  }, []);
   const {
     activeTab,
     setActiveTab,
@@ -200,3 +203,4 @@ export const AppShell: React.FC = () => {
     </div>
   );
 };
+
