@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/clawcrew-api", "crates/clawcrew-infra", "crates/clawcrew-config", "crates/clawcrew-dist", "crates/clawcrew-log", "crates/clawcrew-log/tests/fixtures/attribution-macro-support", "crates/clawcrew-log/tests/fixtures/attribution-macro-consumer", "crates/clawcrew-tls", "crates/clawcrew-relay-proto", "apps/zerorelay", "crates/clawcrew-spawn", "crates/clawcrew-commands", "crates/clawcrew-providers", "crates/clawcrew-memory", "crates/clawcrew-channels", "crates/clawcrew-tools", "crates/clawcrew-sop-graph", "crates/clawcrew-runtime", "crates/clawcrew-eval", "apps/zerocode", "crates/clawcrew-plugins", "crates/clawcrew-plugins/tests/fixtures/channel-fixture", "crates/clawcrew-plugins/tests/fixtures/channel-egress-fixture", "crates/clawcrew-plugins/tests/fixtures/egress-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-timeout-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-sequential-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-secret-fixture", "crates/clawcrew-gateway", "crates/clawcrew-hardware", "crates/clawcrew-tool-call-parser", "crates/clawcrew-macros", "apps/tauri", "tools/fill-translations", "xtask"]
+members = [".", "crates/clawcrew-api", "crates/clawcrew-infra", "crates/clawcrew-config", "crates/clawcrew-dist", "crates/clawcrew-log", "crates/clawcrew-log/tests/fixtures/attribution-macro-support", "crates/clawcrew-log/tests/fixtures/attribution-macro-consumer", "crates/clawcrew-tls", "crates/clawcrew-relay-proto", "apps/zerorelay", "crates/clawcrew-spawn", "crates/clawcrew-commands", "crates/clawcrew-providers", "crates/clawcrew-memory", "crates/clawcrew-channels", "crates/clawcrew-tools", "crates/clawcrew-sop-graph", "crates/clawcrew-runtime", "crates/clawcrew-eval", "apps/zerocode", "crates/clawcrew-plugins", "crates/clawcrew-plugins/tests/fixtures/channel-fixture", "crates/clawcrew-plugins/tests/fixtures/channel-nostr-pilot", "crates/clawcrew-plugins/tests/fixtures/channel-egress-fixture", "crates/clawcrew-plugins/tests/fixtures/egress-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-timeout-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-sequential-fixture", "crates/clawcrew-plugins/tests/fixtures/tool-secret-fixture", "crates/clawcrew-gateway", "crates/clawcrew-hardware", "crates/clawcrew-tool-call-parser", "crates/clawcrew-macros", "apps/tauri", "tools/fill-translations", "xtask"]
 resolver = "2"
 
 [workspace.package]
@@ -393,8 +393,16 @@ ci-all = [
 [profile.dev]
 incremental = true
 opt-level = 0
-debug = 1
+# RF-M2: line-tables-only memangkas debuginfo gen & link time vs full `debug=1`,
+# backtrace tetap ada (line numbers). Ganti dari `debug = 1`.
+debug = "line-tables-only"
 split-debuginfo = "unpacked"
+
+# RF-M2: pre-optimize dependency pihak-ketiga sekali (jarang berubah) sehingga
+# runtime test/dev cepat tanpa menaikkan opt-level kode kita sendiri (tetap 0,
+# compile cepat). Tradeoff: cold compile pertama dep naik, lalu cached.
+[profile.dev.package."*"]
+opt-level = 2
 
 [profile.release]
 opt-level = "z"      # Optimize for size

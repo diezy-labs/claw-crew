@@ -11,6 +11,10 @@ generate = "run --release -p xtask --bin generate --"
 # fail on rustdoc warnings (Cargo replaces config flags when the env is set).
 [build]
 rustdocflags = ["-D", "warnings"]
+# sccache: cache rustc artifacts across builds/branches so cold compiles reuse
+# prior work. Installed by the user. Harmless if sccache is on PATH; remove the
+# line (or unset) to disable. Pair with `sccache --show-stats` to verify hits.
+rustc-wrapper = "sccache"
 
 [target.x86_64-unknown-linux-musl]
 rustflags = ["-C", "link-arg=-static"]
@@ -35,10 +39,10 @@ rustflags = ["-C", "link-arg=-static", "-C", "link-arg=-Wl,-z,stack-size=8388608
 # a CLI tool distributed via GitHub Releases, which ships new builds for any
 # CRT-level security fix regardless.
 [target.x86_64-pc-windows-msvc]
-rustflags = ["-C", "target-feature=+crt-static", "-C", "link-arg=/STACK:8388608"]
+rustflags = ["-C", "target-feature=+crt-static", "-C", "link-arg=/STACK:8388608", "-C", "linker=rust-lld"]
 
 [target.i686-pc-windows-msvc]
-rustflags = ["-C", "target-feature=+crt-static", "-C", "link-arg=/STACK:8388608"]
+rustflags = ["-C", "target-feature=+crt-static", "-C", "link-arg=/STACK:8388608", "-C", "linker=rust-lld"]
 
 [target.x86_64-pc-windows-gnu]
 rustflags = ["-C", "link-arg=-Wl,--stack,8388608"]

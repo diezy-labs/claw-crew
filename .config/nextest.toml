@@ -1,0 +1,19 @@
+# cargo-nextest config. Runner paralel antar-crate (cargo test serial per
+# test-binary). Pakai: `cargo nextest run -p <crate>` untuk inner loop,
+# `cargo nextest run --profile ci` untuk pre-PR. Dok: https://nexte.st
+[profile.default]
+# Retry sekali untuk test yang flaky secara transient (jaringan/timing) tanpa
+# menyembunyikan kegagalan nyata — laporan tetap menandai retried.
+retries = 0
+# Tampilkan output test yang gagal langsung, bukan di akhir.
+failure-output = "immediate"
+# Fail-fast dimatikan: lihat semua kegagalan dalam satu run inner-loop.
+fail-fast = false
+
+[profile.ci]
+# Pre-PR / CI: lebih toleran transient, output ringkas untuk log runner.
+retries = 2
+failure-output = "immediate-final"
+fail-fast = false
+# Slow-test warning agar test yang menggantung terdeteksi.
+slow-timeout = { period = "60s", terminate-after = 4 }
