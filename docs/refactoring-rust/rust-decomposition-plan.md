@@ -76,13 +76,9 @@ Maka plan dibagi dua jalur: **(A) pecah file** (maintainability, cepat, aman) da
 | RF-A0 | Split test jumbo (orchestrator/telegram/schema → `tests.rs` sibling) | ✅ `420c9dee` |
 | RF-B1 | signal + bluesky + core → `galleon-channel-*` (proof-of-pattern) | ✅ `3893a58a`,`9c8c61ee` |
 | RF-M2 | sccache + nextest + profil dev (`.cargo/config.toml`, `.config/nextest.toml`) | ⬛ sebagian (sisa: cranelift dev) |
-| RF-A1 | `clawcrew-config/src/schema.rs` (25k) → submodul by-domain | ⬜ |
-| RF-A2 | `runtime/agent/{loop_.rs 19k, agent.rs 15k}` → submodul | ⬜ |
-| RF-A3 | `runtime/{rpc/dispatch.rs 18k, sop/engine.rs 15k, tools/delegate.rs 13k}` | ⬜ |
-| RF-A4 | `channels/orchestrator/mod.rs` (17.5k) + `matrix.rs` (11.3k) → submodul | ⬜ |
-| RF-A5 | `apps/zerocode/src/chat.rs` (20.6k) → submodul | ⬜ |
-| RF-A6 | `src/main.rs` (13.3k) → modul, `main.rs` tinggal wiring | ⬜ |
-| RF-A7 | `gateway/src/lib.rs` (11.6k) + `providers/{reliable,compatible}.rs` | ⬜ |
+| RF-A1 | `clawcrew-config/src/schema.rs` (25k) → submodul by-domain | ⬜ (BUKAN pure-move: derive macro + 2 impl Config raksasa; tunda sampai build) |
+| RF-A2..A7 **(test-split tahap-1)** | pisah blok test inline file jumbo → `tests.rs` sibling (pure-move) | ✅ semua: slack `9fea70b7`; providers anthropic/reliable/compatible `4147dc2d`; runtime loop_/agent/dispatch/sop·engine/delegate `6e578609`; matrix `8377c09b`; zerocode·chat `89d0ac3b`; gateway·lib `c2738e2c`; bin·main `ceca7c2d` |
+| RF-A2..A7 **(body-split tahap-2)** | pecah BODY file (post-test-split) jadi submodul by-tanggung-jawab | ⬜ (berisiko: butuh pub(crate)/visibility; tunda sampai build dibuka) |
 | RF-B(i18n) | extract `clawcrew-runtime::i18n` → crate `galleon-i18n` (body+locales+generated_locales; runtime re-export) | ✅ `7b7bd51f` (UNVERIFIED, build-deferred) |
 | RF-B1+ | channel Tier B lain: matrix, whatsapp-web, wechat, mattermost, lark | ⬜ (telegram/wechat/line/discord drag `clawcrew_runtime::i18n` → kini bisa pakai `galleon-i18n`; matrix masih drag `agent::loop_::DRAFT_PLACEHOLDER`) |
 | RF-B0 | peta dependency intra-crate runtime/channels (prasyarat B2) | ⬜ |
