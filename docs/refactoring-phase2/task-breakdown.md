@@ -1,5 +1,12 @@
 # Task Breakdown — SSOT Migration (parallel-ready)
 
+> **SCOPE DOKUMEN INI = SSOT Migration (engine Go + web-2 + wiring).** Lane A–F di bawah.
+> **Pemecahan crate/file Rust & optimisasi build DIPISAH** ke `rust-decomposition-plan.md`
+> (sesi "refactoring Rust" tersendiri) agar kedua sesi tidak redundan dan tidak bentrok writer.
+> Jangan kerjakan RF-A/RF-B/RF-M di sini; sebaliknya jangan sentuh `engine/**` atau `web-2/**` di sesi Rust.
+> Catatan silang: A1 (hapus modul zerocode) & A5 (clippy workspace) sudah **selesai** dan juga menjadi
+> prasyarat build-hijau untuk RF-A di dokumen Rust — tidak perlu dikerjakan ulang di kedua sisi.
+
 > Setiap task punya **owner lane**, **depends**, **acceptance** (cara verifikasi), dan **file scope**.
 > Klaim task dengan mengubah `[ ]` → `[~] @nama` saat mulai, `[x]` saat selesai + verifikasi lulus.
 > Satu task = satu PR kecil (satu concern). Branch non-`master`, PR ke `master`.

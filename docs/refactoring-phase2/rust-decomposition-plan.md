@@ -1,5 +1,16 @@
 # Refactoring Lanjutan — Pemecahan Modul Jumbo `crates/` & Waktu Kompilasi
 
+> **SCOPE DOKUMEN INI = SESI "REFACTORING RUST" SAJA.** Hanya perubahan Rust:
+> `crates/`, `src/`, `apps/zerocode`, `apps/tauri-2` (Rust), `Cargo.toml`/`Cargo.lock`.
+> Jalur RF-A (pecah file), RF-B (pecah crate), RF-M (build-speed).
+>
+> **BUKAN di sini** (ada di `README.md` + `task-breakdown.md` = SSOT Migration, sesi berbeda):
+> lane engine Go (`engine/**`), lane web-2 (`web-2/**`), DiskStore/Quartermaster/seed/apiClient.
+> Dua dokumen sengaja dipisah agar sesi Rust dan sesi SSOT **tidak redundan / tidak bentrok writer.**
+> Satu-satunya titik singgung: RF-A7 menyentuh `clawcrew-gateway` yang juga disebut Lane D (Go→Rust
+> SystemGateway) di task-breakdown — Lane D menambah RPC handler, RF-A7 hanya memecah file; koordinasikan
+> bila dikerjakan bersamaan.
+
 > Masalah Owner: file-file raksasa (>10k baris) di `crates/` sulit di-maintain, memusingkan, dan menghambat kompilasi.
 > Semua angka di bawah **diukur** (`Get-Content | Measure-Object -Line`) pada 2026-10-01, bukan tebakan.
 > Status: `[ ]` belum · `[~] @nama` sedang · `[x]` selesai+verifikasi.
@@ -56,14 +67,39 @@ Maka plan dibagi dua jalur: **(A) pecah file** (maintainability, cepat, aman) da
 
 ---
 
+## 2b. Tracker status (per 2026-10-01) — baca ini dulu
+
+> Satu-satunya papan skor sesi Rust. Perbarui saat sebuah RF selesai + ter-commit.
+
+| RF | Ringkas | Status |
+|----|---------|--------|
+| RF-A0 | Split test jumbo (orchestrator/telegram/schema → `tests.rs` sibling) | ✅ `420c9dee` |
+| RF-B1 | signal + bluesky + core → `galleon-channel-*` (proof-of-pattern) | ✅ `3893a58a`,`9c8c61ee` |
+| RF-M2 | sccache + nextest + profil dev (`.cargo/config.toml`, `.config/nextest.toml`) | ⬛ sebagian (sisa: cranelift dev) |
+| RF-A1 | `clawcrew-config/src/schema.rs` (25k) → submodul by-domain | ⬜ |
+| RF-A2 | `runtime/agent/{loop_.rs 19k, agent.rs 15k}` → submodul | ⬜ |
+| RF-A3 | `runtime/{rpc/dispatch.rs 18k, sop/engine.rs 15k, tools/delegate.rs 13k}` | ⬜ |
+| RF-A4 | `channels/orchestrator/mod.rs` (17.5k) + `matrix.rs` (11.3k) → submodul | ⬜ |
+| RF-A5 | `apps/zerocode/src/chat.rs` (20.6k) → submodul | ⬜ |
+| RF-A6 | `src/main.rs` (13.3k) → modul, `main.rs` tinggal wiring | ⬜ |
+| RF-A7 | `gateway/src/lib.rs` (11.6k) + `providers/{reliable,compatible}.rs` | ⬜ |
+| RF-B1+ | channel Tier B lain: matrix, whatsapp-web, wechat, mattermost, lark | ⬜ |
+| RF-B0 | peta dependency intra-crate runtime/channels (prasyarat B2) | ⬜ |
+| RF-B2 | pecah `clawcrew-runtime` (288k) → sub-crate (butuh RF-B0) | ⬜ |
+| RF-B3 | pecah `clawcrew-providers` (84k) per-vendor | ⬜ |
+| RF-M1 | baseline `cargo build --timings` | ⬜ |
+| RF-M3 | CI gate soft: file baru >2k baris → warning | ⬜ |
+| RF-M4 | ukur ulang `--timings` vs baseline tiap RF-B | ⬜ |
+
+Catatan: angka LOC file di tabel ini sudah memperhitungkan RF-A0 (mis. `orchestrator/mod.rs` kini 17.5k setelah 31k test dipisah). Build/test ditahan sampai Owner perintah.
+
 ## 3. Rencana — dua jalur, dikerjakan berurutan per crate
 
 ### JALUR A — Pecah file jumbo (aman, tanpa ubah API publik)
 Teknik Rust: ubah `foo.rs` → folder `foo/` dengan `mod.rs` + submodul, pakai `pub(crate) use` re-export supaya path pemanggil tidak berubah. Satu file ≤ ~800 baris sebagai target.
 
-- [ ] **RF-A0 (quick-win)** — Pisah file **test** jumbo jadi beberapa file by-fitur di folder `tests/`:
-  `clawcrew-channels/src/orchestrator/tests.rs` (31k) & `clawcrew-config/src/schema/tests.rs` (18k).
-  - acceptance: tiap file test ≤ 2k baris; `cargo test -p <crate>` tetap hijau; tidak ada test hilang (`cargo test -- --list` sama).
+- [x] **RF-A0 (quick-win)** — Pisah file **test** jumbo jadi file `tests.rs` sibling (teknik `foo.rs` + `foo/tests.rs`, induk `mod tests;`). **Selesai (commit `420c9dee`)**: `orchestrator/mod.rs` −33.7k → `orchestrator/tests.rs` (620 test); `telegram.rs` −15.4k → `telegram/tests.rs` (365 test); `schema.rs` −20.7k → `schema/tests.rs` (690 test). Pure-move, test count terjaga.
+  - acceptance: ✅ pure-move (`git diff` simetris); induk re-declare submodul; path tak berubah. Build/test ditahan sampai Owner perintah.
 - [ ] **RF-A1** — `clawcrew-config/src/schema.rs` (25k) → `schema/{mod.rs, agents.rs, channels.rs, providers.rs, policy.rs, …}` by domain config.
   - acceptance: `cargo check -p clawcrew-config` hijau; API `schema::*` tidak berubah (re-export).
 - [ ] **RF-A2** — `clawcrew-runtime/src/agent/loop_.rs` (19k) + `agent/agent.rs` (15k) → submodul by tanggung jawab (state, step, tool-dispatch, streaming).
@@ -78,9 +114,11 @@ Teknik Rust: ubah `foo.rs` → folder `foo/` dengan `mod.rs` + submodul, pakai `
 ### JALUR B — Pecah crate besar jadi crate kecil (menurunkan compile-time)
 Prioritas: `clawcrew-runtime` (288k) dan `clawcrew-channels` (197k) — dua ini yang paling membebani.
 
-- [ ] **RF-B1** — `clawcrew-channels` → crate per-channel: `galleon-channel-telegram`, `-slack`, `-matrix`, `-discord`, `-wechat`, `-lark`, `-whatsapp`, `-mattermost`, dengan `galleon-channel-core` untuk trait/tipe bersama.
+- [~] **RF-B1** — `clawcrew-channels` → crate per-channel `galleon-channel-<name>` + `galleon-channel-core` (trait/policy/approval bersama).
   - rasional: tiap channel independen; edit telegram tidak perlu recompile matrix.
-  - acceptance: workspace build hijau; `cargo build -p galleon-channel-telegram` hanya meng-compile telegram+core; nama baru pakai `galleon-*` (sesuai branding).
+  - **Selesai (proof-of-pattern, commit `3893a58a` + `9c8c61ee`):** `galleon-channel-core` (allowlist peer-policy re-export dari `clawcrew_config::schema` SSOT + approval helper i18n-free, TANPA drag `clawcrew-runtime`); `galleon-channel-signal` (signal-cli JSON-RPC/SSE); `galleon-channel-bluesky` (AT Protocol). Monolith re-export `pub use galleon_channel_{signal,bluesky} as {signal,bluesky}`; feature `channel-{signal,bluesky} = ["dep:…"]`.
+  - **Terbuka (ikuti pola di atas):** `-matrix` (11.3k), `-whatsapp-web` (7.4k), `-wechat` (6.5k), `-mattermost` (5.9k), `-lark` (7.2k) [Tier B]; channel Tier C via WASI plugin (lihat ADR-001). Telegram/discord/slack = Tier A, TETAP embed (jangan dipindah).
+  - acceptance: workspace build hijau; `cargo build -p galleon-channel-<name>` hanya meng-compile channel+core; nama baru `galleon-*`.
 - [ ] **RF-B2** — Pecah `clawcrew-runtime` (288k) jadi beberapa crate by domain: `-runtime-agent`, `-runtime-sop`, `-runtime-rpc`, `-runtime-tools`, `-runtime-daemon`, sisakan `-runtime` sebagai fasad tipis.
   - **PRASYARAT:** petakan dependency internal dulu (lihat RF-B0) agar tidak ada import siklik.
   - acceptance: tidak ada cyclic crate dep; `cargo build` paralel per crate; incremental edit di `agent` tidak recompile `channels`.
