@@ -176,9 +176,14 @@ export const apiClient = {
         console.warn('[API] Tauri execute_terminal_command fallback:', e);
       }
     }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const executeToken = process.env.EXECUTE_TOKEN;
+    if (executeToken) {
+      headers['Authorization'] = `Bearer ${executeToken}`;
+    }
     const res = await fetch('/api/engine/execute', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ command })
     });
     return res.json();
