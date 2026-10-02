@@ -1,0 +1,28 @@
+[
+  {
+    "id": "skill-ast-parser",
+    "name": "AST Codebase Navigation",
+    "status": "active",
+    "version": 1,
+    "createdAt": "2026-03-01T00:00:00Z",
+    "createdBy": "Captain",
+    "updatedAt": "2026-03-25T00:00:00Z",
+    "updatedBy": "Captain",
+    "purpose": "Analyzes Abstract Syntax Trees across Rust, TypeScript, and Go codebases.",
+    "instructions": "Traverse syntax tree nodes, identify export signatures, and graph dependencies.",
+    "accessScope": ["ship-dev", "ship-research"]
+  },
+  {
+    "id": "skill-benchmarking",
+    "name": "Synthetic Gateway Benchmarking",
+    "status": "active",
+    "version": 1,
+    "createdAt": "2026-03-10T00:00:00Z",
+    "createdBy": "Captain",
+    "updatedAt": "2026-03-28T00:00:00Z",
+    "updatedBy": "Captain",
+    "purpose": "Runs high-throughput TTFT and streaming latency measurements against LLM endpoints.",
+    "instructions": "Send bounded probe payloads, measure time to first token, and report p99 latency.",
+    "accessScope": ["ship-research"]
+  }
+]

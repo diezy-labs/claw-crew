@@ -8,6 +8,7 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
+	"github.com/diezy-labs/claw-crew/engine/src/fleet"
 	"github.com/diezy-labs/claw-crew/engine/src/llm"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
 	"github.com/diezy-labs/claw-crew/engine/src/run"
@@ -17,7 +18,13 @@ import (
 	"github.com/google/wire"
 )
 
-// InitializeApp builds the dependency injection graph via Google Wire
+// InitializeApp builds the dependency injection graph via Google Wire.
+//
+// NOTE: fleet's objective proposer (orchestrator → fleet.ObjectiveProposer) is
+// wired post-construction in wire_gen.go via fleetService.SetObjectiveProposer,
+// because orchestrator imports fleet (dependency inversion breaks the cycle) and
+// Wire cannot express a setter call. If you regenerate wire_gen.go, re-add that
+// manual step (construct qmorch.NewService(provider, fleetService) and inject it).
 func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	wire.Build(
 		NewGRPCServer,
@@ -31,6 +38,7 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 		tool.Set,
 		artifact.Set,
 		workflow.Set,
+		fleet.Set,
 		NewApp,
 	)
 	return &App{}, nil

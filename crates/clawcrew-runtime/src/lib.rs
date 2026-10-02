@@ -6,9 +6,6 @@
 //! Agent runtime — orchestration, security, observability, cron, SOP, skills, hardware, and more.
 
 pub mod cli_input;
-/// Locale table rendered from repo-root `locales.toml` by
-/// `cargo generate installers runtime-locales`. Generated, not hand-edited.
-mod generated_locales;
 pub mod identity;
 pub mod migration;
 pub mod util;
@@ -26,7 +23,11 @@ pub mod enroll;
 pub mod health;
 pub mod heartbeat;
 pub mod hooks;
-pub mod i18n;
+// RF-B: the i18n body now lives in the standalone `galleon-i18n` crate (so
+// channels/gateway can localize without depending on this 288k-LOC runtime).
+// Re-export it under the historical `i18n` path so every existing
+// `clawcrew_runtime::i18n::*` caller keeps resolving unchanged.
+pub use galleon_i18n as i18n;
 pub mod integrations;
 pub mod observability;
 pub mod peers;

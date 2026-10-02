@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Settings,
   User,
@@ -28,7 +28,9 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
-import { SettingsCategory, TerminologyMode, DensityMode, UpdateChannel } from '../../types';
+import { PageHeader } from '../common/PageHeader';
+import { ThemeCustomizer } from './ThemeCustomizer';
+import { SettingsCategory, TerminologyMode, DensityMode, UpdateChannel, ColorTone } from '../../types';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -38,7 +40,9 @@ export const SettingsView: React.FC = () => {
     updateSettings,
     resetSettingsCategory,
     setActiveTab,
-    setTheme
+    setTheme,
+    colorTone,
+    setColorTone
   } = useFleetStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,36 +111,23 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header - Minimalist on mobile */}
-      <div className="p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 shrink-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Settings
-            </h1>
-            <span className="hidden sm:inline text-xs font-mono text-neutral-400">
+      {/* Standard Reusable PageHeader */}
+      <div className="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#141619]/60 shrink-0">
+        <PageHeader
+          icon={<Settings className="w-4 h-4 text-teal-500 shrink-0" />}
+          title="Settings"
+          badge={
+            <span className="hidden sm:inline-flex text-xs font-mono text-neutral-400">
               Preferences &amp; Application Controls
             </span>
-          </div>
-          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Manage your personal preferences, data location, desktop runtime, and advanced configuration.
-          </p>
-        </div>
-
-        {/* Search settings input */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Search settings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            />
-          </div>
-        </div>
+          }
+          description="Manage your personal preferences, data location, desktop runtime, and advanced configuration."
+          search={{
+            value: searchQuery,
+            onChange: setSearchQuery,
+            placeholder: 'Search settings...'
+          }}
+        />
       </div>
 
       {/* Main Settings Body with Mobile Master-Detail Navigation */}
@@ -326,26 +317,32 @@ export const SettingsView: React.FC = () => {
 
           {/* 2. Appearance & Language */}
           {activeSettingsCategory === 'appearance' && (
-            <div className="space-y-5 text-xs">
+            <div className="space-y-6 text-xs">
               <div>
                 <h2 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
-                  Appearance &amp; Language
+                  Appearance, Themes &amp; Color Customization
                 </h2>
                 <p className="text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  Personalize how Fleet AI looks and speaks without altering core fleet behavior.
+                  Personalize UI colors, customize canvas/accent palettes, and apply themes directly from VS Code.
                 </p>
               </div>
 
+              {/* Theme & VS Code Customizer */}
               <div className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-5">
-                {/* Theme */}
-                <div>
-                  <label className="block font-semibold text-neutral-800 dark:text-neutral-200 mb-2">
-                    Theme
-                  </label>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4">
+                  <div>
+                    <label className="block font-bold text-neutral-900 dark:text-neutral-100 text-sm">
+                      Base Luminance Mode
+                    </label>
+                    <span className="text-[11px] text-neutral-500">
+                      Standard dark or light luminance foundation
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     {(['dark', 'light'] as const).map((t) => (
                       <button
                         key={t}
+                        type="button"
                         onClick={() => {
                           setTheme(t);
                           updateSettings((s) => ({
@@ -353,10 +350,10 @@ export const SettingsView: React.FC = () => {
                             appearance: { ...s.appearance, theme: t }
                           }));
                         }}
-                        className={`px-4 py-2 rounded-lg border font-semibold capitalize ${
+                        className={`px-3.5 py-1.5 rounded-lg border font-semibold capitalize transition-all cursor-pointer ${
                           settings.appearance.theme === t
-                            ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400'
-                            : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400'
+                            ? 'border-teal-500 bg-teal-500/10 text-teal-600 dark:text-teal-400 shadow-2xs'
+                            : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                         }`}
                       >
                         {t} Mode
@@ -365,6 +362,11 @@ export const SettingsView: React.FC = () => {
                   </div>
                 </div>
 
+                {/* VS Code & Custom Theme Engine */}
+                <ThemeCustomizer />
+              </div>
+
+              <div className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-5">
                 {/* Terminology Mode */}
                 <div>
                   <label className="block font-semibold text-neutral-800 dark:text-neutral-200 mb-1">
@@ -968,15 +970,17 @@ export const SettingsView: React.FC = () => {
                 <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-3">
                   <button
                     onClick={() => setActiveTab('crows-nest')}
-                    className="text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-medium"
+                    className="text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
                   >
-                    Open Crow’s Nest Diagnostics →
+                    <span className="hidden sm:inline">Open Crow’s Nest Diagnostics →</span>
+                    <span className="sm:hidden">Crow’s Nest →</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('shipyard')}
-                    className="text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 font-medium"
+                    className="text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-1 font-medium cursor-pointer"
                   >
-                    View Shipyard Capacity →
+                    <span className="hidden sm:inline">View Shipyard Capacity →</span>
+                    <span className="sm:hidden">Shipyard →</span>
                   </button>
                 </div>
               </div>

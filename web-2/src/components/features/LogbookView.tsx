@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   BookOpen,
   Search,
@@ -11,6 +11,9 @@ import {
   Clock
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
+import { ItemCard } from '../common/ItemCard';
 
 export const LogbookView: React.FC = () => {
   const { logbook } = useFleetStore();
@@ -36,94 +39,90 @@ export const LogbookView: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const severities = [
+    { id: 'all', label: 'All Severities' },
+    { id: 'info', label: 'Info' },
+    { id: 'warning', label: 'Warning' },
+    { id: 'alert', label: 'Alert' },
+    { id: 'success', label: 'Success' }
+  ];
+
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header */}
-      <div className="p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Logbook
-            </h1>
-            <span className="text-xs font-mono text-neutral-400">
-              ({filtered.length} Recorded Entries)
-            </span>
-          </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Audit &amp; Activity History. Chronological event log with cryptographic correlation IDs and actor attribution.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Search traces, actors, correlation IDs..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 w-64"
-            />
-          </div>
-
-          <button
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-3 sm:space-y-4 max-w-4xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable General Header with Integrated Chips */}
+      <PageHeaderNav
+        icon={<BookOpen className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Logbook"
+        badge={
+          <span className="text-xs font-mono text-neutral-400">
+            ({filtered.length} Recorded Entries)
+          </span>
+        }
+        description="Audit & Activity History. Chronological event log with cryptographic correlation IDs and actor attribution."
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: 'Search traces, actors, correlation IDs...'
+        }}
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Download className="w-3.5 h-3.5" />}
+            shortLabel="Export"
             onClick={handleExportJSON}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-700 dark:text-neutral-300 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export JSON</span>
-          </button>
-        </div>
-      </div>
+            Export JSON
+          </Button>
+        }
+        chips={{
+          items: severities.map((sev) => ({
+            id: sev.id,
+            label: sev.label,
+            count: sev.id === 'all' ? logbook.length : logbook.filter((e) => e.severity === sev.id).length
+          })),
+          selectedId: filterSeverity,
+          onSelect: setFilterSeverity,
+          variant: 'pills'
+        }}
+      />
 
       {/* Timeline List */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="max-w-4xl mx-auto space-y-3">
-          {filtered.map((entry) => (
-            <div
-              key={entry.id}
-              className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] flex items-start justify-between gap-3 text-xs shadow-xs"
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 shrink-0">
-                  {entry.severity === 'success' && (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  )}
-                  {entry.severity === 'warning' && (
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  )}
-                  {entry.severity === 'info' && (
-                    <Info className="w-4 h-4 text-teal-500" />
-                  )}
-                  {entry.severity === 'alert' && (
-                    <ShieldAlert className="w-4 h-4 text-rose-500" />
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                      {entry.actorName}
-                    </span>
-                    <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 uppercase">
-                      {entry.actorType}
-                    </span>
-                  </div>
-                  <p className="text-neutral-700 dark:text-neutral-300 font-medium">
-                    {entry.action}
-                  </p>
-                  <div className="text-[10px] font-mono text-neutral-400">
-                    Trace ID: {entry.correlationId}
-                  </div>
-                </div>
+      <div className="space-y-3">
+        {filtered.map((entry) => (
+          <ItemCard
+            key={entry.id}
+            compact
+            icon={
+              entry.severity === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              ) : entry.severity === 'warning' ? (
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+              ) : entry.severity === 'alert' ? (
+                <ShieldAlert className="w-4 h-4 text-rose-500" />
+              ) : (
+                <Info className="w-4 h-4 text-teal-500" />
+              )
+            }
+            title={entry.actorName}
+            badge={
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 uppercase">
+                  {entry.actorType}
+                </span>
+                <span className="text-[11px] font-mono text-neutral-400">
+                  {entry.timestamp}
+                </span>
               </div>
-
-              <div className="text-[11px] font-mono text-neutral-400 shrink-0">
-                {entry.timestamp}
+            }
+            description={entry.action}
+            footer={
+              <div className="text-[10px] font-mono text-neutral-400">
+                Trace ID: {entry.correlationId}
               </div>
-            </div>
-          ))}
-        </div>
+            }
+          />
+        ))}
       </div>
     </div>
   );

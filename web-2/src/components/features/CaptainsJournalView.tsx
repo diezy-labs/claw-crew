@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   BookMarked,
   Search,
@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { JournalSession } from '../../types';
+import { PageHeader } from '../common/PageHeader';
+import { Button } from '../common/Button';
 
 export const CaptainsJournalView: React.FC = () => {
   const {
@@ -52,6 +54,11 @@ export const CaptainsJournalView: React.FC = () => {
 
   const pinnedSessions = filteredSessions.filter((s) => s.isPinned && !s.isArchived);
   const unpinnedSessions = filteredSessions.filter((s) => !s.isPinned && !s.isArchived);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeSession?.messages?.length, activeSession?.id]);
 
   const handleSend = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -70,51 +77,35 @@ export const CaptainsJournalView: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header - Compact on mobile with icon and title only */}
-      <div className="p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
-              <BookMarked className="w-4 h-4 text-teal-500 shrink-0" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                  Captain’s Journal
-                </h1>
-                <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10 items-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  Private &amp; Exploratory
-                </span>
-              </div>
-            </div>
-          </div>
-          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
-            Your private conversations, notes, exploratory thinking, and ongoing working sessions with Quartermaster.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Search journal entries..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 w-32 sm:w-48"
-            />
-          </div>
-
-          <button
-            onClick={() => setIsCreating(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Entry</span>
-            <span className="sm:hidden">Entry</span>
-          </button>
-        </div>
+      {/* Standard Reusable PageHeader - Solid & Non-looping */}
+      <div className="px-4 py-3 sm:px-6 sm:py-3.5 border-b border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#141619]/60 shrink-0">
+        <PageHeader
+          icon={<BookMarked className="w-4 h-4 text-teal-500 shrink-0" />}
+          title="Captain’s Journal"
+          badge={
+            <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10 items-center gap-1">
+              <Lock className="w-3 h-3" />
+              Private &amp; Exploratory
+            </span>
+          }
+          description="Your private conversations, notes, exploratory thinking, and ongoing working sessions with Quartermaster."
+          search={{
+            value: search,
+            onChange: setSearch,
+            placeholder: 'Search journal entries...'
+          }}
+          actions={
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<PlusCircle className="w-3.5 h-3.5" />}
+              shortLabel="Entry"
+              onClick={() => setIsCreating(true)}
+            >
+              + New Entry
+            </Button>
+          }
+        />
       </div>
 
       {/* Main Container: Sidebar + Active Canvas */}
@@ -300,25 +291,27 @@ export const CaptainsJournalView: React.FC = () => {
 
               {/* Conversion and Pin actions */}
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap self-end sm:self-auto">
-                <button
+                <Button
+                  variant="outline"
+                  size="xs"
+                  icon={<FileText className="w-3.5 h-3.5 text-teal-500" />}
+                  shortLabel="Artifact"
                   onClick={() => convertJournalToArtifact(activeSession.id)}
-                  className="px-2 sm:px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 hover:border-teal-500 text-neutral-700 dark:text-neutral-300 text-xs font-medium flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
                   title="Promote these notes to a durable Artifact"
                 >
-                  <FileText className="w-3.5 h-3.5 text-teal-500" />
-                  <span className="hidden sm:inline">Save as Artifact</span>
-                  <span className="sm:hidden">Artifact</span>
-                </button>
+                  Save Artifact
+                </Button>
 
-                <button
+                <Button
+                  variant="outline"
+                  size="xs"
+                  icon={<Map className="w-3.5 h-3.5 text-teal-500" />}
+                  shortLabel="Quest"
                   onClick={() => convertJournalToQuest(activeSession.id)}
-                  className="px-2 sm:px-2.5 py-1 rounded border border-neutral-200 dark:border-neutral-700 hover:border-teal-500 text-neutral-700 dark:text-neutral-300 text-xs font-medium flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
                   title="Turn this discussion into an operational Quest"
                 >
-                  <Map className="w-3.5 h-3.5 text-teal-500" />
-                  <span className="hidden sm:inline">Create Quest</span>
-                  <span className="sm:hidden">Quest</span>
-                </button>
+                  Draft Quest
+                </Button>
 
                 <button
                   onClick={() => togglePinJournalSession(activeSession.id)}
@@ -333,7 +326,7 @@ export const CaptainsJournalView: React.FC = () => {
             </div>
 
             {/* Conversation Messages */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
               {(activeSession.messages || []).map((msg) => {
                 const isQM = msg.sender === 'quartermaster';
                 return (
@@ -370,6 +363,7 @@ export const CaptainsJournalView: React.FC = () => {
                   </div>
                 );
               })}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Journal Composer */}

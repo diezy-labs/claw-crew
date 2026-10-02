@@ -19,7 +19,8 @@ func (m *mockFleet) GetFleet(ctx context.Context, id string) (*fleet.Fleet, erro
 }
 
 func TestQuartermasterObjective(t *testing.T) {
-	mockLLM := llm.NewMockProvider("test-model", "Here is a drafted Squad for your objective.")
+	mockLLM := llm.NewMockProvider("test-model")
+	mockLLM.SetResponses([]string{"Here is a drafted Squad for your objective."})
 	fleetSvc := &mockFleet{}
 	
 	service := orchestrator.NewService(mockLLM, fleetSvc)

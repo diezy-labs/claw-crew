@@ -1,0 +1,2 @@
+cargo:rustc-link-search=native=C:\Users\Yoga 6\Documents\Github\diezy-realm\galleon-fleet\apps\tauri-2\target\debug\build\webview2-com-sys-f5011bc839d83c94\out\x64
+cargo:rustc-link-lib=advapi32

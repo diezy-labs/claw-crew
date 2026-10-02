@@ -1,6 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AppSidebar } from './AppSidebar';
-import { ContextBar } from './ContextBar';
+import { Navbar } from '../common/Navbar';
 import { RightRail } from './RightRail';
 import { CommandPalette } from './CommandPalette';
 import { RemoteAccessModal } from '../features/RemoteAccessModal';
@@ -15,14 +15,17 @@ import { CaptainsJournalView } from '../features/CaptainsJournalView';
 import { QuartermasterOffice } from '../features/QuartermasterOffice';
 import { MissionBoard } from '../features/MissionBoard';
 import { ShipsView } from '../features/ShipsView';
+import { SquadsView } from '../features/SquadsView';
 import { CrewView } from '../features/CrewView';
 import { ArtifactsView } from '../features/ArtifactsView';
 import { ApprovalsView } from '../features/ApprovalsView';
 import { TreasuryView } from '../features/TreasuryView';
 import { LogbookView } from '../features/LogbookView';
 import { HarborView } from '../features/HarborView';
+import { TrainingOfficerView } from '../features/TrainingOfficerView';
 import { FleetCodeView } from '../features/FleetCodeView';
 import { CrowsNestView } from '../features/CrowsNestView';
+import { EngineRoomView } from '../features/EngineRoomView';
 import { ShipyardView } from '../features/ShipyardView';
 import { SettingsView } from '../features/SettingsView';
 
@@ -86,6 +89,9 @@ class ViewErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 }
 
 export const AppShell: React.FC = () => {
+  React.useEffect(() => {
+    useFleetStore.getState().fetchRealData();
+  }, []);
   const {
     activeTab,
     setActiveTab,
@@ -130,6 +136,8 @@ export const AppShell: React.FC = () => {
         return <MissionBoard />;
       case 'ships':
         return <ShipsView />;
+      case 'squads':
+        return <SquadsView />;
       case 'crew':
         return <CrewView />;
       case 'artifacts':
@@ -142,10 +150,14 @@ export const AppShell: React.FC = () => {
         return <LogbookView />;
       case 'harbor':
         return <HarborView />;
+      case 'training-officer':
+        return <TrainingOfficerView />;
       case 'fleet-code':
         return <FleetCodeView />;
       case 'crows-nest':
         return <CrowsNestView />;
+      case 'engine-room':
+        return <EngineRoomView />;
       case 'shipyard':
         return <ShipyardView />;
       case 'settings':
@@ -162,8 +174,8 @@ export const AppShell: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Context Breadcrumb Top Bar */}
-        <ContextBar />
+        {/* Standard General Navbar */}
+        <Navbar />
 
         {/* Dynamic Canvas + Optional Right Rail */}
         <div className="flex-1 flex overflow-hidden">
@@ -191,3 +203,4 @@ export const AppShell: React.FC = () => {
     </div>
   );
 };
+

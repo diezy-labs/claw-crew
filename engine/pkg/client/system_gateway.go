@@ -17,6 +17,7 @@ import (
 type SystemGatewayClient interface {
 	ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error)
 	GetDecryptedSecret(ctx context.Context, keyName string) (string, error)
+	ExecuteTask(ctx context.Context, taskID, taskData string) (string, error)
 	Close() error
 }
 
@@ -122,6 +123,27 @@ func (c *systemGatewayClient) GetDecryptedSecret(ctx context.Context, keyName st
 	}
 
 	return resp.GetValue(), nil
+}
+
+func (c *systemGatewayClient) ExecuteTask(ctx context.Context, taskID, taskData string) (string, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.ExecuteTask(ctx, &pb.TaskExecutionRequest{
+		TaskId:   taskID,
+		TaskData: taskData,
+	})
+	if err != nil {
+		return "", appErrors.Wrap(err, appErrors.CodeInternal, "failed to execute task via Rust gateway", appErrors.LayerExternal)
+	}
+
+	if !resp.GetSuccess() {
+		return "", appErrors.New(appErrors.CodeInternal, resp.GetError(), appErrors.LayerExternal)
+	}
+
+	return resp.GetOutput(), nil
 }
 
 func (c *systemGatewayClient) Close() error {

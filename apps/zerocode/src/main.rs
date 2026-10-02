@@ -18,7 +18,6 @@ use clap::Parser;
 
 mod acp;
 mod agent_sidebar;
-mod api;
 mod app;
 mod attachment;
 mod chat;

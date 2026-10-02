@@ -1,0 +1,32 @@
+[
+  {
+    "id": "tr-1",
+    "date": "2026-03-31T04:00:00Z",
+    "shipId": "ship-dev",
+    "questTitle": "Resolve WebSocket Goroutine Timeout in CI",
+    "provider": "Anthropic",
+    "model": "claude-3-7-sonnet",
+    "tokensUsed": 18000,
+    "costUSD": 0.12
+  },
+  {
+    "id": "tr-2",
+    "date": "2026-03-31T03:30:00Z",
+    "shipId": "ship-growth",
+    "questTitle": "Synthesize Fleet AI v2.4 Release Notes",
+    "provider": "Google",
+    "model": "gemini-2-5-pro",
+    "tokensUsed": 29700,
+    "costUSD": 0.04
+  },
+  {
+    "id": "tr-3",
+    "date": "2026-03-31T02:15:00Z",
+    "shipId": "ship-research",
+    "questTitle": "Audit Model Gateway Latency and Token Budgets",
+    "provider": "Ollama",
+    "model": "deepseek-r1:14b",
+    "tokensUsed": 53500,
+    "costUSD": 0.00
+  }
+]

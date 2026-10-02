@@ -1,0 +1,17 @@
+[
+  {
+    "id": "dir-1",
+    "name": "Evidence Distinction Policy",
+    "targetType": "role",
+    "targetId": "crew-repo-analyst",
+    "guidance": "Always distinguish facts in the code from assumptions. Cite exact line numbers.",
+    "priority": 1,
+    "overridePolicy": "override",
+    "status": "active",
+    "version": 1,
+    "createdAt": "2026-03-05T00:00:00Z",
+    "createdBy": "Captain",
+    "updatedAt": "2026-03-22T00:00:00Z",
+    "updatedBy": "Captain"
+  }
+]

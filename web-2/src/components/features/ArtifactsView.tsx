@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   FileText,
   Search,
@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { Artifact } from '../../types';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
+import { ItemCard } from '../common/ItemCard';
+import { CardPopover } from '../common/CardPopover';
 
 export const ArtifactsView: React.FC = () => {
   const {
@@ -49,153 +53,158 @@ export const ArtifactsView: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const artifactTypes = [
+    { id: 'all', label: 'All Types' },
+    { id: 'health-brief', label: 'Health Brief' },
+    { id: 'ci-triage', label: 'CI Triage' },
+    { id: 'readiness-checklist', label: 'Readiness Checklist' }
+  ];
+
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Bar - Compact on mobile with icon and title only */}
-      <div className="p-3 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
-              <FileText className="w-4 h-4 text-teal-500 shrink-0" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                  Artifact Gallery
-                </h1>
-                <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-                  {artifacts.length} Deliverables
-                </span>
-              </div>
-            </div>
-          </div>
-          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
-            Artifacts are durable, evidence-backed deliverables produced by Crew Voyages—not transient chat transcripts.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Search artifacts & findings..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 w-52"
-            />
-          </div>
-
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Types</option>
-            <option value="health-brief">Health Brief</option>
-            <option value="ci-triage">CI Triage</option>
-            <option value="readiness-checklist">Readiness Checklist</option>
-          </select>
-        </div>
-      </div>
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-3 sm:space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable General Header with Integrated Chips */}
+      <PageHeaderNav
+        icon={<FileText className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Artifact Gallery"
+        badge={
+          <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+            {artifacts.length} Deliverables
+          </span>
+        }
+        description="Artifacts are durable, evidence-backed deliverables produced by Crew Voyages—not transient chat transcripts."
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: 'Search artifacts & findings...'
+        }}
+        chips={{
+          items: artifactTypes.map((type) => ({
+            id: type.id,
+            label: type.label,
+            count: type.id === 'all' ? artifacts.length : artifacts.filter((a) => a.type === type.id).length
+          })),
+          selectedId: filterType,
+          onSelect: setFilterType,
+          variant: 'pills'
+        }}
+      />
 
       {/* Grid of Artifacts */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-          {filtered.map((art) => {
-            const ship = ships.find((s) => s.id === art.shipId);
-            const producer = crew.find((c) => c.id === art.producerCrewId);
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filtered.map((art) => {
+          const ship = ships.find((s) => s.id === art.shipId);
+          const producer = crew.find((c) => c.id === art.producerCrewId);
 
-            return (
-              <div
-                key={art.id}
-                onClick={() => setSelectedArtifactId(art.id)}
-                className={`p-4 rounded-xl border bg-white dark:bg-[#191b1f] hover:border-teal-500/50 cursor-pointer transition-all space-y-3 shadow-xs flex flex-col justify-between ${
-                  selectedArtifactId === art.id
-                    ? 'border-teal-500 ring-1 ring-teal-500/30'
-                    : 'border-neutral-200 dark:border-neutral-800'
-                }`}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100 line-clamp-1">
-                      {art.title}
-                    </span>
-                    {art.status === 'treasure' ? (
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-500 font-semibold shrink-0">
-                        Treasure
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-500 font-semibold shrink-0">
-                        Needs Review
-                      </span>
-                    )}
+          return (
+            <ItemCard
+              key={art.id}
+              selected={selectedArtifactId === art.id}
+              onClick={() => setSelectedArtifactId(art.id)}
+              accentColor={art.status === 'treasure' ? 'amber' : 'teal'}
+              icon={<FileText className="w-4 h-4 text-teal-500" />}
+              title={art.title}
+              subtitle={`${producer?.name || 'Specialist'} · ${ship?.name.replace(' Ship', '') || 'Fleet'}`}
+              badge={
+                art.status === 'treasure' ? (
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-500 font-semibold shrink-0">
+                    Treasure
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-500 font-semibold shrink-0">
+                    Needs Review
+                  </span>
+                )
+              }
+              description={art.summary}
+              children={
+                art.discoveries.length > 0 ? (
+                  <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 font-medium pt-0.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span className="truncate">{art.discoveries[0].title}</span>
                   </div>
-
-                  <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-3 leading-relaxed">
-                    {art.summary}
-                  </p>
+                ) : null
+              }
+              footer={
+                <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
+                  <span>{art.evidenceCount} Citations</span>
+                  <span className="text-teal-600 dark:text-teal-400 font-semibold">
+                    ${art.voyageCostUSD.toFixed(2)} Voyage Cost
+                  </span>
                 </div>
-
-                <div className="space-y-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                  {/* Discoveries teaser */}
-                  {art.discoveries.length > 0 && (
-                    <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 font-medium">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                      <span className="truncate">
-                        {art.discoveries[0].title}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
-                    <span>{producer?.name || 'Specialist'}</span>
-                    <span>${art.voyageCostUSD.toFixed(2)} Voyage Cost</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              }
+            />
+          );
+        })}
       </div>
 
-      {/* Artifact Detail Inspector Drawer */}
-      {selectedArtifact && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[560px] bg-white dark:bg-[#191b1f] border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-40 flex flex-col animate-in slide-in-from-right duration-200">
-          {/* Header */}
-          <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                Artifact Inspection
-              </span>
-              {selectedArtifact.status === 'treasure' ? (
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-500 font-bold">
-                  VALIDATED TREASURE
-                </span>
+      {/* Artifact Detail Inspector Popover / Drawer */}
+      <CardPopover
+        isOpen={Boolean(selectedArtifact)}
+        onClose={() => setSelectedArtifactId(null)}
+        variant="sheet-right"
+        drawerWidth="sm:w-[560px]"
+        icon={<FileText className="w-4 h-4 text-teal-500" />}
+        title={selectedArtifact?.title}
+        subtitle={
+          selectedArtifact && (
+            <span>
+              Produced by {crew.find((c) => c.id === selectedArtifact.producerCrewId)?.name || 'Specialist'} ·{' '}
+              {ships.find((s) => s.id === selectedArtifact.shipId)?.name}
+            </span>
+          )
+        }
+        badge={
+          selectedArtifact?.status === 'treasure' ? (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 font-bold">
+              VALIDATED TREASURE
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-500 font-semibold">
+              AWAITING VALIDATION
+            </span>
+          )
+        }
+        footer={
+          selectedArtifact && (
+            <div className="flex items-center justify-between w-full">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Download className="w-3.5 h-3.5" />}
+                shortLabel="Export"
+                onClick={() => handleExport(selectedArtifact)}
+              >
+                Export (.md)
+              </Button>
+
+              {selectedArtifact.status !== 'treasure' ? (
+                <Button
+                  variant="amber"
+                  size="sm"
+                  icon={<BookmarkCheck className="w-4 h-4" />}
+                  shortLabel="Treasure"
+                  onClick={() => promoteArtifactToTreasure(selectedArtifact.id)}
+                >
+                  Mark as Treasure
+                </Button>
               ) : (
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-500 font-semibold">
-                  AWAITING VALIDATION
+                <span className="text-xs font-mono text-amber-500 flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  Treasure Verified
                 </span>
               )}
             </div>
-            <button
-              onClick={() => setSelectedArtifactId(null)}
-              className="p-1 rounded text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-                {selectedArtifact.title}
-              </h2>
-              <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono mt-1">
-                <span>{selectedArtifact.evidenceCount} Evidence Citations</span>
-                <span>·</span>
-                <span>Voyage Cost: ${selectedArtifact.voyageCostUSD.toFixed(2)}</span>
+          )
+        }
+      >
+        {selectedArtifact && (
+          <div className="space-y-6">
+            <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between text-xs text-neutral-500 font-mono">
+                <span>Evidence Citations: {selectedArtifact.evidenceCount}</span>
+                <span className="text-teal-600 dark:text-teal-400 font-semibold">
+                  Voyage Cost: ${selectedArtifact.voyageCostUSD.toFixed(2)}
+                </span>
               </div>
             </div>
 
@@ -248,34 +257,8 @@ export const ArtifactsView: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Footer Controls */}
-          <div className="p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex items-center justify-between gap-2 shrink-0">
-            <button
-              onClick={() => handleExport(selectedArtifact)}
-              className="px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-1.5"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Export (.md)</span>
-            </button>
-
-            {selectedArtifact.status !== 'treasure' ? (
-              <button
-                onClick={() => promoteArtifactToTreasure(selectedArtifact.id)}
-                className="px-4 py-2 rounded-lg bg-amber-500 text-neutral-950 font-semibold text-xs hover:opacity-90 flex items-center gap-1.5"
-              >
-                <BookmarkCheck className="w-4 h-4" />
-                <span>Mark as Treasure (Validate Value)</span>
-              </button>
-            ) : (
-              <span className="text-xs font-mono text-amber-500 flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                Treasure Verified
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </CardPopover>
     </div>
   );
 };

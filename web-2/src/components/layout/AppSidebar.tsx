@@ -25,10 +25,14 @@ import {
   AlertTriangle,
   User,
   Flag,
-  Mic
+  Mic,
+  Terminal,
+  GraduationCap,
+  ShieldCheck
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { NavigationTab } from '../../types';
+import { GalleonLogo } from '../common/GalleonLogo';
 
 export const AppSidebar: React.FC = () => {
   const {
@@ -80,8 +84,9 @@ export const AppSidebar: React.FC = () => {
       title: 'FLEET',
       items: [
         { id: 'mission-board', label: 'Mission Board', icon: LayoutGrid, hint: 'Global Kanban & work routing' },
-        { id: 'ships', label: 'Ships', icon: Ship, hint: 'Specialist team containers' },
-        { id: 'crew', label: 'Crew Members', icon: Users, hint: 'Specialist AI roster & squad wizard' },
+        { id: 'ships', label: 'Ships', icon: Ship, hint: 'Department fleet vessels' },
+        { id: 'squads', label: 'Squad', icon: ShieldCheck, hint: 'Cross-functional teams & squads' },
+        { id: 'crew', label: 'Crew Members', icon: Users, hint: 'Specialist AI roster & squad mapping' },
         { id: 'artifacts', label: 'Artifacts', icon: FileText, hint: 'Reviewable deliverables & treasures' },
         {
           id: 'approvals',
@@ -98,7 +103,8 @@ export const AppSidebar: React.FC = () => {
       items: [
         { id: 'treasury', label: 'Treasury', icon: Coins, hint: 'BYOK cost tracking & token ledger' },
         { id: 'logbook', label: 'Logbook', icon: BookOpen, hint: 'Official immutable audit record' },
-        { id: 'harbor', label: 'Harbor', icon: Anchor, hint: 'Model providers & connectors' }
+        { id: 'harbor', label: 'Harbor', icon: Anchor, hint: 'Model providers & connectors' },
+        { id: 'training-officer', label: 'Training Officer', icon: GraduationCap, hint: 'Skills, steering directives & hooks' }
       ]
     },
     {
@@ -106,6 +112,7 @@ export const AppSidebar: React.FC = () => {
       items: [
         { id: 'fleet-code', label: 'Fleet Code', icon: Shield, hint: 'Policy engine & risk tiers' },
         { id: 'crows-nest', label: 'Crow’s Nest', icon: Activity, hint: 'Observability & gateway health' },
+        { id: 'engine-room', label: 'Engine Room', icon: Terminal, hint: 'Local terminal, process monitor & services' },
         { id: 'shipyard', label: 'Shipyard', icon: Layers, hint: 'Fleet capacity & upgrades' }
       ]
     }
@@ -149,15 +156,15 @@ export const AppSidebar: React.FC = () => {
             <div className={`flex items-center gap-2.5 overflow-hidden ${isSidebarCollapsed ? 'mx-auto' : ''}`}>
               <div
                 onClick={() => handleTabClick('quarterdeck')}
-                className="w-8 h-8 rounded-lg bg-teal-600 dark:bg-teal-500 flex items-center justify-center text-neutral-950 font-bold shadow-sm shrink-0 cursor-pointer hover:bg-teal-500 transition-colors"
-                title="Fleet AI — Return to Quarterdeck"
+                className="w-8 h-8 rounded-lg overflow-hidden shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
+                title="Galleon Fleet — Return to Quarterdeck"
               >
-                <Anchor className="w-4 h-4 text-neutral-950" />
+                <GalleonLogo className="w-full h-full" />
               </div>
               {!isSidebarCollapsed && (
                 <div className="min-w-0">
                   <div className="text-sm font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
-                    <span className="truncate">Fleet AI</span>
+                    <span className="truncate">Galleon Fleet</span>
                     <span className="text-[10px] text-teal-600 dark:text-teal-400 font-mono px-1 py-0.2 rounded bg-teal-500/10 shrink-0">
                       v1.4
                     </span>
@@ -225,22 +232,35 @@ export const AppSidebar: React.FC = () => {
                             key={item.id}
                             onClick={() => handleTabClick(item.id)}
                             title={isSidebarCollapsed ? `${item.label} — ${item.hint || ''}` : undefined}
+                            style={
+                              isActive
+                                ? {
+                                    backgroundColor: 'rgba(var(--brand-primary-rgb, 13, 148, 136), 0.16)',
+                                    color: 'var(--brand-primary, #2dd4bf)'
+                                  }
+                                : undefined
+                            }
                             className={`w-full flex items-center ${
                               isSidebarCollapsed ? 'justify-center px-0 py-2' : 'justify-between px-2.5 py-1.5'
                             } rounded-md text-xs font-medium transition-colors relative group ${
                               isActive
-                                ? 'bg-neutral-100 dark:bg-neutral-800/90 text-teal-700 dark:text-teal-300 font-semibold'
+                                ? 'font-semibold'
                                 : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 hover:text-neutral-950 dark:hover:text-white'
                             }`}
                           >
                             <div className={`flex items-center gap-2.5 ${isSidebarCollapsed ? 'justify-center' : 'truncate'}`}>
-                              <Icon
-                                className={`w-4 h-4 shrink-0 transition-colors ${
-                                  isActive
-                                    ? 'text-teal-600 dark:text-teal-400'
-                                    : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300'
-                                }`}
-                              />
+                              <span
+                                style={isActive ? { color: 'var(--brand-primary, #2dd4bf)' } : undefined}
+                                className="shrink-0 flex items-center justify-center"
+                              >
+                                <Icon
+                                  className={`w-4 h-4 shrink-0 transition-colors ${
+                                    isActive
+                                      ? 'text-teal-600 dark:text-teal-400'
+                                      : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-700 dark:group-hover:text-neutral-300'
+                                  }`}
+                                />
+                              </span>
                               {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
                             </div>
 
@@ -315,8 +335,9 @@ export const AppSidebar: React.FC = () => {
 
                 <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
                   <div
+                    style={!isAnchorDropped ? { backgroundColor: 'var(--brand-primary, #0d9488)' } : undefined}
                     className={`h-full rounded-full transition-all duration-300 ${
-                      isAnchorDropped ? 'bg-amber-500 w-full' : 'bg-teal-500 w-1/3'
+                      isAnchorDropped ? 'bg-amber-500 w-full' : 'w-1/3 shadow-2xs'
                     }`}
                   />
                 </div>

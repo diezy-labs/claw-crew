@@ -1,0 +1,35 @@
+[
+  {
+    "id": "log-1",
+    "timestamp": "08:00:15",
+    "actorType": "system",
+    "actorName": "Galleon Sovereign Kernel",
+    "action": "Booted Sovereign Multi-Agent Fleet Environment v2.4.0",
+    "entityType": "ship",
+    "entityId": "fleet-all",
+    "correlationId": "boot-240",
+    "severity": "info"
+  },
+  {
+    "id": "log-2",
+    "timestamp": "08:02:10",
+    "actorType": "quartermaster",
+    "actorName": "Developer Delivery Ship Navigator",
+    "action": "Embarked on Quest: Resolve WebSocket Goroutine Timeout in CI",
+    "entityType": "quest",
+    "entityId": "quest-ci-ws",
+    "correlationId": "voyage-ws",
+    "severity": "info"
+  },
+  {
+    "id": "log-3",
+    "timestamp": "08:15:40",
+    "actorType": "crew",
+    "actorName": "Repository Analyst",
+    "action": "Generated Artifact: WebSocket Read Deadline Remediation Patch",
+    "entityType": "artifact",
+    "entityId": "art-1",
+    "correlationId": "art-gen-1",
+    "severity": "info"
+  }
+]

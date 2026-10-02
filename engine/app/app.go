@@ -17,6 +17,7 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/run"
+	"github.com/diezy-labs/claw-crew/engine/src/fleet"
 	"github.com/diezy-labs/claw-crew/engine/src/task"
 	"github.com/diezy-labs/claw-crew/engine/src/tool"
 	"github.com/diezy-labs/claw-crew/engine/src/workflow"
@@ -34,6 +35,7 @@ type App struct {
 	ToolHandler     *tool.HTTPHandler
 	ArtifactHandler *artifact.HTTPHandler
 	WorkflowHandler *workflow.HTTPHandler
+	FleetHandler    *fleet.HTTPHandler
 }
 
 // NewGRPCServer creates a grpc.Server instance with interceptors configured
@@ -60,6 +62,7 @@ func NewApp(
 	toolHandler *tool.HTTPHandler,
 	artifactHandler *artifact.HTTPHandler,
 	workflowHandler *workflow.HTTPHandler,
+	fleetHandler *fleet.HTTPHandler,
 ) *App {
 	crewHandler.RegisterService(grpcServer)
 	crewHandler.RegisterHTTP(metricsServer)
@@ -68,6 +71,7 @@ func NewApp(
 	toolHandler.RegisterHTTP(metricsServer)
 	artifactHandler.RegisterHTTP(metricsServer)
 	workflowHandler.RegisterHTTP(metricsServer)
+	fleetHandler.RegisterHTTP(metricsServer)
 
 	return &App{
 		Cfg:             cfg,
@@ -79,12 +83,20 @@ func NewApp(
 		ToolHandler:     toolHandler,
 		ArtifactHandler: artifactHandler,
 		WorkflowHandler: workflowHandler,
+		FleetHandler:    fleetHandler,
 	}
 }
 
 // Run executes the gRPC and Metrics servers concurrently with graceful shutdown handling
 func (a *App) Run() error {
 	log := logger.Get()
+
+	// 0. Resume runs interrupted by a prior restart (F1-3). No-op on in-memory store.
+	if recovered, err := a.RunHandler.Service().ResumeInterrupted(context.Background()); err != nil {
+		log.Warn("resume interrupted runs failed", slog.String("error", err.Error()))
+	} else if len(recovered) > 0 {
+		log.Info("resumed interrupted runs after restart", slog.Int("count", len(recovered)))
+	}
 
 	// 1. Start Prometheus Metrics HTTP Server
 	go func() {

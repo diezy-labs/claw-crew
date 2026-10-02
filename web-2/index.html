@@ -20,21 +20,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
-      // Clear all legacy service worker caches to prevent serving stale bundles
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          for (var reg of regs) {
-            reg.unregister();
-          }
-        });
-      }
-      if ('caches' in window) {
-        caches.keys().then(function(keys) {
-          for (var key of keys) {
-            caches.delete(key);
-          }
-        });
-      }
+      // Clear legacy service worker caches to prevent serving stale bundles
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            for (var reg of regs) {
+              reg.unregister().catch(function() {});
+            }
+          }).catch(function() {});
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(keys) {
+            for (var key of keys) {
+              caches.delete(key).catch(function() {});
+            }
+          }).catch(function() {});
+        }
+      } catch (e) {}
     </script>
   </head>
   <body class="bg-neutral-950 text-neutral-100 antialiased selection:bg-teal-500/20 selection:text-teal-300">

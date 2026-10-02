@@ -24,12 +24,24 @@ import {
   QrCode
 } from 'lucide-react';
 import { SubMenuScroller } from '../common/SubMenuScroller';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
+import { ItemCard } from '../common/ItemCard';
 import { useFleetStore } from '../../store/fleetStore';
+import { apiClient } from '../../utils/apiClient';
+import { initialHarborTools } from '../../utils/seedData';
 
 export const HarborView: React.FC = () => {
-  const { setRemoteAccessModalOpen } = useFleetStore();
+  const { setRemoteAccessModalOpen, harborProviders } = useFleetStore();
   const [activeHarborTab, setActiveHarborTab] = useState<'providers' | 'connectors' | 'a2a_mesh' | 'plugins'>('providers');
   const [isScanningPeers, setIsScanningPeers] = useState(false);
+  const [providers, setProviders] = useState<any[]>(harborProviders || []);
+
+  React.useEffect(() => {
+    apiClient.getHarborProviders().then((data) => {
+      if (data && data.length > 0) setProviders(data);
+    }).catch(console.error);
+  }, []);
   const [peerList, setPeerList] = useState([
     {
       id: 'peer-node-alpha',
@@ -94,61 +106,7 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  const providers = [
-    {
-      name: 'Anthropic Claude',
-      type: 'Cloud Model Provider',
-      status: 'Connected (Active)',
-      defaultModel: 'Claude 3.7 Sonnet (Hybrid Reasoning)',
-      keyMask: 'sk-ant-api03-••••••••',
-      activeUsage: 'Active on Developer Ship'
-    },
-    {
-      name: 'Google Gemini',
-      type: 'Cloud Model Provider',
-      status: 'Connected (Active)',
-      defaultModel: 'Gemini 2.5 Pro & Flash',
-      keyMask: 'AIzaSy••••••••',
-      activeUsage: 'Active on Market & Research Ships'
-    },
-    {
-      name: 'Ollama Local Endpoint',
-      type: 'Local Inference (Zero Cost)',
-      status: 'Running (http://127.0.0.1:11434)',
-      defaultModel: 'deepseek-r1:14b / qwen2.5:7b',
-      keyMask: 'No API Key Required',
-      activeUsage: 'Static AST & Code Audits'
-    },
-    {
-      name: 'OpenAI-Compatible Local Proxy',
-      type: 'Self-Hosted Gateway',
-      status: 'Standby',
-      defaultModel: 'Custom Endpoint',
-      keyMask: 'bearer-token-••••',
-      activeUsage: 'Configured for Private VPC'
-    }
-  ];
-
-  const tools = [
-    {
-      name: 'GitHub Repository Connector',
-      target: 'diezy-labs/claw-crew (Branch: feat/enhance-agent-phase2)',
-      auth: 'Read-only default + Captain Approval for issues/PRs',
-      status: 'Synced'
-    },
-    {
-      name: 'Local Filesystem Sandbox',
-      target: 'Tauri Host Landlock Sandboxing Active',
-      auth: 'Scoped to current repository directory',
-      status: 'Secure'
-    },
-    {
-      name: 'Webhook Event Listener',
-      target: 'https://ais-dev-gmtvncp5itg5m7aoliehtz-965837518617.asia-southeast1.run.app/api/webhooks',
-      auth: 'HMAC SHA-256 Signature Verification',
-      status: 'Active'
-    }
-  ];
+  const tools = initialHarborTools;
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);
@@ -158,105 +116,56 @@ export const HarborView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Header - Statis (Scrolls with Page), Compact on Mobile with Icon & Title only */}
-      <div className="flex items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 pb-4 shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 ring-1 ring-teal-500/20">
-              <Anchor className="w-4 h-4 text-teal-500 shrink-0" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
-                  Harbor
-                </h1>
-                <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-                  Intelligence &amp; Mesh Connectors
-                </span>
-              </div>
-            </div>
-          </div>
-          <p className="hidden sm:block text-xs text-neutral-500 dark:text-neutral-400 mt-1 pl-10.5">
-            Connect the intelligence models, local endpoints, git repositories, A2A mesh peers, and WebAssembly tools your Fleet can use.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button
-            onClick={() => setRemoteAccessModalOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-700 dark:text-teal-300 font-semibold text-xs hover:bg-teal-500/20 transition-all cursor-pointer shadow-xs"
-            title="Scan QR to open on Mobile or Laptop"
-          >
-            <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span className="hidden sm:inline">Remote Access Hub &amp; QR</span>
-            <span className="sm:hidden">Remote Hub</span>
-          </button>
-
-          {activeHarborTab === 'a2a_mesh' && (
-            <button
-              onClick={handleScanMdnsPeers}
-              disabled={isScanningPeers}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Standard Reusable PageHeader with Integrated Chips */}
+      <PageHeaderNav
+        icon={<Anchor className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Harbor"
+        badge={
+          <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+            Intelligence &amp; Mesh Connectors
+          </span>
+        }
+        description="Connect the intelligence models, local endpoints, git repositories, A2A mesh peers, and WebAssembly tools your Fleet can use."
+        actions={
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />}
+              shortLabel="Remote"
+              onClick={() => setRemoteAccessModalOpen(true)}
+              title="Scan QR to open on Mobile or Laptop"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isScanningPeers ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Scan mDNS Peers</span>
-              <span className="sm:hidden">Scan</span>
-            </button>
-          )}
-        </div>
-      </div>
+              Remote Access &amp; QR
+            </Button>
 
-      {/* Sticky Top Navigation with < and > arrows (Sticks to top when scrolling down) */}
-      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2.5 bg-[var(--bg-canvas)]/95 backdrop-blur-md border-b border-neutral-200/80 dark:border-neutral-800/80 shadow-2xs shrink-0 transition-all">
-        <SubMenuScroller className="gap-2 text-xs" containerClassName="w-full">
-          <button
-            onClick={() => setActiveHarborTab('providers')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-              activeHarborTab === 'providers'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            Model Intelligence (BYOK / BYOM)
-          </button>
-          <button
-            onClick={() => setActiveHarborTab('connectors')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-              activeHarborTab === 'connectors'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            Work Connectors &amp; Git
-          </button>
-          <button
-            onClick={() => setActiveHarborTab('a2a_mesh')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-              activeHarborTab === 'a2a_mesh'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            <Network className="w-3.5 h-3.5 text-teal-500" />
-            <span>A2A Mesh Network &amp; Peers</span>
-            <span className="text-[9px] font-mono px-1 rounded bg-teal-500/20 text-teal-600 dark:text-teal-300">
-              {peerList.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveHarborTab('plugins')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-              activeHarborTab === 'plugins'
-                ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-teal-500" />
-            <span>Wasm Plugins ({plugins.length})</span>
-          </button>
-        </SubMenuScroller>
-      </div>
+            {activeHarborTab === 'a2a_mesh' && (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<RefreshCw className={`w-3.5 h-3.5 ${isScanningPeers ? 'animate-spin' : ''}`} />}
+                shortLabel="Scan"
+                disabled={isScanningPeers}
+                onClick={handleScanMdnsPeers}
+              >
+                Scan Peers
+              </Button>
+            )}
+          </div>
+        }
+        chips={{
+          items: [
+            { id: 'providers', label: 'Model Intelligence (BYOK / BYOM)' },
+            { id: 'connectors', label: 'Work Connectors & Git' },
+            { id: 'a2a_mesh', label: 'A2A Mesh Network & Peers', count: peerList.length },
+            { id: 'plugins', label: 'Wasm Plugins', count: plugins.length }
+          ],
+          selectedId: activeHarborTab,
+          onSelect: (id) => setActiveHarborTab(id as any),
+          variant: 'pills'
+        }}
+      />
 
       {/* Tab 1: Model Intelligence (BYOK / BYOM) */}
       {activeHarborTab === 'providers' && (
@@ -272,48 +181,44 @@ export const HarborView: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {providers.map((p) => (
-              <div
+              <ItemCard
                 key={p.name}
-                className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-3 text-xs shadow-xs"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
-                      <Cpu className="w-3.5 h-3.5 text-teal-500" />
-                      <span>{p.name}</span>
-                    </div>
-                    <div className="text-[11px] text-neutral-400">{p.type}</div>
-                  </div>
+                icon={<Cpu className="w-4 h-4 text-teal-500" />}
+                title={p.name}
+                subtitle={p.type}
+                badge={
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     <span>Active</span>
                   </span>
-                </div>
-
-                <div className="space-y-1.5 pt-2 border-t border-neutral-100 dark:border-neutral-800/80 font-mono text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Default Model:</span>
-                    <span className="text-neutral-700 dark:text-neutral-300 font-semibold">{p.defaultModel}</span>
+                }
+                children={
+                  <div className="space-y-1.5 pt-1 font-mono text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Default Model:</span>
+                      <span className="text-neutral-700 dark:text-neutral-300 font-semibold">{p.defaultModel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">API Key Mask:</span>
+                      <span className="text-neutral-500">{p.keyMask}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-400">Routing:</span>
+                      <span className="text-teal-600 dark:text-teal-400 font-sans">{p.activeUsage}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">API Key Mask:</span>
-                    <span className="text-neutral-500">{p.keyMask}</span>
+                }
+                footer={
+                  <div className="flex items-center justify-end gap-2">
+                    <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer text-xs">
+                      Configure Keys
+                    </button>
+                    <button className="px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer text-xs">
+                      Test Latency
+                    </button>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-400">Routing:</span>
-                    <span className="text-teal-600 dark:text-teal-400 font-sans">{p.activeUsage}</span>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center justify-end gap-2">
-                  <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer">
-                    Configure Keys
-                  </button>
-                  <button className="px-2.5 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer">
-                    Test Latency
-                  </button>
-                </div>
-              </div>
+                }
+              />
             ))}
           </div>
         </div>
@@ -328,28 +233,25 @@ export const HarborView: React.FC = () => {
 
           <div className="space-y-3">
             {tools.map((t) => (
-              <div
+              <ItemCard
                 key={t.name}
-                className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs"
-              >
-                <div className="space-y-1">
-                  <div className="font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-                    <FolderGit2 className="w-4 h-4 text-teal-500" />
-                    <span>{t.name}</span>
-                  </div>
-                  <div className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400">{t.target}</div>
-                  <div className="text-[11px] text-neutral-600 dark:text-neutral-400">{t.auth}</div>
-                </div>
-
-                <div className="flex items-center gap-2 self-start sm:self-auto">
+                icon={<FolderGit2 className="w-4 h-4 text-teal-500" />}
+                title={t.name}
+                subtitle={t.target}
+                badge={
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500 font-semibold">
                     {t.status}
                   </span>
-                  <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-teal-500 transition-colors cursor-pointer">
-                    Review Scopes
-                  </button>
-                </div>
-              </div>
+                }
+                description={t.auth}
+                footer={
+                  <div className="flex items-center justify-end">
+                    <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-teal-500 transition-colors cursor-pointer text-xs">
+                      Review Scopes
+                    </button>
+                  </div>
+                }
+              />
             ))}
           </div>
         </div>
@@ -422,10 +324,10 @@ export const HarborView: React.FC = () => {
 
                   <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                     <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs hover:border-teal-500 transition-colors cursor-pointer">
-                      Inspect Card JSON
+                      Inspect JSON
                     </button>
                     <button className="px-2.5 py-1 rounded-md bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-opacity cursor-pointer">
-                      Delegate Mission &rarr;
+                      Delegate &rarr;
                     </button>
                   </div>
                 </div>
@@ -444,7 +346,8 @@ export const HarborView: React.FC = () => {
             </span>
             <button className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold cursor-pointer">
               <Plus className="w-3 h-3" />
-              <span>Install Wasm Plugin</span>
+              <span className="hidden sm:inline">Install Wasm Plugin</span>
+              <span className="sm:hidden">+ Plugin</span>
             </button>
           </div>
 

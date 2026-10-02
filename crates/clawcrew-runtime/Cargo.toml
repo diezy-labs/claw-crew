@@ -13,6 +13,8 @@ clawcrew-api.workspace = true
 clawcrew-spawn.workspace = true
 clawcrew-infra.workspace = true
 clawcrew-config.workspace = true
+# RF-B: i18n body moved to galleon-i18n; runtime re-exports it as `i18n`.
+galleon-i18n.workspace = true
 clawcrew-tls.workspace = true
 clawcrew-relay-proto.workspace = true
 clawcrew-commands.workspace = true
@@ -109,7 +111,7 @@ default = ["observability-prometheus", "schema-export"]
 observability-prometheus = ["dep:prometheus"]
 observability-otel = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-otlp"]
 sandbox-landlock = ["dep:landlock"]
-schema-export = ["dep:schemars", "clawcrew-config/schema-export", "clawcrew-sop-graph/schema-export"]
+schema-export = ["dep:schemars", "clawcrew-config/schema-export", "clawcrew-sop-graph/schema-export", "galleon-i18n/schema-export"]
 
 
 browser-native = []

@@ -109,3 +109,39 @@ func TestDiskStore_SaveGetAndResume(t *testing.T) {
 		t.Errorf("expected recovered run-durable-001, got: %v", recovered)
 	}
 }
+
+// TestService_ResumeInterrupted verifies F1-3: a DiskStore-backed run.Service
+// recovers interrupted runs through the ResumableStore capability.
+func TestService_ResumeInterrupted(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "disk_resume_svc_*")
+	if err != nil {
+		t.Fatalf("temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	store, err := NewDiskStore(tempDir)
+	if err != nil {
+		t.Fatalf("NewDiskStore: %v", err)
+	}
+	ctx := context.Background()
+
+	// Persist a run left mid-flight.
+	if err := store.SaveRun(ctx, &run.Run{
+		ID:        "run-svc-001",
+		CrewID:    "crew-dev",
+		Status:    run.StatusRunning,
+		CreatedAt: time.Now().UTC(),
+	}); err != nil {
+		t.Fatalf("SaveRun: %v", err)
+	}
+
+	// A fresh service over the same disk store (simulates restart).
+	svc := run.NewService(store, run.NewEventHub())
+	recovered, err := svc.ResumeInterrupted(ctx)
+	if err != nil {
+		t.Fatalf("ResumeInterrupted: %v", err)
+	}
+	if len(recovered) != 1 || recovered[0].ID != "run-svc-001" {
+		t.Fatalf("expected run-svc-001 resumed, got: %v", recovered)
+	}
+}

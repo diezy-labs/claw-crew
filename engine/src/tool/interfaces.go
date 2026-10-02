@@ -57,4 +57,7 @@ type Service interface {
 	GetRegistry() Registry
 	GetPolicyEngine() PolicyEngine
 	GetApprovalGate() ApprovalGate
+	// WithSystemGateway routes native builtin execution through the Rust
+	// SystemGateway (F3-1); nil leaves in-process execution unchanged.
+	WithSystemGateway(gw SystemGateway) Service
 }

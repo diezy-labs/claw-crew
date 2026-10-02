@@ -1,0 +1,23 @@
+[package]
+name = "galleon-channel-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Shared peer-policy (allowlist) + approval helpers reused across galleon channel feature-crates (RF-B1 split)."
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[dependencies]
+# RF-B1 seam #1 — allowlist. The grant/deny/`!name`/wildcard peer-policy SSOT
+# lives in `clawcrew_config::schema` (peer_policy_admits & co.), and
+# `clawcrew-channels::allowlist` is a thin wrapper over it. This crate re-exports
+# that real policy rather than reimplementing security-critical precedence rules.
+# `clawcrew-config` does NOT depend on clawcrew-runtime (its deps are
+# api/log/infra/macros), so sharing it keeps channel feature-crates off the
+# heavy runtime — the constraint the split exists to hold.
+clawcrew-config.workspace = true
+# RF-B1 seam #2 — approval. `ChannelApprovalResponse` and the approval wire
+# types; the i18n-free half of the approval helper reused by channels.
+clawcrew-api.workspace = true
+rand = "0.10"

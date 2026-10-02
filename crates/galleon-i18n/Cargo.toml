@@ -1,0 +1,32 @@
+[package]
+name = "galleon-i18n"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Fluent-based i18n (tool descriptions + CLI strings) extracted from clawcrew-runtime (RF-B) so channels/gateway localize without the runtime crate."
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[dependencies]
+# RF-B: the body moved verbatim from clawcrew-runtime::i18n. Its real deps are
+# the Fluent engine, config (for ftl_locale_dir disk-override resolution + the
+# config.toml locale read) and the structured-log macro — all light, and
+# clawcrew-config/clawcrew-log do NOT pull clawcrew-runtime, which is the whole
+# point of the extraction.
+clawcrew-config.workspace = true
+clawcrew-log.workspace = true
+fluent = "0.16"
+directories = "6.0"
+sys-locale.workspace = true
+toml = "1.0"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+
+[features]
+# Mirror the runtime crate's schema-export forwarding so a workspace build with
+# that feature still type-checks clawcrew-config's JsonSchema derives.
+schema-export = ["clawcrew-config/schema-export"]
+
+[dev-dependencies]
+clawcrew-config = { workspace = true, features = ["test-helpers"] }

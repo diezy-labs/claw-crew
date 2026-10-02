@@ -1764,6 +1764,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "clawcrew-channel-nostr-pilot"
+version = "0.0.0"
+dependencies = [
+ "serde_json",
+ "wit-bindgen 0.51.0",
+]
+
+[[package]]
 name = "clawcrew-channel-plugin-fixture"
 version = "0.0.0"
 dependencies = [
@@ -1799,6 +1807,8 @@ dependencies = [
  "directories",
  "ecb",
  "futures-util",
+ "galleon-channel-bluesky",
+ "galleon-channel-signal",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -2264,6 +2274,7 @@ dependencies = [
  "filetime",
  "fluent",
  "futures-util",
+ "galleon-i18n",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -4581,6 +4592,64 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54614a3312934d066701a80f20f15fa3b56d67ac7722b39eea5b4c9dd1d66c94"
 dependencies = [
  "thread_local",
+]
+
+[[package]]
+name = "galleon-channel-bluesky"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "galleon-channel-core",
+ "parking_lot",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "galleon-channel-core"
+version = "0.8.5"
+dependencies = [
+ "clawcrew-api",
+ "clawcrew-config",
+ "rand 0.10.2",
+]
+
+[[package]]
+name = "galleon-channel-signal"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "futures-util",
+ "galleon-channel-core",
+ "lru 0.18.4",
+ "parking_lot",
+ "rand 0.10.2",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "galleon-i18n"
+version = "0.8.5"
+dependencies = [
+ "clawcrew-config",
+ "clawcrew-log",
+ "directories",
+ "fluent",
+ "serde",
+ "serde_json",
+ "sys-locale",
+ "toml 1.1.2+spec-1.1.0",
 ]
 
 [[package]]

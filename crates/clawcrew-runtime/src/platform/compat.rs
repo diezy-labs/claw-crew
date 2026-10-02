@@ -121,7 +121,6 @@ pub fn render_compat_markdown(matrix: &CompatMatrix) -> String {
 /// Build a local App scaffold manifest with a placeholder tool and lifecycle
 /// hook. The result passes `AppRegistry` manifest validation as-is.
 pub fn scaffold_app_manifest(id: &str, name: &str, version: &str) -> AppManifest {
-        mcp_server: None,
     let mut ui_routes = HashMap::new();
     ui_routes.insert("home".to_string(), "/apps/{id}".replace("{id}", id));
     AppManifest {

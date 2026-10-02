@@ -1,0 +1,20 @@
+[
+  {
+    "id": "chat-init-1",
+    "sender": "quartermaster",
+    "content": "Greetings, Sovereign Captain! Quartermaster aboard and reporting for duty. Your Fleet has 3 active Ships anchored in the harbor. How may I assist your strategy today?",
+    "timestamp": "08:00 AM",
+    "suggestedActions": [
+      {
+        "label": "Review CI Fix Progress",
+        "actionType": "open_tab",
+        "payload": "quests"
+      },
+      {
+        "label": "Inspect Pending Approvals",
+        "actionType": "open_tab",
+        "payload": "approvals"
+      }
+    ]
+  }
+]

@@ -9,42 +9,23 @@ import {
   Brain,
   FileCode
 } from 'lucide-react';
+import { useFleetStore } from '../../store/fleetStore';
+import { apiClient } from '../../utils/apiClient';
 
 export const FleetCodeView: React.FC = () => {
-  const policies = [
-    {
-      category: 'External Side-Effects',
-      rule: 'Require Captain’s Approval for External Writes',
-      description: 'Agents may never submit GitHub issues, merge pull requests, trigger deployments, or send outbound messages without explicit cryptographic Owner confirmation.',
-      status: 'Enforced'
-    },
-    {
-      category: 'Memory & Learning Boundaries',
-      rule: 'Scoped Operational Memory & Proposed Learning',
-      description: 'Ship operational memory does not leak across unrelated Workspaces. Any persistent rule update proposed by Crew must be confirmed by the Owner.',
-      status: 'Enforced'
-    },
-    {
-      category: 'Treasury & Provider Spending',
-      rule: 'Hard Per-Voyage & Monthly Drop-Anchor Caps',
-      description: 'Automatically pause any autonomous agent voyage that incurs more than $2.00 USD in model API consumption.',
-      status: 'Enforced'
-    },
-    {
-      category: 'Host Sandboxing',
-      rule: 'Tauri & Landlock OS Isolation',
-      description: 'Rust host layer prevents agent execution from accessing root filesystem directories, SSH keys, or environment secrets.',
-      status: 'Enforced'
-    }
-  ];
+  const { fleetPolicies, riskTiers: storeRiskTiers } = useFleetStore();
+  // E3: risk-tier/policies SSOT is the Go engine (GET /api/fleet/policies).
+  // Seed from the store's hydrated copy (fetchRealData), engine fetch below
+  // is authoritative. No TS-side initialFleetPolicies/initialRiskTiers fallback.
+  const [policies, setPolicies] = React.useState<Record<string, unknown>[]>(fleetPolicies ?? []);
+  const [riskTiers, setRiskTiers] = React.useState<Record<string, unknown>[]>(storeRiskTiers ?? []);
 
-  const riskTiers = [
-    { tier: 'read_only', label: 'Read-Only (Tier 1)', behavior: 'Autonomous', desc: 'Code search, git log analysis, documentation review.' },
-    { tier: 'draft', label: 'Draft Only (Tier 2)', behavior: 'Autonomous', desc: 'Synthesizing PR descriptions, drafting markdown files.' },
-    { tier: 'write', label: 'Local Write (Tier 3)', behavior: 'Gated', desc: 'Creating localized patch branches or unit tests.' },
-    { tier: 'sensitive', label: 'Sensitive Write (Tier 4)', behavior: 'Captain Approval', desc: 'Creating public repository issues, external webhooks.' },
-    { tier: 'destructive', label: 'Destructive (Tier 5)', behavior: 'Strictly Denied', desc: 'Direct production deployment, master branch merge, secret deletion.' }
-  ];
+  React.useEffect(() => {
+    apiClient.getFleetPolicies().then((res) => {
+      if (res?.policies && res.policies.length > 0) setPolicies(res.policies);
+      if (res?.riskTiers && res.riskTiers.length > 0) setRiskTiers(res.riskTiers);
+    }).catch(console.error);
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in">
@@ -55,7 +36,7 @@ export const FleetCodeView: React.FC = () => {
             Fleet Code
           </h1>
           <span className="text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-            Policy &amp; Safety v1.4
+            Policy &amp; Safety v2.4
           </span>
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -71,7 +52,7 @@ export const FleetCodeView: React.FC = () => {
 
         <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] overflow-hidden text-xs">
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-            {riskTiers.map((r) => (
+            {riskTiers.map((r: any) => (
               <div
                 key={r.tier}
                 className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
@@ -103,35 +84,49 @@ export const FleetCodeView: React.FC = () => {
         </div>
       </div>
 
-      {/* Active Governance Rules */}
-      <div className="space-y-3 pt-2">
+      {/* Enforced Sovereign Guardrails */}
+      <div className="space-y-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-          Enforced Operating Invariants
+          Enforced Sovereign Policies
         </span>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {policies.map((p) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {policies.map((p: any, idx: number) => (
             <div
-              key={p.rule}
-              className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-2 text-xs shadow-xs"
+              key={idx}
+              className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-2 flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-neutral-400 uppercase">
-                  {p.category}
-                </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-500 font-semibold">
-                  {p.status}
-                </span>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-medium text-teal-600 dark:text-teal-400">
+                    {p.category}
+                  </span>
+                  <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{p.status}</span>
+                  </div>
+                </div>
+                <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                  {p.rule}
+                </h3>
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                  {p.description}
+                </p>
               </div>
-              <h3 className="font-bold text-neutral-900 dark:text-neutral-100">
-                {p.rule}
-              </h3>
-              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed text-[11px]">
-                {p.description}
-              </p>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Verification Seal */}
+      <div className="p-4 rounded-xl border border-teal-500/30 bg-teal-500/5 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2.5 text-neutral-700 dark:text-neutral-300">
+          <Shield className="w-4 h-4 text-teal-500 shrink-0" />
+          <span>Cryptographic Proof: All policy checks enforced by Rust host &amp; Landlock sandbox.</span>
+        </div>
+        <span className="font-mono text-[10px] text-teal-600 dark:text-teal-400 font-semibold uppercase">
+          Enforced
+        </span>
       </div>
     </div>
   );

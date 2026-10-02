@@ -1,12 +1,30 @@
-# Steering: Graph-First Codebase Navigation
+# Steering: Galleon Architecture & Codebase Navigation
 
-This steering document governs how AI agents discover, query, and navigate the ClawCrew codebase. It applies to all agent sessions (Antigravity, Claude Code, subagents).
+This steering document governs how AI agents architect, implement, query, and navigate the Galleon Fleet AI codebase. It applies to all agent sessions (Antigravity, Claude Code, subagents).
 
-Related skills: [`.gemini/skills/graphify/SKILL.md`](skills/graphify/SKILL.md), [`.github/skills/graphify/SKILL.md`](../.github/skills/graphify/SKILL.md)
+Related documents & skills:
+- Architecture & Layering Specification: [`.gemini/architecture.md`](architecture.md)
+- Rust Standards: [`.gemini/rules/rust-standards.md`](rules/rust-standards.md)
+- Graph-First Codebase Navigation: [`.gemini/skills/graphify/SKILL.md`](skills/graphify/SKILL.md)
 
-VS Code Copilot integration: [`.github/copilot-instructions.md`](../.github/copilot-instructions.md)
+---
 
-## Core Principle
+## 1. 3-Tier Layering Governance (STRICT RULE)
+
+All implementations MUST adhere to the following separation of concerns:
+
+| Component | Lokasi | Bahasa & Runtime | Tugas Riil di Repo | Jalur Akses / Komunikasi |
+|---|---|---|---|---|
+| **Desktop Shell** | `apps/tauri-2/` | Rust (Tauri v2 + WRY) | Window framing, system tray icon, OS dialogs/notifikasi, packaging desktop `.exe`. | **Tauri IPC** (`invoke`) dari webview React. |
+| **System Core** | `crates/` | Rust (2024 edition) | Security microkernel (`clawcrew-runtime`), Landlock LSM sandboxing, native tool execution (`clawcrew-tools`), mDNS/A2A network (`clawcrew-gateway`), channel adapters (`clawcrew-channels`), WASI plugins (`clawcrew-plugins`). | **gRPC Server** `SystemGateway` (:50052) dipanggil oleh Go; atau direct CLI. |
+| **AI Orchestrator** | `engine/` | Go 1.25+ / Go 1.27 | Agent Brain (`StartTurn`), Fleet governance (Quests, Ships, Squads, Crew, Approvals), vector memory RAG (`memory/`), persistensi kanonikal `DiskStore`. | **gRPC Server** `AgentEngine` (:50051) & **HTTP Gateway** (:9090). |
+| **Interface / UI** | `web-2/` | TypeScript, React 19 | Visual rendering, view-models (`useFleetStore`), client-bridge (`apiClient.ts`). Zero backend APIs. | HTTP reverse proxy ke Go (:9090) / Tauri IPC. |
+
+*Detail arsitektur, boundary invariants, dan sequence diagram terdokumentasi lengkap di [`.gemini/architecture.md`](architecture.md).*
+
+---
+
+## 2. Graph-First Codebase Navigation Principle
 
 **Graph first, grep second, manual browsing never.**
 

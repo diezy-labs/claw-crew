@@ -318,3 +318,27 @@ func (s *runService) PublishEvent(runID string, eventType string, payload any, e
 	s.eventHub.Publish(evt)
 	return evt
 }
+
+// ResumeInterrupted recovers runs left in a non-terminal state by a restart (F1-3).
+// Delegates to the store when it is resumable (disk-backed); a no-op otherwise.
+func (s *runService) ResumeInterrupted(ctx context.Context) ([]*Run, error) {
+	resumable, ok := s.store.(ResumableStore)
+	if !ok {
+		return nil, nil // in-memory store keeps nothing across restart
+	}
+	recovered, err := resumable.ResumeInterruptedRuns(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range recovered {
+		// Rehydrate a cancel context so the resumed run can still be cancelled.
+		runCtx, cancel := context.WithCancel(context.Background())
+		s.cancels.Store(r.ID, cancel)
+		s.contexts.Store(r.ID, runCtx)
+		s.PublishEvent(r.ID, "run.resumed", map[string]any{
+			"run_id": r.ID,
+			"status": r.Status,
+		}, "")
+	}
+	return recovered, nil
+}

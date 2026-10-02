@@ -16,6 +16,11 @@ import {
 import { useFleetStore } from '../../store/fleetStore';
 import { retroAudio } from '../../utils/retroAudio';
 import { RealmCanvas, DeckCharacter, CharacterState } from './RealmCanvas';
+import { Button } from '../common/Button';
+import { Dropdown } from '../common/Dropdown';
+import { ToolButton } from '../common/ToolButton';
+import { ChatboxSparksEffect } from '../common/ChatboxSparksEffect';
+import { getSparksConfig, SparksConfig } from '../../utils/sparksEngine';
 
 export const RealmView: React.FC = () => {
   const { ships, crew } = useFleetStore();
@@ -46,6 +51,20 @@ export const RealmView: React.FC = () => {
 
   // Full Log Drawer
   const [isLogOpen, setIsLogOpen] = useState(false);
+  const [sparksConfig, setSparksConfig] = useState<SparksConfig>(() => getSparksConfig());
+
+  useEffect(() => {
+    const handleSparksUpdated = (e: any) => {
+      if (e.detail) {
+        setSparksConfig(e.detail);
+      } else {
+        setSparksConfig(getSparksConfig());
+      }
+    };
+    window.addEventListener('galleon:sparks-updated', handleSparksUpdated);
+    return () => window.removeEventListener('galleon:sparks-updated', handleSparksUpdated);
+  }, []);
+
   const [dialogueHistory, setDialogueHistory] = useState<{
     id: string;
     speaker: string;
@@ -500,142 +519,95 @@ export const RealmView: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-neutral-950 font-sans select-none relative animate-view-fade-in">
       {/* 1. TOP BAR: CONVERSATION PARTICIPANT SELECTOR & CONTROLS */}
-      <div className="px-4 py-2.5 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between gap-3 shrink-0 z-30">
+      <div className="px-3 sm:px-4 py-2 bg-neutral-900 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-2.5 shrink-0 z-30 min-w-0">
         {/* Left: Participant Scope Dropdown & Deck Indicator */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <button
-              onClick={() => setIsScopeMenuOpen(!isScopeMenuOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-xs font-semibold text-neutral-100 transition-colors shadow-xs cursor-pointer"
-            >
-              <Compass className="w-3.5 h-3.5 text-teal-400" />
-              <span className="text-neutral-400 font-normal hidden sm:inline">Deck Roster:</span>
-              <span className="text-teal-400 font-bold">
-                {selectedScope === 'quartermaster'
-                  ? '👑 Quartermaster (1-on-1)'
-                  : selectedScope.startsWith('ship:')
-                  ? `⚓ ${ships.find((s) => s.id === (selectedScope.split(':')[1] || ''))?.name || 'Ship'}`
-                  : `👤 ${crew.find((c) => c.id === (selectedScope.split(':')[1] || ''))?.name || 'Crew'}`}
-              </span>
-              <ChevronDown className="w-3 h-3 text-neutral-400" />
-            </button>
-
-            {isScopeMenuOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-72 rounded-xl bg-neutral-900 border border-neutral-800 shadow-2xl p-2 z-50 space-y-1.5">
-                <div className="text-[10px] font-mono uppercase text-neutral-500 px-2 py-0.5">
-                  Deck Conversational Scope
-                </div>
-
-                {/* Quartermaster 1-on-1 */}
-                <button
-                  onClick={() => {
-                    setSelectedScope('quartermaster');
-                    setIsScopeMenuOpen(false);
-                    retroAudio.playBell();
-                  }}
-                  className={`w-full text-left p-2 rounded-lg text-xs flex items-center justify-between cursor-pointer ${
-                    selectedScope === 'quartermaster'
-                      ? 'bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30'
-                      : 'text-neutral-300 hover:bg-neutral-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">👑</span>
-                    <div>
-                      <div>Quartermaster</div>
-                      <div className="text-[10px] text-neutral-400 font-normal">AI Executive (1-on-1 helm)</div>
-                    </div>
-                  </div>
-                  {selectedScope === 'quartermaster' && <Check className="w-3.5 h-3.5 text-amber-400" />}
-                </button>
-
-                {/* Ships (Whole team on deck) */}
-                <div className="text-[10px] font-mono uppercase text-neutral-500 px-2 pt-1">
-                  Ships (Entire Crew on Deck)
-                </div>
-                {ships.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      setSelectedScope(`ship:${s.id}`);
-                      setIsScopeMenuOpen(false);
-                      retroAudio.playBell();
-                    }}
-                    className={`w-full text-left p-2 rounded-lg text-xs flex items-center justify-between cursor-pointer ${
-                      selectedScope === `ship:${s.id}`
-                        ? 'bg-teal-500/15 text-teal-300 font-bold border border-teal-500/30'
-                        : 'text-neutral-300 hover:bg-neutral-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <ShipIcon className="w-3.5 h-3.5 text-teal-400" />
-                      <div>
-                        <div>{s.name}</div>
-                        <div className="text-[10px] text-neutral-400 font-normal">
-                          {s.crewIds.length + 1} characters on deck
-                        </div>
-                      </div>
-                    </div>
-                    {selectedScope === `ship:${s.id}` && <Check className="w-3.5 h-3.5 text-teal-400" />}
-                  </button>
-                ))}
-
-                {/* Individual Specialists */}
-                <div className="text-[10px] font-mono uppercase text-neutral-500 px-2 pt-1">
-                  Private Specialist Briefing
-                </div>
-                {crew.slice(0, 4).map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setSelectedScope(`crew:${c.id}`);
-                      setIsScopeMenuOpen(false);
-                      retroAudio.playBell();
-                    }}
-                    className={`w-full text-left p-1.5 rounded-lg text-xs flex items-center justify-between cursor-pointer ${
-                      selectedScope === `crew:${c.id}`
-                        ? 'bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30'
-                        : 'text-neutral-300 hover:bg-neutral-800'
-                    }`}
-                  >
-                    <span className="truncate">{c.name}</span>
-                    {selectedScope === `crew:${c.id}` && <Check className="w-3 h-3 text-blue-400" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Dropdown
+            title="Deck Conversational Scope"
+            menuWidth="w-72"
+            groups={[
+              {
+                group: 'EXECUTIVE',
+                items: [
+                  {
+                    id: 'quartermaster',
+                    label: 'Quartermaster',
+                    description: 'AI Executive (1-on-1 helm)',
+                    icon: <span className="text-base">👑</span>
+                  }
+                ]
+              },
+              {
+                group: 'SHIPS (Entire Crew on Deck)',
+                items: ships.map((s) => ({
+                  id: `ship:${s.id}`,
+                  label: s.name,
+                  description: `${s.crewIds.length + 1} characters on deck`,
+                  icon: <ShipIcon className="w-3.5 h-3.5 text-teal-400" />
+                }))
+              },
+              {
+                group: 'PRIVATE SPECIALIST BRIEFING',
+                items: crew.slice(0, 4).map((c) => ({
+                  id: `crew:${c.id}`,
+                  label: c.name,
+                  description: c.role || 'Crew specialist',
+                  icon: <span className="text-base">👤</span>
+                }))
+              }
+            ]}
+            selectedId={selectedScope}
+            onSelect={(id) => {
+              setSelectedScope(id);
+              retroAudio.playBell();
+            }}
+            trigger={
+              <button
+                type="button"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-xs font-semibold text-neutral-100 transition-colors shadow-xs cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5 text-teal-400" />
+                <span className="text-neutral-400 font-normal hidden sm:inline">Deck Roster:</span>
+                <span className="text-teal-400 font-bold truncate max-w-[130px] sm:max-w-none">
+                  {selectedScope === 'quartermaster'
+                    ? '👑 Quartermaster'
+                    : selectedScope.startsWith('ship:')
+                    ? `⚓ ${ships.find((s) => s.id === (selectedScope.split(':')[1] || ''))?.name || 'Ship'}`
+                    : `👤 ${crew.find((c) => c.id === (selectedScope.split(':')[1] || ''))?.name || 'Crew'}`}
+                </span>
+                <ChevronDown className="w-3 h-3 text-neutral-400" />
+              </button>
+            }
+          />
 
           {/* Quick Deck Actions */}
-          <div className="hidden md:flex items-center gap-1.5">
-            <button
+          <div className="hidden sm:flex items-center gap-1.5">
+            <ToolButton
               onClick={handleBellClick}
-              className={`px-2 py-1 rounded text-[11px] font-mono border transition-all flex items-center gap-1 cursor-pointer ${
-                bellRinging
-                  ? 'bg-amber-500 text-neutral-950 font-bold border-amber-400 scale-105'
-                  : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:text-white'
-              }`}
+              icon={<Bell className="w-3.5 h-3.5 text-amber-400" />}
+              label="Ring Bell"
+              shortLabel="Bell"
+              active={bellRinging}
+              variant={bellRinging ? 'amber' : 'default'}
+              size="xs"
               title="Ring ship's bell"
-            >
-              <Bell className="w-3 h-3 text-amber-400" />
-              <span>Ring Bell</span>
-            </button>
+            />
 
-            <button
+            <ToolButton
               onClick={() => handleCannonClick('port')}
-              className="px-2 py-1 rounded text-[11px] font-mono bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 hover:text-white transition-all flex items-center gap-1 cursor-pointer"
+              icon={<Flame className="w-3.5 h-3.5 text-red-400" />}
+              label="Fire Cannon"
+              shortLabel="Cannon"
+              size="xs"
               title="Fire port cannon"
-            >
-              <Flame className="w-3 h-3 text-red-400" />
-              <span>Fire Cannon</span>
-            </button>
+            />
           </div>
         </div>
 
         {/* Right: Audio Waveform & Voice Mode Controls */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
           {/* 8-bit Oscilloscope Audio Frequency Bars */}
-          <div className="hidden sm:flex items-center gap-0.5 px-2.5 py-1 rounded-md bg-neutral-950 border border-neutral-800 h-7">
+          <div className="hidden sm:flex items-center gap-0.5 px-2 py-1 rounded-md bg-neutral-950 border border-neutral-800 h-8">
             {audioLevel.map((lvl, i) => (
               <div
                 key={i}
@@ -653,43 +625,39 @@ export const RealmView: React.FC = () => {
           </div>
 
           {/* Mute Toggle */}
-          <button
+          <ToolButton
             onClick={() => {
               const nextMute = !isMuted;
               setIsMuted(nextMute);
               retroAudio.setMuted(nextMute);
             }}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              isMuted
-                ? 'bg-red-500/10 border-red-500/40 text-red-400'
-                : 'bg-neutral-800 border-neutral-700 text-neutral-300 hover:text-white'
-            }`}
+            icon={isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            size="sm"
+            variant={isMuted ? 'danger' : 'default'}
             title={isMuted ? 'Unmute Audio & Voice' : 'Mute Audio & Voice'}
-          >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
+          />
 
-          {/* Main Voice Toggle Button */}
-          <button
+          {/* Main Voice Toggle Button with shortLabel for Mobile */}
+          <Button
+            variant={isVoiceActive ? 'danger' : 'primary'}
+            size="sm"
             onClick={toggleVoiceMode}
-            className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md ${
-              isVoiceActive
-                ? 'bg-red-600 text-white animate-pulse ring-4 ring-red-500/30'
-                : 'bg-teal-500 hover:bg-teal-400 text-neutral-950 hover:shadow-teal-500/20'
-            }`}
+            icon={isVoiceActive ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+            shortLabel={isVoiceActive ? 'Rec' : 'Voice'}
+            className={isVoiceActive ? 'animate-pulse ring-2 ring-red-500/40 shadow-md' : 'shadow-md'}
           >
-            {isVoiceActive ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            <span>{isVoiceActive ? 'Listening...' : 'Voice Mode'}</span>
-          </button>
+            {isVoiceActive ? 'Listening...' : 'Voice Mode'}
+          </Button>
 
           {/* Transcript / Dialogue Log Toggle */}
-          <button
+          <ToolButton
             onClick={() => setIsLogOpen(!isLogOpen)}
-            className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+            icon={<MessageSquare className="w-4 h-4" />}
+            size="sm"
+            active={isLogOpen}
+            variant={isLogOpen ? 'primary' : 'default'}
             title="Dialogue Log & History"
-          >
-            <MessageSquare className="w-4 h-4" />
-          </button>
+          />
         </div>
       </div>
 
@@ -777,86 +745,89 @@ export const RealmView: React.FC = () => {
       <div className="p-3 bg-neutral-900 border-t border-neutral-800 shrink-0 z-30">
         <div className="max-w-4xl mx-auto space-y-2">
           {/* Quick Command Action Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 text-xs">
-            <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Quick Commands:</span>
-            <button
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 text-xs shrink-0 max-w-full">
+            <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider shrink-0">Quick Commands:</span>
+            <ToolButton
               onClick={() => dispatchCommand('Quartermaster, give me our latest fleet status, budget and active voyages.')}
-              className="px-2.5 py-1 rounded-md bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-[11px] text-neutral-300 font-mono transition-colors cursor-pointer"
-            >
-              📊 Fleet Status
-            </button>
-            <button
+              label="📊 Fleet Status"
+              size="xs"
+              hideLabelOnMobile={false}
+            />
+            <ToolButton
               onClick={() => dispatchCommand('Horizon, run a comprehensive repository health and CI triage audit.')}
-              className="px-2.5 py-1 rounded-md bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-[11px] text-teal-300 font-mono transition-colors cursor-pointer"
-            >
-              🛠️ Delegate Heavy Audit (Office)
-            </button>
-            <button
+              label="🛠️ Delegate Heavy Audit"
+              size="xs"
+              hideLabelOnMobile={false}
+              variant="primary"
+            />
+            <ToolButton
               onClick={() => dispatchCommand('Review current pull request diffs and security risk tiers.')}
-              className="px-2.5 py-1 rounded-md bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-[11px] text-neutral-300 font-mono transition-colors cursor-pointer"
-            >
-              🛡️ Risk Review
-            </button>
-            <button
+              label="🛡️ Risk Review"
+              size="xs"
+              hideLabelOnMobile={false}
+            />
+            <ToolButton
               onClick={() => dispatchCommand('What are our active quests and deliverables?')}
-              className="px-2.5 py-1 rounded-md bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-[11px] text-neutral-300 font-mono transition-colors cursor-pointer"
-            >
-              🗺️ Quest Roster
-            </button>
+              label="🗺️ Quest Roster"
+              size="xs"
+              hideLabelOnMobile={false}
+            />
           </div>
 
           {/* Voice Transcript / Text Input Bar */}
           <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={transcript || textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    dispatchCommand(textInput);
-                    setTextInput('');
+            <ChatboxSparksEffect config={sparksConfig} className="flex-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={transcript || textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      dispatchCommand(textInput);
+                      setTextInput('');
+                    }
+                  }}
+                  placeholder={
+                    isVoiceActive
+                      ? 'Listening... speak to the Quarterdeck crew (e.g. "Prepare release package")'
+                      : 'Click mic or type command to speak on deck (WASD / Click to move Captain)...'
                   }
-                }}
-                placeholder={
-                  isVoiceActive
-                    ? 'Listening... speak to the Quarterdeck crew (e.g. "Prepare release package")'
-                    : 'Click mic or type command to speak on deck (WASD / Click to move Captain)...'
-                }
-                className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-teal-500 font-mono shadow-inner"
-              />
-              {transcript && (
-                <span className="absolute right-3 top-2.5 text-[10px] text-teal-400 font-mono animate-pulse">
-                  VOICE DETECTED
-                </span>
-              )}
-            </div>
+                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-teal-500 font-mono shadow-inner transition-colors"
+                />
+                {transcript && (
+                  <span className="absolute right-3 top-2.5 text-[10px] text-teal-400 font-mono animate-pulse">
+                    VOICE DETECTED
+                  </span>
+                )}
+              </div>
+            </ChatboxSparksEffect>
 
             {/* Mic Toggle Button */}
-            <button
+            <Button
+              variant={isVoiceActive ? 'danger' : 'secondary'}
+              size="sm"
               onClick={toggleVoiceMode}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-                isVoiceActive
-                  ? 'bg-red-600 text-white border-red-500 animate-pulse'
-                  : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700'
-              }`}
+              icon={isVoiceActive ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-teal-400" />}
               title={isVoiceActive ? 'Stop Voice Recording' : 'Start Voice Mode'}
-            >
-              {isVoiceActive ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            </button>
+              className={isVoiceActive ? 'animate-pulse px-2.5' : 'px-2.5'}
+            />
 
             {/* Send Button */}
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => {
                 dispatchCommand(textInput);
                 setTextInput('');
               }}
               disabled={!textInput.trim() && !transcript.trim()}
-              className="px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-40 text-neutral-950 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+              icon={<Send className="w-3.5 h-3.5" />}
+              shortLabel="Send"
+              className="px-4"
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>Command</span>
-            </button>
+              Command
+            </Button>
           </div>
         </div>
       </div>

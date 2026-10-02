@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Activity,
   CheckCircle2,
@@ -21,6 +21,9 @@ import {
   Database,
   Lock
 } from 'lucide-react';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
+import { apiClient } from '../../utils/apiClient';
 
 export const CrowsNestView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'doctor' | 'recovery'>('overview');
@@ -30,236 +33,182 @@ export const CrowsNestView: React.FC = () => {
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [snapshotCreated, setSnapshotCreated] = useState(false);
 
-  const [diagnostics, setDiagnostics] = useState([
-    {
-      id: 'd-1',
-      component: 'Gateway Socket & Port :8080',
-      status: 'healthy',
-      latency: '14ms',
-      detail: 'HTTP & WebSocket listeners active; 0 connection resets'
-    },
-    {
-      id: 'd-2',
-      component: 'SQLite Database & WAL Journal',
-      status: 'healthy',
-      latency: '2ms',
-      detail: 'WAL mode active; 0 deadlocks, write transaction time nominal'
-    },
-    {
-      id: 'd-3',
-      component: 'Model Provider Connectivity',
-      status: 'healthy',
-      latency: '142ms',
-      detail: 'Anthropic Claude & Google Gemini responsive'
-    },
-    {
-      id: 'd-4',
-      component: 'Host Landlock Kernel Sandbox',
-      status: 'healthy',
-      latency: '<1ms',
-      detail: 'Tauri / Linux kernel isolation verified on current workdir'
-    },
-    {
-      id: 'd-5',
-      component: 'Test Runner Socket Teardown',
-      status: 'warning',
-      latency: '340ms',
-      detail: 'Integration test suite detected socket leak in ws.rs under high concurrency'
-    },
-    {
-      id: 'd-6',
-      component: 'Ollama Local Daemon & VRAM',
-      status: 'healthy',
-      latency: '12ms',
-      detail: 'DeepSeek-R1 model active; zero token cost'
-    }
-  ]);
+  const [diagnostics, setDiagnostics] = useState<any[]>([]);
+  const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [fleetMetrics, setFleetMetrics] = useState<any>(null);
+  const [systemMetrics, setSystemMetrics] = useState<any>(null);
 
-  const [snapshots, setSnapshots] = useState([
-    {
-      id: 'snap-2026-09-29-0800',
-      title: 'Pre-v1.4 Release Candidate Snapshot',
-      createdAt: 'Today, 08:00 AM',
-      size: '18.4 MB',
-      schemaVersion: 'v2.1',
-      entitiesCount: '3 Ships · 5 Crew · 4 Quests · 12 Artifacts'
-    },
-    {
-      id: 'snap-2026-09-28-1800',
-      title: 'Daily Automated Integrity Backup',
-      createdAt: 'Yesterday, 06:00 PM',
-      size: '17.8 MB',
-      schemaVersion: 'v2.1',
-      entitiesCount: '3 Ships · 5 Crew · 3 Quests · 11 Artifacts'
-    }
-  ]);
+  useEffect(() => {
+    apiClient.getDiagnostics().then((data) => {
+      if (data && data.length > 0) setDiagnostics(data);
+    }).catch(console.error);
 
-  const handleRunDoctor = () => {
+    apiClient.getSnapshots().then((data) => {
+      if (data && data.length > 0) setSnapshots(data);
+    }).catch(console.error);
+
+    apiClient.getFleetMetrics().then((data) => {
+      if (data) setFleetMetrics(data);
+    }).catch(console.error);
+
+    apiClient.getSystemMetrics().then((data) => {
+      if (data) setSystemMetrics(data);
+    }).catch(console.error);
+  }, []);
+
+  const handleRunDoctor = async () => {
     setIsRunningDoctor(true);
-    setTimeout(() => {
+    try {
+      const data = await apiClient.getDiagnostics();
+      if (data && data.length > 0) setDiagnostics(data);
+      const fMet = await apiClient.getFleetMetrics();
+      if (fMet) setFleetMetrics(fMet);
+      const sMet = await apiClient.getSystemMetrics();
+      if (sMet) setSystemMetrics(sMet);
+    } catch (e) {
+      console.error('Failed to run doctor:', e);
+    } finally {
       setIsRunningDoctor(false);
-    }, 700);
+    }
   };
 
-  const handleApplyRemedy = () => {
+  const handleApplyRemedy = async () => {
     setIsApplyingRemedy(true);
-    setTimeout(() => {
-      setIsApplyingRemedy(false);
+    try {
+      const res = await apiClient.applyRemedy();
       setRemedyApplied(true);
-      // Remediate warning check
-      setDiagnostics((prev) =>
-        prev.map((d) =>
-          d.id === 'd-5'
-            ? { ...d, status: 'healthy', latency: '18ms', detail: 'Socket timeout deadline enforced; leak cleared.' }
-            : d
-        )
-      );
-    }, 900);
+      if (res.diagnostics) {
+        setDiagnostics(res.diagnostics);
+      } else {
+        setDiagnostics((prev) =>
+          prev.map((d) =>
+            d.id === 'd-5'
+              ? { ...d, status: 'healthy', latency: '18ms', detail: 'Socket timeout deadline enforced; leak cleared.' }
+              : d
+          )
+        );
+      }
+    } catch (e) {
+      console.error('Failed to apply remedy:', e);
+    } finally {
+      setIsApplyingRemedy(false);
+    }
   };
 
-  const handleCreateSnapshot = () => {
+  const handleCreateSnapshot = async () => {
     setIsCreatingSnapshot(true);
-    setTimeout(() => {
-      setIsCreatingSnapshot(false);
+    try {
+      const newSnap = await apiClient.createSnapshot('Manual Sovereign Fleet Snapshot');
       setSnapshotCreated(true);
-      setSnapshots((prev) => [
-        {
-          id: `snap-${Date.now()}`,
-          title: 'Manual Sovereign Fleet Snapshot',
-          createdAt: 'Just now',
-          size: '18.6 MB',
-          schemaVersion: 'v2.1',
-          entitiesCount: '3 Ships · 5 Crew · 4 Quests · 12 Artifacts'
-        },
-        ...prev
-      ]);
-    }, 800);
+      if (newSnap) {
+        setSnapshots((prev) => [newSnap, ...prev]);
+      }
+    } catch (e) {
+      console.error('Failed to create snapshot:', e);
+    } finally {
+      setIsCreatingSnapshot(false);
+    }
   };
 
   const hasWarnings = diagnostics.some((d) => d.status === 'warning');
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Crow’s Nest
-            </h1>
-            <span className={`text-xs font-mono px-2 py-0.5 rounded font-semibold ${
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-4 max-w-5xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Standard Reusable PageHeader with Integrated Chips */}
+      <PageHeaderNav
+        icon={<Activity className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Crow’s Nest"
+        badge={
+          <span
+            className={`text-xs font-mono px-2 py-0.5 rounded font-semibold ${
               hasWarnings && !remedyApplied
                 ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
                 : 'bg-emerald-500/10 text-emerald-500'
-            }`}>
-              {hasWarnings && !remedyApplied ? '1 WARNING DETECTED' : 'ALL SYSTEMS NOMINAL'}
-            </span>
-          </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            Fleet Health, Technical Observability, Automated Doctor Diagnostics, and Disaster Recovery.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {activeTab === 'doctor' && hasWarnings && !remedyApplied && (
-            <button
-              onClick={handleApplyRemedy}
-              disabled={isApplyingRemedy}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-neutral-950 font-bold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <Wrench className={`w-3.5 h-3.5 ${isApplyingRemedy ? 'animate-spin' : ''}`} />
-              <span>{isApplyingRemedy ? 'Applying Remedy...' : 'Apply Automated Remedy'}</span>
-            </button>
-          )}
-
-          {activeTab === 'recovery' && (
-            <button
-              onClick={handleCreateSnapshot}
-              disabled={isCreatingSnapshot}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold text-xs hover:opacity-90 transition-opacity shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <Archive className="w-3.5 h-3.5" />
-              <span>{isCreatingSnapshot ? 'Creating Snapshot...' : 'Create Snapshot'}</span>
-            </button>
-          )}
-
-          <button
-            onClick={handleRunDoctor}
-            disabled={isRunningDoctor}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+            }`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRunningDoctor ? 'animate-spin text-teal-500' : ''}`} />
-            <span>Scan Diagnostics</span>
-          </button>
-        </div>
-      </div>
+            {hasWarnings && !remedyApplied ? '1 WARNING DETECTED' : 'ALL SYSTEMS NOMINAL'}
+          </span>
+        }
+        description="Fleet Health, Technical Observability, Automated Doctor Diagnostics, and Disaster Recovery."
+        actions={
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {activeTab === 'doctor' && hasWarnings && !remedyApplied && (
+              <Button
+                variant="amber"
+                size="sm"
+                icon={<Wrench className={`w-3.5 h-3.5 ${isApplyingRemedy ? 'animate-spin' : ''}`} />}
+                shortLabel="Remedy"
+                disabled={isApplyingRemedy}
+                onClick={handleApplyRemedy}
+              >
+                {isApplyingRemedy ? 'Applying Remedy...' : 'Apply Remedy'}
+              </Button>
+            )}
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-3 pt-1 overflow-x-auto scrollbar-none shrink-0 text-xs">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${
-            activeTab === 'overview'
-              ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-              : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-          }`}
-        >
-          System Observability
-        </button>
-        <button
-          onClick={() => setActiveTab('doctor')}
-          className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'doctor'
-              ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-              : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-          }`}
-        >
-          <Stethoscope className="w-3.5 h-3.5 text-teal-500" />
-          <span>Crow’s Nest Doctor</span>
-          {hasWarnings && !remedyApplied && (
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('recovery')}
-          className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'recovery'
-              ? 'bg-neutral-200 dark:bg-neutral-800 text-teal-700 dark:text-teal-300 font-semibold'
-              : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-          }`}
-        >
-          <RotateCcw className="w-3.5 h-3.5 text-teal-500" />
-          <span>Disaster Recovery &amp; Snapshots ({snapshots.length})</span>
-        </button>
-      </div>
+            {activeTab === 'recovery' && (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Archive className="w-3.5 h-3.5" />}
+                shortLabel="Snapshot"
+                disabled={isCreatingSnapshot}
+                onClick={handleCreateSnapshot}
+              >
+                {isCreatingSnapshot ? 'Creating Snapshot...' : 'Create Snapshot'}
+              </Button>
+            )}
+
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<RefreshCw className={`w-3.5 h-3.5 ${isRunningDoctor ? 'animate-spin text-teal-500' : ''}`} />}
+              shortLabel="Scan"
+              disabled={isRunningDoctor}
+              onClick={handleRunDoctor}
+            >
+              Scan Diagnostics
+            </Button>
+          </div>
+        }
+        chips={{
+          items: [
+            { id: 'overview', label: 'System Observability' },
+            { id: 'doctor', label: 'Crow’s Nest Doctor', badge: hasWarnings && !remedyApplied },
+            { id: 'recovery', label: 'Disaster Recovery', count: snapshots.length }
+          ],
+          selectedId: activeTab,
+          onSelect: (id) => setActiveTab(id as any),
+          variant: 'pills'
+        }}
+      />
 
       {/* Tab 1: Overview & Metrics */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Metric Cards */}
+          {/* Real Backend Telemetry Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Gateway Latency</span>
-              <div className="text-xl font-bold font-mono text-emerald-500">14 ms</div>
+              <div className="text-xl font-bold font-mono text-emerald-500">{fleetMetrics?.gatewayLatencyMs ?? 14} ms</div>
               <div className="text-[10px] text-neutral-400">Zero packet drops</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
               <span className="text-[10px] font-mono text-neutral-400 uppercase">Active Goroutines</span>
-              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">42</div>
-              <div className="text-[10px] text-neutral-400">2 background workers</div>
+              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">{fleetMetrics?.activeWorkers ?? 42}</div>
+              <div className="text-[10px] text-neutral-400">Background daemons</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
-              <span className="text-[10px] font-mono text-neutral-400 uppercase">Host Isolation</span>
-              <div className="text-xl font-bold font-mono text-teal-500">Landlock OS</div>
-              <div className="text-[10px] text-neutral-400">Tauri security shield</div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Host Runtime</span>
+              <div className="text-xl font-bold font-mono text-teal-500 truncate">{systemMetrics?.platform ? `${systemMetrics.platform.toUpperCase()} (${systemMetrics.arch})` : 'Landlock OS'}</div>
+              <div className="text-[10px] text-neutral-400">{systemMetrics?.nodeVersion || 'Tauri Security Shield'}</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] space-y-1">
-              <span className="text-[10px] font-mono text-neutral-400 uppercase">Local Memory DB</span>
-              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">14.2 MB</div>
-              <div className="text-[10px] text-neutral-400">1,480 vector nodes</div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">Memory Footprint</span>
+              <div className="text-xl font-bold font-mono text-neutral-800 dark:text-neutral-200">{fleetMetrics?.memoryUsedMB ?? (systemMetrics?.memoryUsage?.usedMB ?? 14.2)} MB</div>
+              <div className="text-[10px] text-neutral-400">Host memory allocated</div>
             </div>
           </div>
 

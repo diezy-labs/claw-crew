@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Map,
+  Plus,
   PlusCircle,
   Search,
   Filter,
@@ -19,6 +20,11 @@ import {
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { Quest, QuestTab } from '../../types';
+import { PageHeaderNav } from '../common/PageHeaderNav';
+import { Button } from '../common/Button';
+import { Modal } from '../common/Modal';
+import { ItemCard } from '../common/ItemCard';
+import { SelectDropdown } from '../common/Dropdown';
 
 export const QuestsView: React.FC = () => {
   const {
@@ -104,50 +110,61 @@ export const QuestsView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden animate-view-fade-in">
-      {/* Top Header */}
-      <div className="p-4 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-[#141619]/40 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Quests
-            </h1>
-            <span className="text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
-              Workspace &amp; Project SOPs
-            </span>
-          </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-            What work are we planning, running, and improving for {selectedWorkspace} / {selectedProject}?
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Search quests..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-teal-500 w-32 sm:w-44"
-            />
-          </div>
-
-          <button
+    <div className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-y-auto px-4 sm:px-6 pt-0 pb-6 space-y-3 sm:space-y-4 max-w-6xl mx-auto w-full animate-view-fade-in scrollbar-none">
+      {/* Reusable General Header with Integrated Chips */}
+      <PageHeaderNav
+        icon={<Map className="w-4 h-4 text-teal-500 shrink-0" />}
+        title="Quests"
+        badge={
+          <span className="hidden sm:inline-flex text-xs font-mono text-teal-600 dark:text-teal-400 px-2 py-0.5 rounded bg-teal-500/10">
+            {quests.length} Active Missions
+          </span>
+        }
+        description={`What work are we planning, running, and improving for ${selectedWorkspace} / ${selectedProject}?`}
+        search={{
+          value: search,
+          onChange: setSearch,
+          placeholder: 'Search quests, objectives, keys...'
+        }}
+        actions={
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            shortLabel="Quest"
             onClick={() => setIsNewQuestModalOpen(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-xs shrink-0"
           >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Quest</span>
-            <span className="sm:hidden">Quest</span>
+            + Quest
+          </Button>
+        }
+        chips={{
+          items: questTabs,
+          selectedId: activeTabFilter,
+          onSelect: (id) => setActiveTabFilter(id as QuestTab),
+          variant: 'tabs'
+        }}
+        navRightContent={
+          <button
+            type="button"
+            onClick={() => setMapStudioMode((prev) => (prev === 'guided' ? 'advanced' : 'guided'))}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 text-[11px] font-medium text-neutral-700 dark:text-neutral-200 hover:border-teal-500/40 hover:text-teal-600 dark:hover:text-teal-400 transition-all cursor-pointer shadow-2xs group shrink-0"
+            title={`Switch to ${mapStudioMode === 'guided' ? 'Advanced Studio (Nodes)' : 'Guided Map (Steps)'}`}
+          >
+            <Workflow className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+            <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+              {mapStudioMode === 'guided' ? 'Guided Map' : 'Advanced Studio'}
+            </span>
+            <div className="flex items-center text-neutral-400 group-hover:text-teal-500 group-hover:translate-x-0.5 transition-all">
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
           </button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Main Body with Project Rail & Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Project Context Rail */}
-        <div className="w-56 shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-[#121315]/50 p-3 space-y-4 overflow-y-auto hidden md:block select-none text-xs">
+      {/* Main Content Layout */}
+      <div className="flex gap-6 items-start">
+        {/* Left Desktop Sidebar: Workspaces & Projects */}
+        <div className="w-52 shrink-0 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-neutral-50/50 dark:bg-[#121315]/50 p-3 space-y-4 hidden lg:block select-none text-xs">
           {/* Workspaces */}
           <div className="space-y-1">
             <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider px-1">
@@ -216,122 +233,38 @@ export const QuestsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Center Canvas */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Sub-Tabs with < and > arrows */}
-          <div className="px-3 sm:px-4 py-2 border-b border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-[#141619]/60 flex items-center justify-between gap-2 overflow-x-auto shrink-0 scrollbar-none">
-            <div className="flex items-center gap-1.5 min-w-0">
-              {/* Prev tab arrow button (<) */}
-              <button
-                type="button"
-                onClick={() => {
-                  const currIdx = questTabs.findIndex((t) => t.id === activeTabFilter);
-                  const prevIdx = (currIdx - 1 + questTabs.length) % questTabs.length;
-                  setActiveTabFilter(questTabs[prevIdx].id);
-                }}
-                className="p-1 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-teal-500/50 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer shrink-0"
-                title="Previous Tab (<)"
-                aria-label="Previous tab"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
+        {/* Center / Main Content Area */}
+        <div className="flex-1 min-w-0 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filteredQuests.map((quest) => {
+              const assignedShip = ships.find(
+                (s) => s.id === (quest.assignedShipId || quest.suggestedShipId)
+              );
+              const isSelected = selectedQuest?.id === quest.id;
 
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-                {questTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTabFilter(tab.id)}
-                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
-                      activeTabFilter === tab.id
-                        ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-semibold'
-                        : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Next tab arrow button (>) */}
-              <button
-                type="button"
-                onClick={() => {
-                  const currIdx = questTabs.findIndex((t) => t.id === activeTabFilter);
-                  const nextIdx = (currIdx + 1) % questTabs.length;
-                  setActiveTabFilter(questTabs[nextIdx].id);
-                }}
-                className="p-1 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-teal-500/50 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors cursor-pointer shrink-0"
-                title="Next Tab (>)"
-                aria-label="Next tab"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Map Studio mode toggle */}
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 text-[11px] shrink-0 font-medium">
-              <button
-                onClick={() => setMapStudioMode('guided')}
-                className={`px-2 py-1 rounded ${
-                  mapStudioMode === 'guided'
-                    ? 'bg-white dark:bg-neutral-900 text-teal-600 dark:text-teal-400 font-semibold shadow-xs'
-                    : 'text-neutral-500'
-                }`}
-              >
-                Guided Map (Steps)
-              </button>
-              <button
-                onClick={() => setMapStudioMode('advanced')}
-                className={`px-2 py-1 rounded ${
-                  mapStudioMode === 'advanced'
-                    ? 'bg-white dark:bg-neutral-900 text-teal-600 dark:text-teal-400 font-semibold shadow-xs'
-                    : 'text-neutral-500'
-                }`}
-              >
-                Advanced Studio (Nodes)
-              </button>
-            </div>
-          </div>
-
-          {/* Quests Viewport */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredQuests.map((quest) => {
-                const assignedShip = ships.find(
-                  (s) => s.id === (quest.assignedShipId || quest.suggestedShipId)
-                );
-                const isSelected = selectedQuest?.id === quest.id;
-
-                return (
-                  <div
-                    key={quest.id}
-                    onClick={() => setSelectedQuestId(quest.id)}
-                    className={`p-4 rounded-xl border bg-white dark:bg-[#191b1f] hover:border-teal-500/50 cursor-pointer transition-all space-y-3 shadow-xs ${
-                      isSelected
-                        ? 'border-teal-500 ring-1 ring-teal-500/30'
-                        : 'border-neutral-200 dark:border-neutral-800'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">
-                          {quest.title}
-                        </h3>
-                        <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                          {assignedShip?.name || 'Developer Ship'} · Priority: {(quest.priority || 'medium').toUpperCase()}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 uppercase font-semibold text-neutral-600 dark:text-neutral-300">
-                        {(quest.status || 'ready').replace('_', ' ')}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">
-                      {quest.objective}
-                    </p>
-
-                    {/* Map Progress Bar */}
-                    <div className="space-y-1">
+              return (
+                <ItemCard
+                  key={quest.id}
+                  selected={isSelected}
+                  onClick={() => setSelectedQuestId(quest.id)}
+                  accentColor={
+                    quest.priority === 'urgent'
+                      ? 'rose'
+                      : quest.priority === 'high'
+                      ? 'amber'
+                      : 'teal'
+                  }
+                  title={quest.title}
+                  subtitle={`${assignedShip?.name || 'Developer Ship'} · Priority: ${(quest.priority || 'medium').toUpperCase()}`}
+                  badge={
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 uppercase font-semibold text-neutral-600 dark:text-neutral-300">
+                      {(quest.status || 'ready').replace('_', ' ')}
+                    </span>
+                  }
+                  description={quest.objective}
+                  descriptionClamp={2}
+                  children={
+                    <div className="space-y-1 pt-1">
                       <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
                         <span>Map Step Progression</span>
                         <span className="text-teal-600 dark:text-teal-400 font-bold">
@@ -345,34 +278,35 @@ export const QuestsView: React.FC = () => {
                         />
                       </div>
                     </div>
-
-                    {/* Metadata & Actions */}
-                    <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[11px] font-mono">
+                  }
+                  footer={
+                    <div className="flex items-center justify-between text-[11px] font-mono">
                       <span className="text-neutral-400">
                         {(quest.requiredArtifacts || []).length} Artifacts Required
                       </span>
-
                       {quest.status === 'ready' ? (
-                        <button
+                        <Button
+                          variant="primary"
+                          size="xs"
+                          icon={<Play className="w-3 h-3" />}
                           onClick={(e) => {
                             e.stopPropagation();
                             runQuestVoyage(quest.id);
                           }}
-                          className="px-2.5 py-1 rounded bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-bold text-xs flex items-center gap-1 hover:opacity-90"
                         >
-                          <Play className="w-3 h-3" />
-                          <span>Set Sail</span>
-                        </button>
+                          Set Sail
+                        </Button>
                       ) : (
                         <span className="text-teal-600 dark:text-teal-400 font-medium">
                           ${quest.budgetLimitUSD.toFixed(2)} cap
                         </span>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  }
+                />
+              );
+            })}
+          </div>
 
             {/* Selected Quest Living Map Preview */}
             {selectedQuest && (
@@ -435,25 +369,16 @@ export const QuestsView: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
 
       {/* New Quest Modal */}
-      {isNewQuestModalOpen && (
-        <div
-          onClick={() => setIsNewQuestModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-pointer"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#191b1f] shadow-2xl p-5 space-y-4 cursor-default"
-          >
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-                Create a Quest — Step-by-Step
-              </h3>
-            </div>
-
-            <form onSubmit={handleCreateQuestSubmit} className="space-y-3.5 text-xs">
+      <Modal
+        isOpen={isNewQuestModalOpen}
+        onClose={() => setIsNewQuestModalOpen(false)}
+        maxWidth="lg"
+        title="Create a Quest — Step-by-Step"
+        subtitle="Formulate an SOP directive, assign specialist ship, and set budget limit."
+      >
+        <form onSubmit={handleCreateQuestSubmit} className="space-y-3.5 text-xs">
               <div>
                 <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1">
                   1. Objective / Title
@@ -483,36 +408,30 @@ export const QuestsView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1">
+                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1 text-xs">
                     3. Assigned Specialist Ship
                   </label>
-                  <select
+                  <SelectDropdown
                     value={newShipId}
-                    onChange={(e) => setNewShipId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                  >
-                    {ships.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setNewShipId(val)}
+                    options={ships.map((s) => ({ value: s.id, label: s.name }))}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1">
+                  <label className="block text-neutral-700 dark:text-neutral-300 font-semibold mb-1 text-xs">
                     Priority
                   </label>
-                  <select
+                  <SelectDropdown
                     value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
+                    onChange={(val) => setNewPriority(val as any)}
+                    options={[
+                      { value: 'low', label: 'Low' },
+                      { value: 'medium', label: 'Medium' },
+                      { value: 'high', label: 'High' },
+                      { value: 'urgent', label: 'Urgent' }
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -532,24 +451,25 @@ export const QuestsView: React.FC = () => {
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2 border-t border-neutral-200 dark:border-neutral-800">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   type="button"
                   onClick={() => setIsNewQuestModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 font-semibold hover:opacity-90"
+                  shortLabel="Set Sail"
                 >
                   Confirm &amp; Set Sail
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Modal>
     </div>
   );
 };

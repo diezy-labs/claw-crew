@@ -1,0 +1,68 @@
+[
+  {
+    "id": "ship-dev",
+    "name": "Developer Delivery Ship",
+    "fleetId": "fleet-diezy",
+    "tagline": "Autonomous coding, refactoring, test repair, and CI verification.",
+    "homeScope": "repository",
+    "navigatorName": "Horizon (Lead)",
+    "status": "active",
+    "activeVoyagesCount": 1,
+    "monthlySpentUSD": 2.45,
+    "squadIds": ["squad-dev"],
+    "crewIds": ["crew-repo-analyst", "crew-eng-planner"],
+    "charter": {
+      "purpose": "Execute precise software changes, maintain architecture patterns, and repair test regressions.",
+      "acceptedQuestTypes": ["bug_fix", "feature_development", "test_generation", "code_refactor"],
+      "crewAuthority": "Create and run branch-scoped tests, edit local files. Direct git push requires Captain's Approval.",
+      "prohibitedActions": ["Direct master branch push", "Production DB migration", "Deleting secret keys"],
+      "budgetPerVoyageUSD": 2.50,
+      "monthlyBudgetUSD": 30.00,
+      "memorySharing": "ship_scoped"
+    }
+  },
+  {
+    "id": "ship-growth",
+    "name": "Growth & Brand Ship",
+    "fleetId": "fleet-diezy",
+    "tagline": "Market analysis, documentation, release notes, and community signals.",
+    "homeScope": "content",
+    "navigatorName": "Beacon (Lead)",
+    "status": "active",
+    "activeVoyagesCount": 1,
+    "monthlySpentUSD": 0.88,
+    "squadIds": ["squad-growth"],
+    "crewIds": ["crew-market-analyst", "crew-brand-reviewer"],
+    "charter": {
+      "purpose": "Develop market intelligence and high-converting launch copy with strict human verification.",
+      "acceptedQuestTypes": ["competitor_research", "audience_research", "positioning_strategy", "content_draft"],
+      "crewAuthority": "Draft copy, extract audience signals. External publication requires Captain's Approval.",
+      "prohibitedActions": ["Direct social publishing", "Outbound email blast", "External media buy"],
+      "budgetPerVoyageUSD": 2.00,
+      "monthlyBudgetUSD": 20.00,
+      "memorySharing": "project_scoped"
+    }
+  },
+  {
+    "id": "ship-research",
+    "name": "Research & Decision Ship",
+    "fleetId": "fleet-diezy",
+    "tagline": "Synthesizing technical architectural decisions, vendor benchmarks, and risk evaluations.",
+    "homeScope": "research",
+    "navigatorName": "Sextant (Lead)",
+    "status": "active",
+    "activeVoyagesCount": 0,
+    "monthlySpentUSD": 1.25,
+    "squadIds": [],
+    "crewIds": ["crew-tech-evaluator"],
+    "charter": {
+      "purpose": "Provide rigorous evidence-backed decision briefs and comparative trade-off analyses.",
+      "acceptedQuestTypes": ["vendor_analysis", "architecture_decision", "security_audit"],
+      "crewAuthority": "Read-only search, documentation parsing, synthetic benchmarking.",
+      "prohibitedActions": ["Credential generation", "External payment commits"],
+      "budgetPerVoyageUSD": 1.50,
+      "monthlyBudgetUSD": 15.00,
+      "memorySharing": "isolated"
+    }
+  }
+]

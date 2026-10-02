@@ -72,6 +72,25 @@ func ValidateSandboxPath(workspaceRoot, targetPath string) (string, error) {
 	return absCombined, nil
 }
 
+// withWorkspaceRoot injects the resolved workspace root into the tool arguments
+// JSON envelope (key "__workspace_root") so the Rust SystemGateway can enforce the
+// sandbox boundary on its side (F3-1). If args is empty it starts a fresh object;
+// a non-object args payload is an error (native builtins always take a JSON object).
+func withWorkspaceRoot(args, workspaceRoot string) (string, error) {
+	env := map[string]any{}
+	if strings.TrimSpace(args) != "" {
+		if err := json.Unmarshal([]byte(args), &env); err != nil {
+			return "", appErrors.New(appErrors.CodeInvalidArgument, fmt.Sprintf("gateway routing requires JSON-object arguments: %v", err), appErrors.LayerService)
+		}
+	}
+	env["__workspace_root"] = workspaceRoot
+	out, err := json.Marshal(env)
+	if err != nil {
+		return "", fmt.Errorf("encode gateway arguments: %w", err)
+	}
+	return string(out), nil
+}
+
 // Builtin WriteFileTool
 type WriteFileTool struct{}
 
@@ -311,12 +330,21 @@ func registerBuiltinTools(r Registry) {
 	r.Register(&BrowserActionTool{})
 }
 
+// SystemGateway is the minimal slice of pkg/client.SystemGatewayClient the tool
+// service needs to route native builtin execution across the process boundary
+// to the Rust SystemGateway (F3-1). Declared locally to avoid a tool->client
+// import cycle; *client.systemGatewayClient satisfies it structurally.
+type SystemGateway interface {
+	ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error)
+}
+
 // toolService coordinates execution
 type toolService struct {
 	registry   Registry
 	gate       ApprovalGate
 	policy     PolicyEngine
 	runService run.Service
+	gateway    SystemGateway // when set, native builtins run in the Rust sandbox, not in-process (F3-1)
 }
 
 // NewService creates a tool service
@@ -327,6 +355,14 @@ func NewService(registry Registry, gate ApprovalGate, runService run.Service) Se
 		policy:     NewPolicyEngine(),
 		runService: runService,
 	}
+}
+
+// WithSystemGateway routes native builtin tool execution through the Rust
+// SystemGateway gRPC instead of executing in-process (F3-1). Returns the same
+// service for chaining; a nil gateway leaves in-process execution unchanged.
+func (s *toolService) WithSystemGateway(gw SystemGateway) Service {
+	s.gateway = gw
+	return s
 }
 
 // NewServiceWithPolicy creates a tool service with explicit PolicyEngine injection
@@ -462,7 +498,21 @@ func (s *toolService) ExecuteWithContext(ctx context.Context, execCtx *Execution
 	var output string
 	var artifactIDs []string
 
-	output, artifactIDs, err = t.ExecuteWithContext(ctx, execCtx, args)
+	// F3-1: when a SystemGateway is wired, native builtin tools execute inside
+	// the Rust sandbox (Landlock/Seatbelt) across gRPC :50052 instead of
+	// in-process. MCP tools (source "mcp:*") always stay in-process. The
+	// workspace root travels in the arguments envelope so Rust enforces the
+	// sandbox boundary; the Go-side ValidateSandboxPath pre-check below is
+	// defense-in-depth, not the sole gate.
+	if s.gateway != nil && toolDef.Source == "native" {
+		gwArgs, encErr := withWorkspaceRoot(args, workspaceRoot)
+		if encErr != nil {
+			return "", encErr
+		}
+		output, err = s.gateway.ExecuteNativeTool(ctx, toolName, gwArgs)
+	} else {
+		output, artifactIDs, err = t.ExecuteWithContext(ctx, execCtx, args)
+	}
 	if err != nil {
 		metrics.ToolRequestsTotal.WithLabelValues(toolName, string(t.RiskTier()), "failed").Inc()
 		if s.runService != nil && execCtx.RunID != "" {

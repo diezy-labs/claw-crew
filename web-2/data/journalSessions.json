@@ -1,0 +1,28 @@
+[
+  {
+    "id": "journal-1",
+    "title": "Fleet AI Architecture Strategy Review",
+    "updatedAt": "Just now",
+    "workspaceId": "galleon-core",
+    "lastNote": "Aligned on single source of truth across Tauri v2 IPC and Web REST APIs.",
+    "isPinned": true,
+    "isArchived": false,
+    "isTemporary": false,
+    "savedArtifactCount": 1,
+    "questDraftCount": 1,
+    "messages": [
+      {
+        "id": "msg-j1",
+        "sender": "owner",
+        "content": "Review the architecture and ensure all UI elements call real backend endpoints.",
+        "timestamp": "08:00 AM"
+      },
+      {
+        "id": "msg-j2",
+        "sender": "quartermaster",
+        "content": "Aye Captain! All mock arrays have been unified into persistent backend collections across Tauri and Web.",
+        "timestamp": "08:01 AM"
+      }
+    ]
+  }
+]
