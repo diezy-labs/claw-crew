@@ -28,7 +28,7 @@ import { PageHeaderNav } from '../common/PageHeaderNav';
 import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 import { useFleetStore } from '../../store/fleetStore';
-import { apiClient } from '../../utils/apiClient';
+import { apiClient, type ToolDefinition } from '../../utils/apiClient';
 
 export const HarborView: React.FC = () => {
   const { setRemoteAccessModalOpen, harborProviders } = useFleetStore();
@@ -105,9 +105,10 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  // ponytail: Harbor connector tools use backend ToolDefinition from /api/v1/tools
-  // Harbor tab uses `any[]` until /api/harbor/tools endpoint is added in Phase 2c
-  const tools: any[] = [];
+  // ponytail: HarborView connectors tab - using ToolDefinition from backend /api/v1/tools
+  // Note: HarborView UI expects additional fields (target, auth, status) not in ToolDefinition
+  // This is a schema mismatch that needs backend Phase 2c fix
+  const tools: ToolDefinition[] = [];
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);
