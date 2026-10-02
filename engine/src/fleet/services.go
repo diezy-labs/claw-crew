@@ -367,7 +367,7 @@ func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, er
 				"%d indexed artifact(s); engine heap %.1f MB, %d goroutine(s) live.",
 				artifacts, float64(mem.Alloc)/1024.0/1024.0, runtime.NumGoroutine())
 			out[i].Status = "healthy"
-			out[i].Latency = fmt.Sprintf("%dms", runtime.NumGoroutine()) // placeholder, no real latency to report
+			out[i].Latency = "n/a" // runtime metrics, not a measurable latency
 			break
 		}
 	}

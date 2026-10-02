@@ -106,7 +106,8 @@ export const HarborView: React.FC = () => {
   ]);
 
   // Harbor tools placeholder (engine-provided via /api/harbor/tools)
-  const tools: any[] = [];
+  // ponytail: tools array is empty pending apiClient.getHarborTools() wiring; typed as HarborTool[] for now
+  const tools: HarborTool[] = [];
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);

@@ -156,10 +156,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async getEngineProcesses(): Promise<Record<string, unknown>[]> {
+  async getEngineProcesses(): Promise<Array<{ pid: number; name: string; memory: number; cpu: number }>> {
     if (this.isTauri()) {
       try {
-        return await invoke<Record<string, unknown>[]>('get_engine_processes');
+        return await invoke<Array<{ pid: number; name: string; memory: number; cpu: number }>>('get_engine_processes');
       } catch (e) {
         console.warn('[API] Tauri get_engine_processes fallback:', e);
       }
