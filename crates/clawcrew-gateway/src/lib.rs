@@ -47,6 +47,7 @@ pub mod sse;
 pub mod static_files;
 pub mod tls;
 pub mod version;
+pub mod grpc_system_gateway;
 #[cfg(feature = "gateway-voice-duplex")]
 pub mod voice_duplex;
 #[cfg(any(
@@ -807,6 +808,29 @@ impl GatewaySupervision {
     }
 }
 
+/// Binds the `SystemGateway` gRPC server on `127.0.0.1:50052` and serves it
+/// until the process exits. D1: lets the Go engine call back into Rust for
+/// native-tool execution (bash/git/file I/O). Loopback-only — this is an
+/// internal engine<->gateway channel, never exposed on a public interface.
+pub async fn start_grpc_server() -> Result<()> {
+    use grpc_system_gateway::system_gateway_server::SystemGatewayServer;
+
+    let addr: SocketAddr = "127.0.0.1:50052".parse().expect("valid loopback addr");
+    ::clawcrew_log::record!(
+        INFO,
+        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        "ClawCrew SystemGateway gRPC server listening on {addr}"
+    );
+
+    tonic::transport::Server::builder()
+        .add_service(SystemGatewayServer::new(
+            grpc_system_gateway::SystemGatewayService::new(None),
+        ))
+        .serve(addr)
+        .await?;
+    Ok(())
+}
+
 /// Run the HTTP gateway using axum with proper HTTP/1.1 compliance.
 pub async fn run_gateway(
     host: &str,
@@ -914,6 +938,12 @@ pub async fn run_gateway_with_plugin_webhooks(
     let actual_addr = listener.local_addr()?;
     let actual_port = actual_addr.port();
     let display_addr = format!("{host}:{actual_port}");
+
+    // D1: SystemGateway gRPC server so the Go engine can call back into Rust
+    // for native-tool execution (bash/git/file I/O). Independent listener,
+    // independent lifecycle from the HTTP gateway above — a failure here
+    // must not block the dashboard/API from booting.
+    tokio::spawn(start_grpc_server());
 
     // Seed the install-wide default provider from the first entry that
     // actually declares a `model`. Entries without one cannot serve as the
