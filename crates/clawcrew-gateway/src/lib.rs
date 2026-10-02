@@ -824,7 +824,7 @@ pub async fn start_grpc_server() -> Result<()> {
 
     tonic::transport::Server::builder()
         .add_service(SystemGatewayServer::new(
-            grpc_system_gateway::SystemGatewayService,
+            grpc_system_gateway::SystemGatewayService::new(None),
         ))
         .serve(addr)
         .await?;
