@@ -6,6 +6,32 @@ fn main() {
     // the build fails, we skip silently — the binary works fine without it.
     build_web_dashboard();
     ensure_embedded_web_dist_when_enabled();
+    compile_agent_service_proto();
+}
+
+/// Generates the tonic server stubs for `SystemGateway` (D1: Go engine ->
+/// Rust native-tool execution) from the shared proto contract. Server-only —
+/// this crate hosts `SystemGateway`, it never calls `AgentEngine` as a client.
+fn compile_agent_service_proto() {
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+        .expect("CARGO_MANIFEST_DIR is always set by cargo for build scripts");
+    let proto_path = std::path::Path::new(&manifest_dir)
+        .parent()
+        .and_then(|crates_dir| crates_dir.parent())
+        .map(|root| root.join("proto/agent_service.proto"))
+        .expect("clawcrew-gateway is always at <repo_root>/crates/clawcrew-gateway");
+
+    println!("cargo:rerun-if-changed={}", proto_path.display());
+
+    tonic_build::configure()
+        .build_server(true)
+        .build_client(false)
+        .compile_protos(&[proto_path.to_string_lossy().to_string()], &[proto_path
+            .parent()
+            .unwrap()
+            .to_string_lossy()
+            .to_string()])
+        .expect("failed to compile proto/agent_service.proto");
 }
 
 fn build_web_dashboard() {
