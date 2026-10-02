@@ -7606,7 +7606,6 @@ data: [DONE]\n\n";
             state.pairing.tokens()
         );
     }
-}
 
 #[cfg(test)]
 mod accept_error_tests {
@@ -7634,3 +7633,4 @@ mod accept_error_tests {
             ErrorKind::InvalidInput
         )));
     }
+}

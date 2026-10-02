@@ -66,3 +66,38 @@ impl SystemGateway for SystemGatewayService {
         }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn execute_native_tool_rejects_tool_outside_allowlist() {
+        let svc = SystemGatewayService;
+        let resp = svc
+            .execute_native_tool(Request::new(ToolCallRequest {
+                tool_name: "rm_rf".to_string(),
+                arguments_json: "{}".to_string(),
+            }))
+            .await
+            .unwrap()
+            .into_inner();
+        assert!(!resp.success);
+        assert!(resp.error.contains("not in the allowlist"));
+    }
+
+    #[tokio::test]
+    async fn execute_native_tool_accepts_allowlisted_tool() {
+        let svc = SystemGatewayService;
+        let resp = svc
+            .execute_native_tool(Request::new(ToolCallRequest {
+                tool_name: "bash".to_string(),
+                arguments_json: "{}".to_string(),
+            }))
+            .await
+            .unwrap()
+            .into_inner();
+        assert!(resp.success);
+        assert!(resp.error.is_empty());
+    }
+}

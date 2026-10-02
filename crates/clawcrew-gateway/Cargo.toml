@@ -25,8 +25,13 @@ clawcrew-hardware.workspace = true
 clawcrew-plugins = { workspace = true, optional = true }
 
 # gRPC server for SystemGateway (D1): Go engine -> Rust native-tool execution.
+# `prost` must stay a direct dep: tonic-build's generated code references
+# `::prost::...` paths directly, so this crate needs `prost` in scope by name.
+# Pinned to the version tonic 0.12 / tonic-build 0.12 themselves resolve to —
+# a mismatched "0.12" here previously diamond-deped against a separate prost
+# 0.12.6, breaking the `Message` trait identity for the generated types.
 tonic = "0.12"
-prost = "0.12"
+prost = "0.13"
 
 # HTTP server
 axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio", "query", "ws", "macros"] }
@@ -89,7 +94,6 @@ libc = "0.2"
 
 [build-dependencies]
 tonic-build = "0.12"
-prost-build = "0.12"
 
 [dev-dependencies]
 rand = "0.10"
