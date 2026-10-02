@@ -81,11 +81,15 @@ impl SystemGatewayService {
         Ok(canonical_requested)
     }
 
-    /// Execute a bash/shell command with stdout/stderr capture.
-    async fn execute_bash(&self, command: &str) -> Result<String, String> {
+    /// Execute a bash/shell command with stdout/stderr capture within the workspace root.
+    ///
+    /// Sets `current_dir(&root)` to scope the bash process to the workspace,
+    /// preventing workspace-escape attacks like `bash "cat ../../etc/passwd"`.
+    async fn execute_bash(&self, command: &str, workspace_root: &PathBuf) -> Result<String, String> {
         let output = tokio::process::Command::new("bash")
             .arg("-c")
             .arg(command)
+            .current_dir(workspace_root)
             .output()
             .await
             .map_err(|e| format!("failed to execute bash: {}", e))?;
@@ -99,6 +103,7 @@ impl SystemGatewayService {
             "stdout": stdout.to_string(),
             "stderr": stderr.to_string(),
             "exit_code": exit_code,
+            "cwd": workspace_root.display().to_string(),
         })
         .to_string())
     }
@@ -229,7 +234,7 @@ impl SystemGateway for SystemGatewayService {
                     .get("command")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                tokio::time::timeout(timeout_duration, self.execute_bash(command)).await
+                tokio::time::timeout(timeout_duration, self.execute_bash(command, &workspace_root)).await
             }
             "git" => {
                 let git_args = args
@@ -323,6 +328,8 @@ mod tests {
             .execute_native_tool(Request::new(ToolCallRequest {
                 tool_name: "rm_rf".to_string(),
                 arguments_json: "{}".to_string(),
+                workspace_path: None,
+                timeout_seconds: None,
             }))
             .await
             .unwrap()
@@ -338,6 +345,8 @@ mod tests {
             .execute_native_tool(Request::new(ToolCallRequest {
                 tool_name: "bash".to_string(),
                 arguments_json: r#"{"command":"echo hello"}"#.to_string(),
+                workspace_path: None,
+                timeout_seconds: None,
             }))
             .await
             .unwrap()
@@ -355,6 +364,8 @@ mod tests {
             .execute_native_tool(Request::new(ToolCallRequest {
                 tool_name: "bash".to_string(),
                 arguments_json: r#"{"command":"echo stdout; echo stderr >&2; exit 42"}"#.to_string(),
+                workspace_path: None,
+                timeout_seconds: None,
             }))
             .await
             .unwrap()
@@ -391,6 +402,8 @@ mod tests {
             .execute_native_tool(Request::new(ToolCallRequest {
                 tool_name: "read_file".to_string(),
                 arguments_json: r#"{"path":"../../../../etc/passwd"}"#.to_string(),
+                workspace_path: None,
+                timeout_seconds: None,
             }))
             .await
             .unwrap()
@@ -414,6 +427,8 @@ mod tests {
                 .execute_native_tool(Request::new(ToolCallRequest {
                     tool_name: "git".to_string(),
                     arguments_json: escape_args.to_string(),
+                    workspace_path: None,
+                    timeout_seconds: None,
                 }))
                 .await
                 .unwrap()
@@ -438,6 +453,8 @@ mod tests {
             .execute_native_tool(Request::new(ToolCallRequest {
                 tool_name: "git".to_string(),
                 arguments_json: r#"{"args":"rev-parse --show-toplevel"}"#.to_string(),
+                workspace_path: None,
+                timeout_seconds: None,
             }))
             .await
             .unwrap()
