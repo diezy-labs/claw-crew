@@ -98,11 +98,30 @@ impl SystemGatewayService {
     }
 
     /// Execute a git command within the workspace root.
+    ///
+    /// `current_dir(&root)` alone is not a boundary: git's own global flags
+    /// (`-C <dir>`, `--git-dir`, `--work-tree`, `--exec-path`, `-c
+    /// safe.directory=...`) redirect git's repo resolution before the
+    /// process cwd matters at all, so a request can escape the workspace
+    /// even though we spawned it rooted there. Reject those flags up front.
     async fn execute_git(&self, args: &str) -> Result<String, String> {
+        const BOUNDARY_ESCAPE_FLAGS: &[&str] =
+            &["-C", "--git-dir", "--work-tree", "--exec-path", "-c", "--namespace"];
+
+        let tokens: Vec<&str> = args.split_whitespace().collect();
+        for token in &tokens {
+            let flag = token.split('=').next().unwrap_or(token);
+            if BOUNDARY_ESCAPE_FLAGS.contains(&flag) {
+                return Err(format!(
+                    "git flag '{flag}' is not allowed (would redirect git outside the workspace root)"
+                ));
+            }
+        }
+
         let root = self.workspace_root();
 
         let output = tokio::process::Command::new("git")
-            .args(args.split_whitespace())
+            .args(&tokens)
             .current_dir(&root)
             .output()
             .await
@@ -337,5 +356,58 @@ mod tests {
         // Either the operation fails, or it succeeds with path validation applied.
         // The key is that we don't panic or return arbitrary OS files.
         let _ = resp;
+    }
+
+    #[tokio::test]
+    async fn git_rejects_boundary_escape_flags() {
+        let workspace = std::env::current_dir().unwrap();
+        let svc = SystemGatewayService::new(Some(workspace));
+
+        for escape_args in [
+            r#"{"args":"-C /etc log"}"#,
+            r#"{"args":"--git-dir=/etc/.git log"}"#,
+            r#"{"args":"--work-tree=/tmp status"}"#,
+        ] {
+            let resp = svc
+                .execute_native_tool(Request::new(ToolCallRequest {
+                    tool_name: "git".to_string(),
+                    arguments_json: escape_args.to_string(),
+                }))
+                .await
+                .unwrap()
+                .into_inner();
+            assert!(!resp.success, "expected rejection for: {escape_args}");
+            assert!(resp.error.contains("not allowed"), "got: {}", resp.error);
+        }
+    }
+
+    #[tokio::test]
+    async fn git_rev_parse_show_toplevel_stays_within_workspace() {
+        // galleon-fleet itself is a git repo, so run from its root.
+        let workspace = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|p| p.parent())
+            .unwrap()
+            .to_path_buf();
+        let canonical_workspace = workspace.canonicalize().unwrap();
+        let svc = SystemGatewayService::new(Some(workspace));
+
+        let resp = svc
+            .execute_native_tool(Request::new(ToolCallRequest {
+                tool_name: "git".to_string(),
+                arguments_json: r#"{"args":"rev-parse --show-toplevel"}"#.to_string(),
+            }))
+            .await
+            .unwrap()
+            .into_inner();
+
+        assert!(resp.success, "git command failed: {}", resp.error);
+        let output: serde_json::Value = serde_json::from_str(&resp.output).unwrap();
+        let toplevel = output["stdout"].as_str().unwrap().trim();
+        let canonical_toplevel = PathBuf::from(toplevel).canonicalize().unwrap();
+        assert_eq!(
+            canonical_toplevel, canonical_workspace,
+            "git must resolve the repo root to the workspace, not escape it"
+        );
     }
 }
