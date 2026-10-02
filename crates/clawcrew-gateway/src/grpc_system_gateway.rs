@@ -247,12 +247,16 @@ impl SystemGateway for SystemGatewayService {
         &self,
         _request: Request<SecretRequest>,
     ) -> Result<Response<SecretResponse>, Status> {
-        // ponytail: stub — Secret Vault wiring is a separate ticket.
-        // For now, always return not found.
-        Ok(Response::new(SecretResponse {
-            found: false,
-            value: String::new(),
-        }))
+        // ponytail: stub — Secret Vault wiring (crates/clawcrew-vault or
+        // equivalent, decrypt-on-read keyed by `key_name`) is a separate
+        // ticket. `Unimplemented` rather than `found: false`: the latter is
+        // indistinguishable from "this key genuinely doesn't exist" to a
+        // caller, which is the wrong signal while the vault isn't wired at
+        // all. Integration point: swap this body for a real vault lookup
+        // once that crate lands; the request/response shape doesn't change.
+        Err(Status::unimplemented(
+            "secret vault not yet wired — SystemGateway::GetDecryptedSecret has no backing store",
+        ))
     }
 
     async fn execute_task(
@@ -409,5 +413,18 @@ mod tests {
             canonical_toplevel, canonical_workspace,
             "git must resolve the repo root to the workspace, not escape it"
         );
+    }
+
+    #[tokio::test]
+    async fn get_decrypted_secret_reports_unimplemented_not_silent_not_found() {
+        let svc = SystemGatewayService::new(None);
+        let err = svc
+            .get_decrypted_secret(Request::new(SecretRequest {
+                key_name: "anything".to_string(),
+            }))
+            .await
+            .expect_err("vault is not wired yet, must surface as an error");
+        assert_eq!(err.code(), tonic::Code::Unimplemented);
+        assert!(err.message().contains("not yet wired"));
     }
 }
