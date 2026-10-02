@@ -1,0 +1,141 @@
+name: Auto-Create Prerelease PR
+
+# Trigger: PR merged to testing branch (means all gates passed)
+# Action: Create PR from testing → prerelease
+on:
+  push:
+    branches:
+      - testing
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-prerelease-pr:
+    # Only run if HEAD commit was a merge (not a direct push)
+    if: |
+      contains(github.event.head_commit.message, 'Merge pull request') ||
+      contains(github.event.head_commit.message, 'merge')
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get commit details
+        id: commit
+        run: |
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          COMMIT_SHA="${{ github.event.head_commit.id }}"
+          
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "short_sha=${COMMIT_SHA:0:7}" >> $GITHUB_OUTPUT
+      
+      - name: Check if prerelease PR already exists
+        id: check-pr
+        run: |
+          # Check if there's already an open PR from testing → prerelease
+          EXISTING_PR=$(gh pr list --base prerelease --head testing --state open --json number -q '.[0].number' 2>/dev/null || echo "")
+          
+          if [ -z "$EXISTING_PR" ]; then
+            echo "exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "number=$EXISTING_PR" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      
+      - name: Get branch info
+        id: branch-info
+        run: |
+          # Get latest tag or commit date for version
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          COMMIT_DATE=$(git log -1 --format=%ci ${{ steps.commit.outputs.sha }})
+          
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+      
+      - name: Create prerelease PR (if not exists)
+        if: steps.check-pr.outputs.exists == 'false'
+        run: |
+          PR_TITLE="chore(release): prerelease ${{ steps.commit.outputs.short_sha }} (testing → prerelease)"
+          PR_BODY="## Prerelease Promotion
+
+**Source:** testing branch  
+**Target:** prerelease branch  
+**Commit:** ${{ steps.commit.outputs.short_sha }}  
+**Latest tag:** ${{ steps.branch-info.outputs.latest_tag }}
+
+### Testing Status
+✅ All testing branch gates passed
+✅ QA crew approved (if applicable)
+
+### Changes
+Merging testing → prerelease for release candidate build.
+
+### Next Steps
+1. Principle crew reviews this PR (final gate before release)
+2. Once approved: merge to prerelease
+3. Prerelease → main merge requires manual approval (Achmad)
+
+### Checklist
+- [ ] Verify no breaking changes
+- [ ] Confirm all QA tests passed
+- [ ] Review commit messages
+- [ ] Ready for release candidate build
+
+---
+
+*Auto-created by GitHub Actions workflow: testing-to-prerelease-pr.yml*"
+          
+          gh pr create \
+            --base prerelease \
+            --head testing \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --label "automated,prerelease,release-candidate"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      
+      - name: Update existing PR (if exists)
+        if: steps.check-pr.outputs.exists == 'true'
+        run: |
+          # If PR already exists, add a comment noting the new commit
+          gh pr comment ${{ steps.check-pr.outputs.number }} \
+            --body "🔄 **New commit pushed to testing branch**
+
+Commit: ${{ steps.commit.outputs.short_sha }}
+Message: ${{ steps.commit.outputs.message }}
+
+This PR is updated with the latest changes. Principle crew will review."
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      
+      - name: Discord notification — Prerelease PR created
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "📋 **Prerelease PR Auto-Created**",
+              "embeds": [{
+                "title": "testing → prerelease",
+                "color": 3447003,
+                "fields": [
+                  {"name": "Status", "value": "Ready for Principle final review", "inline": true},
+                  {"name": "Commit", "value": "${{ steps.commit.outputs.short_sha }}", "inline": true},
+                  {"name": "Next", "value": "Principle approves → merge to prerelease", "inline": false},
+                  {"name": "After", "value": "Achmad approval needed for prerelease → main", "inline": false}
+                ],
+                "footer": {"text": "galleon-fleet Phase 3 Automation"}
+              }]
+            }' \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        continue-on-error: true
