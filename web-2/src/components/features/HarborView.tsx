@@ -109,7 +109,7 @@ export const HarborView: React.FC = () => {
   // Backend /api/v1/tools = tool type definitions (id, version, display_name, capabilities, risk_tier)
   // Harbor needs /api/harbor/tools = connection instances (name, target, status, auth)
   // Until /api/harbor/tools endpoint exists (Phase 2c), array remains empty
-  const tools: any[] = [];
+  const tools: ToolDefinition[] = [];
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);
@@ -237,16 +237,11 @@ export const HarborView: React.FC = () => {
           <div className="space-y-3">
             {tools.map((t) => (
               <ItemCard
-                key={t.name}
+                key={t.id}
                 icon={<FolderGit2 className="w-4 h-4 text-teal-500" />}
-                title={t.name}
-                subtitle={t.target}
-                badge={
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-500 font-semibold">
-                    {t.status}
-                  </span>
-                }
-                description={t.auth}
+                title={t.display_name}
+                subtitle={t.risk_tier}
+                description={t.capabilities.join(', ')}
                 footer={
                   <div className="flex items-center justify-end">
                     <button className="px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-teal-500 transition-colors cursor-pointer text-xs">

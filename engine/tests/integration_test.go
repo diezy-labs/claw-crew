@@ -1,18 +1,14 @@
 package tests
 
 import (
-	"context"
 	"encoding/json"
-	"net/http"
 	"testing"
-
-	"github.com/diezy-software/galleon-fleet/engine/src/fleet"
 )
 
 // TestSeedDataEndpoint verifies B2: GET /api/fleet/seed returns valid JSON schema
 func TestSeedDataEndpoint(t *testing.T) {
 	t.Log("B2: Testing GET /api/fleet/seed endpoint")
-	
+
 	// TODO: Initialize HTTP server with handler for /api/fleet/seed
 	// TODO: Mock seedData store or load test fixture
 	// TODO: Call GET /api/fleet/seed
@@ -26,7 +22,7 @@ func TestSeedDataEndpoint(t *testing.T) {
 // TestSeedDataSchema verifies the JSON schema of seed data response
 func TestSeedDataSchema(t *testing.T) {
 	t.Log("B2: Verifying seed data JSON schema")
-	
+
 	// TODO: Define expected schema (seedID string, metadata object, taskList array)
 	// TODO: Parse actual response JSON
 	// TODO: Validate against schema using a JSON schema validator or manual field checks
@@ -37,7 +33,7 @@ func TestSeedDataSchema(t *testing.T) {
 // TestExecuteTaskGRPC verifies C2: ExecuteTask gRPC call marshals request/response correctly
 func TestExecuteTaskGRPC(t *testing.T) {
 	t.Log("C2: Testing ExecuteTask gRPC marshaling")
-	
+
 	// TODO: Create gRPC server (agent_service.proto::ExecuteTask)
 	// TODO: Mock service implementation that echoes request
 	// TODO: Create gRPC client
@@ -52,7 +48,7 @@ func TestExecuteTaskGRPC(t *testing.T) {
 // TestExecuteTaskRequestValidation verifies C2: gRPC request validation
 func TestExecuteTaskRequestValidation(t *testing.T) {
 	t.Log("C2: Testing ExecuteTask request validation")
-	
+
 	// TODO: Create gRPC server
 	// TODO: Send invalid request (missing required fields like taskID)
 	// TODO: Verify server rejects with gRPC error code (InvalidArgument)
@@ -65,7 +61,7 @@ func TestExecuteTaskRequestValidation(t *testing.T) {
 // This test confirms the Go engine can call Rust ExecuteTool service correctly
 func TestRustExecuteToolIntegration(t *testing.T) {
 	t.Log("D1: Testing Go->Rust ExecuteTool gRPC integration")
-	
+
 	// TODO: Start Rust gateway server (clawcrew-gateway on port 50052)
 	// TODO: Start Go engine server (on port 9090)
 	// TODO: From Go engine, send ExecuteTask request to Rust gateway
@@ -79,7 +75,7 @@ func TestRustExecuteToolIntegration(t *testing.T) {
 // TestRustExecuteToolErrorHandling verifies D1: error path when Rust service unavailable
 func TestRustExecuteToolErrorHandling(t *testing.T) {
 	t.Log("D1: Testing Go->Rust error handling (service unavailable)")
-	
+
 	// TODO: Start Go engine WITHOUT Rust gateway running
 	// TODO: Attempt ExecuteTask call that requires Rust
 	// TODO: Verify Go returns gRPC error with Unavailable status code
@@ -91,7 +87,7 @@ func TestRustExecuteToolErrorHandling(t *testing.T) {
 // TestFleetStoreHydration verifies prerequisite: fleetStore can be hydrated
 func TestFleetStoreHydration(t *testing.T) {
 	t.Log("E2 prerequisite: Testing fleet store hydration")
-	
+
 	// TODO: Load seed data
 	// TODO: Call fleetStore.HydrateSeedData(seedData)
 	// TODO: Verify tasks are indexed in memory
@@ -103,37 +99,13 @@ func TestFleetStoreHydration(t *testing.T) {
 // TestIntegrationEndToEnd smoke test: seed -> hydrate -> execute -> result
 func TestIntegrationEndToEnd(t *testing.T) {
 	t.Log("E2E: Full flow from seed data to task execution")
-	
+
 	// TODO: Load seed data from /api/fleet/seed
 	// TODO: Hydrate fleet store with seed data
 	// TODO: Execute one task via ExecuteTask gRPC
 	// TODO: Verify task completes with output
 	// TODO: Verify task status transitions: pending -> running -> completed
 	t.Skip("Implementation pending: full E2E flow")
-}
-
-// Helper: Mock seed data for testing
-func mockSeedData() interface{} {
-	// TODO: Return representative seed JSON structure
-	// Expected structure: array of seed objects
-	// Each seed: { seedID, createdAt, metadata: { name, type, description }, taskList: [...] }
-	return map[string]interface{}{
-		"seedID":    "test-seed-001",
-		"createdAt": "2026-10-02T00:50:53Z",
-		"metadata": map[string]interface{}{
-			"name":        "Phase 1 Test Seed",
-			"type":        "approval",
-			"description": "Integration test seed data",
-		},
-		"taskList": []map[string]interface{}{
-			{
-				"taskID":      "task-001",
-				"name":        "Sample Approval Task",
-				"status":      "pending",
-				"executorID":  "executor-001",
-			},
-		},
-	}
 }
 
 // Helper: Validate JSON structure

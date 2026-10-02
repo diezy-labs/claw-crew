@@ -54,6 +54,26 @@ func (t *RunLinterTool) Execute(ctx context.Context, args string, workspaceRoot 
 }
 
 func (t *RunLinterTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else exec.Command
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Linter string   `json:"linter"`
 		Args   []string `json:"args"`
@@ -173,6 +193,26 @@ func (t *RunTestsTool) Execute(ctx context.Context, args string, workspaceRoot s
 }
 
 func (t *RunTestsTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else exec.Command
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Command        string   `json:"command"`
 		Args           []string `json:"args"`
