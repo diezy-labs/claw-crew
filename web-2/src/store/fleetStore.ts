@@ -399,6 +399,7 @@ export const useFleetStore = create<FleetState>((set, get) => ({
           apiClient.getFleetPolicies()
         ]);
 
+        // E3: Policies now consumed from engine via GET /api/fleet/policies
         set({
           systemMetrics: sysMetrics as { gateway_latency_ms: number; active_threads: number; isolation_mode: string; memory_db_mb: number; } | undefined,
           executiveBriefing: briefing as any[],
@@ -468,6 +469,7 @@ export const useFleetStore = create<FleetState>((set, get) => ({
       }
     } catch (err) {
       console.warn('[Store] hydrateSeedData API error, using mock:', err);
+      // E2: seedData.ts fallback ready for removal post-Phase-1-validation
       // Fallback to mock data
       const seedMap: Record<string, any[]> = {
         squads: seedData.squads,
