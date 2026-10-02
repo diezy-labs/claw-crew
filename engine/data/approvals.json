@@ -1,0 +1,32 @@
+[
+  {
+    "id": "appr-1",
+    "questId": "quest-ci-ws",
+    "shipId": "ship-dev",
+    "crewId": "crew-repo-analyst",
+    "title": "Authorize GitHub Pull Request Submission: WebSocket CI Fix",
+    "actionType": "github_issue_create",
+    "targetResource": "diezy-labs/claw-crew#pulls",
+    "draftSummary": "Developer Delivery Ship completed the fix for WebSocket teardown. Requires Captain's signature to create PR against master.",
+    "justification": "Fixes 100% reproducible socket teardown hang in CI runner.",
+    "effect": "Merges cleanly without breaking existing transport ABI.",
+    "costUSD": 0.05,
+    "status": "pending",
+    "createdAt": "15m ago"
+  },
+  {
+    "id": "appr-2",
+    "questId": "quest-audit-gw",
+    "shipId": "ship-research",
+    "crewId": "crew-tech-evaluator",
+    "title": "Expand Local Ollama Memory Cap to 16GB RAM",
+    "actionType": "modify_policy",
+    "targetResource": "host.system.vram",
+    "draftSummary": "Research Ship requests increasing the local model execution budget to load deepseek-r1:14b into VRAM/system RAM.",
+    "justification": "Required for high-accuracy local AST parsing without token charges.",
+    "effect": "Allocates up to 16GB host memory during local scans.",
+    "costUSD": 0.00,
+    "status": "pending",
+    "createdAt": "1h ago"
+  }
+]

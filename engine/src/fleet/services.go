@@ -538,3 +538,47 @@ func (s *fleetService) streamComplete(ctx context.Context, system, userMsg strin
 	}
 	return sb.String(), nil
 }
+
+func (s *fleetService) GetSeedData(ctx context.Context) (map[string]any, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	seedData := make(map[string]any)
+
+	// List of collection names to load
+	collections := []string{
+		"ships",
+		"crew",
+		"squads",
+		"quests",
+		"approvals",
+		"artifacts",
+		"treasury_ledger",
+		"logbook",
+		"notifications",
+		"training_skills",
+		"global_steering",
+		"steering_directives",
+		"training_hooks",
+		"journal_sessions",
+		"chat_messages",
+	}
+
+	for _, name := range collections {
+		filename := filepath.Join(s.dataDir, name+".json")
+		data, err := os.ReadFile(filename)
+		if err != nil {
+			// Return partial data if some files are missing
+			continue
+		}
+
+		var parsed []any
+		if err := json.Unmarshal(data, &parsed); err != nil {
+			continue
+		}
+
+		seedData[name] = parsed
+	}
+
+	return seedData, nil
+}

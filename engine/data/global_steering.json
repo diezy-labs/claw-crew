@@ -1,0 +1,16 @@
+[
+  {
+    "id": "steering-1",
+    "name": "Zero Compromise on Production Safety",
+    "directive": "Never perform destructive file deletions or unauthenticated remote calls without explicit Owner sign-off.",
+    "priority": "critical",
+    "enforcement": "required",
+    "appliesTo": ["all-ships"],
+    "status": "active",
+    "version": 1,
+    "createdAt": "2026-03-01T00:00:00Z",
+    "createdBy": "Captain",
+    "updatedAt": "2026-03-20T00:00:00Z",
+    "updatedBy": "Captain"
+  }
+]

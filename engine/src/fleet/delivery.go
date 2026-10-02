@@ -22,6 +22,7 @@ func NewHTTPHandler(service Service) *HTTPHandler {
 func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/fleet/metrics", h.handleMetrics)
 	server.RegisterRouteFunc("/api/fleet/deck-bell", h.handleDeckBell)
+	server.RegisterRouteFunc("/api/fleet/seed", h.handleSeedData)
 	server.RegisterRouteFunc("/api/system/executive-briefing", h.handleBriefing)
 	server.RegisterRouteFunc("/api/providers/harbor", h.handleHarborProviders)
 	server.RegisterRouteFunc("/api/diagnostics", h.handleDiagnostics)
@@ -224,4 +225,22 @@ func (h *HTTPHandler) handleQuartermasterChat(w http.ResponseWriter, r *http.Req
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *HTTPHandler) handleSeedData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	seedData, err := h.service.GetSeedData(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status": "ok",
+		"seed":   seedData,
+	})
 }

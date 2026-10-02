@@ -213,6 +213,7 @@ var AgentEngine_ServiceDesc = grpc.ServiceDesc{
 const (
 	SystemGateway_ExecuteNativeTool_FullMethodName  = "/clawcrew.agent.SystemGateway/ExecuteNativeTool"
 	SystemGateway_GetDecryptedSecret_FullMethodName = "/clawcrew.agent.SystemGateway/GetDecryptedSecret"
+	SystemGateway_ExecuteTask_FullMethodName        = "/clawcrew.agent.SystemGateway/ExecuteTask"
 )
 
 // SystemGatewayClient is the client API for SystemGateway service.
@@ -225,6 +226,8 @@ type SystemGatewayClient interface {
 	ExecuteNativeTool(ctx context.Context, in *ToolCallRequest, opts ...grpc.CallOption) (*ToolCallResponse, error)
 	// Requests a decrypted credential from Rust Secret Vault
 	GetDecryptedSecret(ctx context.Context, in *SecretRequest, opts ...grpc.CallOption) (*SecretResponse, error)
+	// ExecuteTask route for external task execution (engine -> executor)
+	ExecuteTask(ctx context.Context, in *TaskExecutionRequest, opts ...grpc.CallOption) (*TaskExecutionResponse, error)
 }
 
 type systemGatewayClient struct {
@@ -255,6 +258,16 @@ func (c *systemGatewayClient) GetDecryptedSecret(ctx context.Context, in *Secret
 	return out, nil
 }
 
+func (c *systemGatewayClient) ExecuteTask(ctx context.Context, in *TaskExecutionRequest, opts ...grpc.CallOption) (*TaskExecutionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TaskExecutionResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_ExecuteTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SystemGatewayServer is the server API for SystemGateway service.
 // All implementations must embed UnimplementedSystemGatewayServer
 // for forward compatibility.
@@ -265,6 +278,8 @@ type SystemGatewayServer interface {
 	ExecuteNativeTool(context.Context, *ToolCallRequest) (*ToolCallResponse, error)
 	// Requests a decrypted credential from Rust Secret Vault
 	GetDecryptedSecret(context.Context, *SecretRequest) (*SecretResponse, error)
+	// ExecuteTask route for external task execution (engine -> executor)
+	ExecuteTask(context.Context, *TaskExecutionRequest) (*TaskExecutionResponse, error)
 	mustEmbedUnimplementedSystemGatewayServer()
 }
 
@@ -280,6 +295,9 @@ func (UnimplementedSystemGatewayServer) ExecuteNativeTool(context.Context, *Tool
 }
 func (UnimplementedSystemGatewayServer) GetDecryptedSecret(context.Context, *SecretRequest) (*SecretResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDecryptedSecret not implemented")
+}
+func (UnimplementedSystemGatewayServer) ExecuteTask(context.Context, *TaskExecutionRequest) (*TaskExecutionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExecuteTask not implemented")
 }
 func (UnimplementedSystemGatewayServer) mustEmbedUnimplementedSystemGatewayServer() {}
 func (UnimplementedSystemGatewayServer) testEmbeddedByValue()                       {}
@@ -338,6 +356,24 @@ func _SystemGateway_GetDecryptedSecret_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SystemGateway_ExecuteTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TaskExecutionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).ExecuteTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_ExecuteTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).ExecuteTask(ctx, req.(*TaskExecutionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SystemGateway_ServiceDesc is the grpc.ServiceDesc for SystemGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -352,6 +388,10 @@ var SystemGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDecryptedSecret",
 			Handler:    _SystemGateway_GetDecryptedSecret_Handler,
+		},
+		{
+			MethodName: "ExecuteTask",
+			Handler:    _SystemGateway_ExecuteTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

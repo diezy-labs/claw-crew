@@ -735,6 +735,118 @@ func (x *SecretResponse) GetValue() string {
 	return ""
 }
 
+type TaskExecutionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TaskId        string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	TaskData      string                 `protobuf:"bytes,2,opt,name=task_data,json=taskData,proto3" json:"task_data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TaskExecutionRequest) Reset() {
+	*x = TaskExecutionRequest{}
+	mi := &file_agent_service_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskExecutionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskExecutionRequest) ProtoMessage() {}
+
+func (x *TaskExecutionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskExecutionRequest.ProtoReflect.Descriptor instead.
+func (*TaskExecutionRequest) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *TaskExecutionRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
+}
+
+func (x *TaskExecutionRequest) GetTaskData() string {
+	if x != nil {
+		return x.TaskData
+	}
+	return ""
+}
+
+type TaskExecutionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Output        string                 `protobuf:"bytes,2,opt,name=output,proto3" json:"output,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TaskExecutionResponse) Reset() {
+	*x = TaskExecutionResponse{}
+	mi := &file_agent_service_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskExecutionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskExecutionResponse) ProtoMessage() {}
+
+func (x *TaskExecutionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskExecutionResponse.ProtoReflect.Descriptor instead.
+func (*TaskExecutionResponse) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *TaskExecutionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *TaskExecutionResponse) GetOutput() string {
+	if x != nil {
+		return x.Output
+	}
+	return ""
+}
+
+func (x *TaskExecutionResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_agent_service_proto protoreflect.FileDescriptor
 
 const file_agent_service_proto_rawDesc = "" +

@@ -1,0 +1,71 @@
+[
+  {
+    "id": "quest-ci-ws",
+    "title": "Resolve WebSocket Goroutine Timeout in CI",
+    "objective": "Implement explicit SetReadDeadline and graceful connection termination during test suite cleanup.",
+    "workspaceId": "galleon-core",
+    "projectId": "transport-layer",
+    "priority": "urgent",
+    "status": "underway",
+    "suggestedShipId": "ship-dev",
+    "assignedShipId": "ship-dev",
+    "requiredArtifacts": ["WebSocket Timeout Patch Briefing", "CI Test Run Verification Log"],
+    "budgetLimitUSD": 2.50,
+    "estimatedCostUSD": 0.85,
+    "mapSteps": [
+      {"stepNumber": 1, "title": "Locate listener termination loop in pkg/transport", "status": "completed"},
+      {"stepNumber": 2, "title": "Inject context cancellation and test abort hook", "status": "in_progress"},
+      {"stepNumber": 3, "title": "Verify test passes 5 consecutive runs without leaks", "status": "pending"}
+    ],
+    "activeVoyageProgress": 65,
+    "createdAt": "2026-03-30T10:15:00Z",
+    "updatedAt": "2026-03-31T04:20:00Z",
+    "discoveriesCount": 3
+  },
+  {
+    "id": "quest-rel-notes",
+    "title": "Synthesize Fleet AI v2.4 Release Notes",
+    "objective": "Aggregate recent pull requests, security policy upgrades, and multi-agent coordination capabilities into release documentation.",
+    "workspaceId": "galleon-core",
+    "projectId": "docs-release",
+    "priority": "high",
+    "status": "ready",
+    "suggestedShipId": "ship-growth",
+    "assignedShipId": "ship-growth",
+    "requiredArtifacts": ["v2.4 Release Notes Document", "Breaking Changes Checklist"],
+    "budgetLimitUSD": 1.50,
+    "estimatedCostUSD": 0.40,
+    "mapSteps": [
+      {"stepNumber": 1, "title": "Extract commit changelog from v2.3.0..HEAD", "status": "pending"},
+      {"stepNumber": 2, "title": "Categorize changes by Engine, UI, and Security", "status": "pending"},
+      {"stepNumber": 3, "title": "Format into verified Markdown artifact for Captain sign-off", "status": "pending"}
+    ],
+    "activeVoyageProgress": 0,
+    "createdAt": "2026-03-30T14:00:00Z",
+    "updatedAt": "2026-03-31T01:10:00Z",
+    "discoveriesCount": 0
+  },
+  {
+    "id": "quest-audit-gw",
+    "title": "Audit Model Gateway Latency and Token Budgets",
+    "objective": "Benchmark token latency between Anthropic, Gemini, and local Ollama instances across varying context lengths.",
+    "workspaceId": "galleon-core",
+    "projectId": "telemetry",
+    "priority": "medium",
+    "status": "ready",
+    "suggestedShipId": "ship-research",
+    "assignedShipId": "ship-research",
+    "requiredArtifacts": ["Gateway Benchmark Analysis Table"],
+    "budgetLimitUSD": 1.00,
+    "estimatedCostUSD": 0.20,
+    "mapSteps": [
+      {"stepNumber": 1, "title": "Sample 50 queries across all three providers", "status": "pending"},
+      {"stepNumber": 2, "title": "Measure TTFT (Time To First Token) and overall throughput", "status": "pending"},
+      {"stepNumber": 3, "title": "Output latency comparison to Treasury and Crows Nest", "status": "pending"}
+    ],
+    "activeVoyageProgress": 0,
+    "createdAt": "2026-03-29T18:00:00Z",
+    "updatedAt": "2026-03-30T12:00:00Z",
+    "discoveriesCount": 1
+  }
+]

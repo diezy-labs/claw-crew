@@ -23,6 +23,9 @@ service SystemGateway {
     
     // Requests a decrypted credential from Rust Secret Vault
     rpc GetDecryptedSecret(SecretRequest) returns (SecretResponse);
+    
+    // ExecuteTask route for external task execution (engine -> executor)
+    rpc ExecuteTask(TaskExecutionRequest) returns (TaskExecutionResponse);
 }
 
 // ======================================
@@ -101,4 +104,16 @@ message SecretRequest {
 message SecretResponse {
     bool found = 1;
     string value = 2;
+}
+
+// Task execution request/response for external executor
+message TaskExecutionRequest {
+    string task_id = 1;
+    string task_data = 2;  // JSON-encoded task payload
+}
+
+message TaskExecutionResponse {
+    bool success = 1;
+    string output = 2;
+    string error = 3;
 }

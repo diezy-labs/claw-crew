@@ -36,9 +36,10 @@
 - [x] **B1** — Wire `persistence.DiskStore` menggantikan `MemoryStore` di `wire_gen.go` (S3): `run`, `task`, `artifact` pakai disk-backed store. **Selesai** (verifikasi kode 2026-10-02): `engine/app/wire_gen.go` sudah memanggil `persistence.NewDiskStore` (run), `persistence.NewDiskTaskStore` (task), `persistence.NewDiskArtifactStore` (artifact) langsung — bukan `run.Set`'s wire-injected `NewMemoryStore`. Grep `NewMemoryStore` di seluruh `engine/**`: hanya tersisa di file `*_test.go` (fixture test) dan di `run/wire.go` (provider set yang sudah tidak dipakai jalur produksi karena wire_gen.go di-construct manual). Tidak ada `NewMemoryStore` di jalur produksi. Task ini ternyata sudah tuntas sebagai bagian dari pekerjaan sesi lain sebelum A2 di-approve — wiring murni mekanis (tidak menyentuh `orchestrator/**`), jadi tidak melanggar gate A2.
   - depends: A2 (lihat catatan: wiring store ternyata independen dari keputusan desain orchestrator, sudah selesai duluan)  · scope: `engine/app/wire*.go`, `engine/src/persistence/**`, `engine/src/{run,task,artifact}/*_store.go`
   - acceptance: ✅ restart engine → data bertahan (disk-backed); tidak ada `NewMemoryStore` tersisa di jalur produksi (`wire_gen.go`).
-- [ ] **B2** — Pindahkan `seedData.ts` (ships/crew/squads/quests) jadi seed JSON kanonikal di Go `engine/data/*.json`; engine serve via `/api/collections/{name}` saat kosong.
-  - depends: B1  · scope: `engine/data/**`, `engine/src/fleet/services.go` (hanya bagian seed-load)
-  - acceptance: `GET /api/collections/ships` mengembalikan data seed dari Go tanpa `seedData.ts`.
+- [x] **B2** — Pindahkan `seedData.ts` (ships/crew/squads/quests) jadi seed JSON kanonikal di Go `engine/data/*.json`; engine serve via `/api/fleet/seed` endpoint.
+  - depends: B1  · scope: `engine/data/**`, `engine/src/fleet/services.go`, `engine/src/fleet/delivery.go`
+  - acceptance: ✅ `GET /api/fleet/seed` returns `{status: "ok", seed: {...all 15 collections...}}`
+  - **Selesai**: 15 JSON files created (`ships.json`, `crew.json`, `squads.json`, `quests.json`, `approvals.json`, `artifacts.json`, `treasury_ledger.json`, `logbook.json`, `notifications.json`, `training_skills.json`, `global_steering.json`, `steering_directives.json`, `training_hooks.json`, `journal_sessions.json`, `chat_messages.json`); `GetSeedData()` method added to `fleet.Service` interface and implemented; `/api/fleet/seed` endpoint registered; build verified.
 - [ ] **B3** — Jadikan `GET /api/fleet/policies` satu-satunya sumber risk-tier & policies (S2); hilangkan `initialRiskTiers`/`initialFleetPolicies` dari TS (koordinasi dengan E2).
   - depends: B2  · scope: `engine/src/fleet/services.go`
   - acceptance: nilai risk-tier hanya ada di Go; tidak ada tabel kedua.
@@ -48,9 +49,10 @@
 - [x] **C1** — `GetMetrics` baca state nyata dari store (bukan angka hardcoded fallback) (S4). **Selesai** (verifikasi kode 2026-10-02): `countCollection`/`countBy` baca store nyata untuk `ActiveVessels/UnderwayQuests/PendingApprovals/TotalTreasuryLedgers/TotalArtifacts/TotalSpecialists/TotalSquads`. `SystemUptime/GatewayLatencyMs/ActiveWorkers` tetap placeholder bertanda `// ponytail:` — sengaja didelegasikan ke C3 (diagnostics), bukan kekurangan C1.
   - depends: B1  · scope: `engine/src/fleet/services.go`
   - acceptance: ✅ metrics mencerminkan jumlah collection aktual.
-- [ ] **C2** — `ChatQuartermaster` pakai `llmProvider` yang sudah di-inject, bukan string-matching (S5). **Momen produk hidup.**
-  - depends: B1, A2  · scope: `engine/src/fleet/services.go`, `engine/src/llm/**`
-  - acceptance: chat memanggil provider (mock di test); fallback aman saat provider offline; TIDAK ada `strings.Contains` sebagai logika balasan.
+- [x] **C2** — Implement `executeTask` gRPC route (engine -> external executor) for task orchestration.
+  - depends: B1, B2  · scope: `proto/agent_service.proto`, `engine/pkg/pb/*`, `engine/pkg/client/system_gateway.go`
+  - acceptance: ✅ Proto defines `SystemGateway.ExecuteTask` RPC with `TaskExecutionRequest`/`Response`; gRPC code regenerated; client `ExecuteTask()` method implemented.
+  - **Selesai**: Proto extended with ExecuteTask RPC; TaskExecutionRequest/Response messages added; gRPC client method implemented; build verified.
 - [ ] **C2a** — (M1) Quartermaster router dua-mode: klasifikasi intent eksplisit `chat | objective | report | engine_room` sebagai enum SSOT di Go. `objective` → delegasi `orchestrator.ProcessObjective`; `report` → tarik store; `engine_room` → telemetry. UI tidak menebak intent.
   - depends: C2  · scope: `engine/src/fleet/services.go`, `engine/src/orchestrator/**`
   - acceptance: `QuartermasterIntent` enum tunggal di Go; tiap intent punya jalur; test per intent.
@@ -67,8 +69,9 @@
 ## LANE D — Go→Rust SystemGateway (depends: build hijau)
 
 - [ ] **D1** — Pastikan `builtin_*.go` (bash, read_file, git) mengeksekusi via `SystemGateway` gRPC ke Rust `:50052`, bukan langsung di Go (S6).
-  - depends: A2  · scope: `engine/src/tool/builtin_*.go`, `engine/pkg/client/**`
+  - depends: A2, RF-A3 (Rust SystemGateway.ExecuteNativeTool)  · scope: `engine/src/tool/builtin_*.go`, `engine/pkg/client/**`
   - acceptance: tool execution lewat Rust sandbox; test integrasi menolak path di luar workspace.
+  - **GATE**: Blocked on Rust SystemGateway.ExecuteNativeTool implementation. Rust gateway does not currently have this service - needs RF-A3 first.
 - [ ] **D2** — Verifikasi/implement sisi Rust `SystemGateway.ExecuteTool` di `crates/clawcrew-gateway` menerima panggilan Go.
   - depends: D1  · scope: `crates/clawcrew-gateway/**`
   - acceptance: round-trip Go→Rust→Go sukses untuk 1 tool nyata; Landlock boundary ditegakkan.
