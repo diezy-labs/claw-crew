@@ -28,8 +28,7 @@ import { PageHeaderNav } from '../common/PageHeaderNav';
 import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 import { useFleetStore } from '../../store/fleetStore';
-import { apiClient } from '../../utils/apiClient';
-import { initialHarborTools } from '../../utils/seedData';
+import { apiClient, type ToolDefinition } from '../../utils/apiClient';
 
 export const HarborView: React.FC = () => {
   const { setRemoteAccessModalOpen, harborProviders } = useFleetStore();
@@ -106,7 +105,11 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  const tools = initialHarborTools;
+  // ponytail: HarborView connector instances (git, auth, S3, etc.) use a different shape than backend ToolDefinition
+  // Backend /api/v1/tools = tool type definitions (id, version, display_name, capabilities, risk_tier)
+  // Harbor needs /api/harbor/tools = connection instances (name, target, status, auth)
+  // Until /api/harbor/tools endpoint exists (Phase 2c), array remains empty
+  const tools: any[] = [];
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);

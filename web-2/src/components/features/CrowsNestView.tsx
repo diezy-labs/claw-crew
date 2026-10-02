@@ -77,7 +77,7 @@ export const CrowsNestView: React.FC = () => {
     try {
       const res = await apiClient.applyRemedy();
       setRemedyApplied(true);
-      if (res.diagnostics) {
+      if (res.diagnostics && Array.isArray(res.diagnostics)) {
         setDiagnostics(res.diagnostics);
       } else {
         setDiagnostics((prev) =>

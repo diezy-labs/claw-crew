@@ -1,24 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from '../utils/apiClient';
 import {
-  initialShips,
-  initialCrew,
-  initialSquads,
-  initialQuests,
-  initialArtifacts,
-  initialApprovals,
-  initialTreasuryLedger,
-  initialLogbook,
-  initialNotifications,
-  initialTrainingSkills,
-  initialGlobalSteering,
-  initialSteeringDirectives,
-  initialTrainingHooks,
-  initialJournalSessions,
-  initialChatMessages,
-  seedData
-} from '../utils/seedData';
-import {
   ThemeMode,
   ColorTone,
   NavigationTab,
@@ -280,21 +262,21 @@ export const useFleetStore = create<FleetState>((set, get) => ({
   selectedProject: 'v1.4 Release Readiness',
   workspaces: ['Product Platform', 'Autonomous Agents', 'Core Infrastructure'],
   projects: ['v1.4 Release Readiness', 'Claw Crew Agent Phase 2', 'BYOK Treasury Optimizer'],
-  ships: initialShips,
-  squads: initialSquads,
-  crew: initialCrew,
-  trainingSkills: initialTrainingSkills,
-  globalSteering: initialGlobalSteering,
-  steeringDirectives: initialSteeringDirectives,
-  trainingHooks: initialTrainingHooks,
-  quests: initialQuests,
-  artifacts: initialArtifacts,
-  approvals: initialApprovals,
-  logbook: initialLogbook,
-  treasuryLedger: initialTreasuryLedger,
-  notifications: initialNotifications,
-  chatMessages: initialChatMessages,
-  journalSessions: initialJournalSessions,
+  ships: [],
+  squads: [],
+  crew: [],
+  trainingSkills: [],
+  globalSteering: [],
+  steeringDirectives: [],
+  trainingHooks: [],
+  quests: [],
+  artifacts: [],
+  approvals: [],
+  logbook: [],
+  treasuryLedger: [],
+  notifications: [],
+  chatMessages: [],
+  journalSessions: [],
   selectedJournalSessionId: 'session-1',
   selectedQuestId: null,
   selectedArtifactId: null,
@@ -357,21 +339,21 @@ export const useFleetStore = create<FleetState>((set, get) => ({
   fetchRealData: async () => {
     try {
       const seedMap: Record<string, any[]> = {
-        squads: initialSquads,
-        ships: initialShips,
-        crew: initialCrew,
-        trainingSkills: initialTrainingSkills,
-        globalSteering: initialGlobalSteering,
-        steeringDirectives: initialSteeringDirectives,
-        trainingHooks: initialTrainingHooks,
-        quests: initialQuests,
-        artifacts: initialArtifacts,
-        approvals: initialApprovals,
-        logbook: initialLogbook,
-        treasuryLedger: initialTreasuryLedger,
-        notifications: initialNotifications,
-        journalSessions: initialJournalSessions,
-        chatMessages: initialChatMessages
+        squads: [],
+        ships: [],
+        crew: [],
+        trainingSkills: [],
+        globalSteering: [],
+        steeringDirectives: [],
+        trainingHooks: [],
+        quests: [],
+        artifacts: [],
+        approvals: [],
+        logbook: [],
+        treasuryLedger: [],
+        notifications: [],
+        journalSessions: [],
+        chatMessages: []
       };
 
       for (const [col, defaultList] of Object.entries(seedMap)) {
@@ -468,29 +450,8 @@ export const useFleetStore = create<FleetState>((set, get) => ({
         }
       }
     } catch (err) {
-      console.warn('[Store] hydrateSeedData API error, using mock:', err);
-      // E2: seedData.ts fallback ready for removal post-Phase-1-validation
-      // Fallback to mock data
-      const seedMap: Record<string, any[]> = {
-        squads: seedData.squads,
-        ships: seedData.ships,
-        crew: seedData.crew,
-        quests: seedData.quests,
-        artifacts: seedData.artifacts,
-        approvals: seedData.approvals,
-        logbook: seedData.logbook,
-        treasuryLedger: seedData.treasuryLedger,
-        notifications: seedData.notifications,
-        journalSessions: seedData.journalSessions,
-        chatMessages: seedData.chatMessages,
-        trainingSkills: seedData.trainingSkills,
-        globalSteering: seedData.globalSteering,
-        steeringDirectives: seedData.steeringDirectives,
-        trainingHooks: seedData.trainingHooks
-      };
-      for (const [col, data] of Object.entries(seedMap)) {
-        set({ [col]: data } as any);
-      }
+      console.error('[Store] hydrateSeedData API error, fleet offline:', err);
+      // No mock fallback - SSOT from engine only
     }
   },
 

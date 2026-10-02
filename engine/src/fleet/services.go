@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -54,12 +56,13 @@ func NewService(llmProvider llm.Provider) Service {
 	}
 	_ = os.MkdirAll(dataDir, 0755)
 
+	// Initial diagnostics use mock status. GetDiagnostics() overlays real signals.
 	initialDiags := []DiagnosticItem{
-		{ID: "d-1", Component: "Sovereign Gateway (Warp Engine)", Status: "healthy", Latency: "14ms", Detail: "TCP socket open on port 8080. Dual stack IPv4/v6 active."},
-		{ID: "d-2", Component: "Kernel Landlock LSM Sandboxing", Status: "healthy", Latency: "2ms", Detail: "Enforce mode active. Filesystem boundaries strictly scoped to workspace."},
-		{ID: "d-3", Component: "Ollama Local LLM Bridge", Status: "healthy", Latency: "42ms", Detail: "Local inference node active (deepseek-r1:14b loaded in VRAM)."},
-		{ID: "d-4", Component: "SQLite FTS5 Semantic Memory", Status: "healthy", Latency: "6ms", Detail: "1,480 vector nodes indexed with zero index corruption."},
-		{ID: "d-5", Component: "Disaster Recovery Daemon", Status: "healthy", Latency: "18ms", Detail: "Automated snapshot integrity validated."},
+		{ID: "d-1", Component: "Sovereign Gateway (Warp Engine)", Status: "unknown", Latency: "unknown", Detail: "Gateway status not checked."},
+		{ID: "d-2", Component: "Kernel Landlock LSM Sandboxing", Status: "unknown", Latency: "unknown", Detail: "Landlock check requires system-specific tools."},
+		{ID: "d-3", Component: "Ollama Local LLM Bridge", Status: "unknown", Latency: "unknown", Detail: "Ollama ping pending."},
+		{ID: "d-4", Component: "SQLite FTS5 Semantic Memory", Status: "unknown", Latency: "unknown", Detail: "Memory stats pending runtime read."},
+		{ID: "d-5", Component: "Disaster Recovery Daemon", Status: "unknown", Latency: "unknown", Detail: "Snapshot integrity check pending."},
 	}
 
 	initialSnaps := []SnapshotItem{
@@ -204,11 +207,10 @@ func (s *fleetService) GetExecutiveBriefing(ctx context.Context) (*ExecutiveBrie
 	runtime.ReadMemStats(&mem)
 	ramMB := float64(mem.Alloc) / 1024.0 / 1024.0
 
-	// Status derives from real signals: pending approvals mean the Admiral is
-	// awaiting a decision; otherwise the fleet is patrolling autonomously.
-	status := "Operational Ready — Autonomous Fleet Patrol in Sector Prime"
+	// AdmiralStatus: "Operational Ready" if pending=0, else "Awaiting Captain -- N approval(s)"
+	status := "Operational Ready"
 	if pending > 0 {
-		status = fmt.Sprintf("Awaiting Captain — %d approval(s) pending Pirate King's signature", pending)
+		status = fmt.Sprintf("Awaiting Captain — %d approval(s) pending", pending)
 	}
 
 	achievements := []string{
@@ -273,28 +275,112 @@ func (s *fleetService) GetHarborProviders(ctx context.Context) ([]HarborProvider
 	}, nil
 }
 
+// checkOllama pings the Ollama endpoint with a 100ms timeout. Returns status, latency, detail.
+func checkOllama(ctx context.Context) (status, latency, detail string) {
+	client := &http.Client{Timeout: 100 * time.Millisecond}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:11434/api/tags", nil)
+	if err != nil {
+		return "error", "0ms", fmt.Sprintf("Ollama check failed: %v", err)
+	}
+	start := time.Now()
+	resp, err := client.Do(req)
+	if err != nil {
+		return "unavailable", "0ms", "Ollama not responding (daemon may be offline)."
+	}
+	defer resp.Body.Close()
+	lat := time.Since(start)
+	return "healthy", fmt.Sprintf("%dms", lat.Milliseconds()), fmt.Sprintf("Ollama API accessible (%d models).", resp.StatusCode)
+}
+
+// checkGateway checks if the gRPC server is listening on :50052 (100ms dial timeout).
+func checkGateway(ctx context.Context) (status, latency, detail string) {
+	dialer := &net.Dialer{Timeout: 100 * time.Millisecond}
+	start := time.Now()
+	conn, err := dialer.DialContext(ctx, "tcp", "localhost:50052")
+	if err != nil {
+		return "unavailable", "0ms", "Gateway port 50052 not listening (gRPC server not started)."
+	}
+	defer conn.Close()
+	lat := time.Since(start)
+	return "healthy", fmt.Sprintf("%dms", lat.Milliseconds()), "Gateway listening on port 50052."
+}
+
+// checkSnapshots checks if snapshot directory exists with at least one recent file.
+func checkSnapshots() (status, latency, detail string) {
+	start := time.Now()
+	dataDir := filepath.Join("..", "web-2", "data")
+	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+		dataDir = filepath.Join("data")
+	}
+	// Look for files matching snap-* pattern
+	matches, _ := filepath.Glob(filepath.Join(dataDir, "snap-*"))
+	lat := time.Since(start)
+	if len(matches) == 0 {
+		return "degraded", fmt.Sprintf("%dms", lat.Milliseconds()), fmt.Sprintf("Snapshot dir exists but no snap-* files found (%s).", dataDir)
+	}
+	// Check for recent file (within 7 days)
+	sevenDaysAgo := time.Now().Add(-7 * 24 * time.Hour)
+	for _, m := range matches {
+		if fi, err := os.Stat(m); err == nil && fi.ModTime().After(sevenDaysAgo) {
+			return "healthy", fmt.Sprintf("%dms", lat.Milliseconds()), fmt.Sprintf("%d snapshot file(s) found, recent backup confirmed.", len(matches))
+		}
+	}
+	return "degraded", fmt.Sprintf("%dms", lat.Milliseconds()), fmt.Sprintf("%d snapshot file(s) found but none recent (within 7 days).", len(matches))
+}
+
 func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Return a copy so the live overlay below never mutates the stateful slice
-	// that ApplyRemedy owns (it flips Status/Latency and must stay authoritative).
+	// Return a copy so the live overlay never mutates the stateful slice that ApplyRemedy owns.
 	out := make([]DiagnosticItem, len(s.diagnostics))
 	copy(out, s.diagnostics)
 
+	// Check d-1: Gateway (port 50052)
+	status, latency, detail := checkGateway(ctx)
+	for i := range out {
+		if out[i].ID == "d-1" {
+			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			break
+		}
+	}
+
+	// Check d-2: Landlock — keep as-is (system-dependent, no portable way)
+	// (d-2 remains "unknown" with explanatory detail)
+
+	// Check d-3: Ollama
+	status, latency, detail = checkOllama(ctx)
+	for i := range out {
+		if out[i].ID == "d-3" {
+			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			break
+		}
+	}
+
+	// Check d-4: Memory (runtime) + artifacts count
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
-	vectorNodes := s.countCollection("artifacts")
-
-	// Overlay real signals onto the memory component (d-4) instead of a
-	// fabricated node count — C3: diagnostics reflect actual engine state.
+	artifacts := s.countCollection("artifacts")
 	for i := range out {
 		if out[i].ID == "d-4" {
 			out[i].Detail = fmt.Sprintf(
 				"%d indexed artifact(s); engine heap %.1f MB, %d goroutine(s) live.",
-				vectorNodes, float64(mem.Alloc)/1024.0/1024.0, runtime.NumGoroutine())
+				artifacts, float64(mem.Alloc)/1024.0/1024.0, runtime.NumGoroutine())
+			out[i].Status = "healthy"
+			out[i].Latency = "n/a" // runtime metrics, not a measurable latency
+			break
 		}
 	}
+
+	// Check d-5: Disaster Recovery (snapshots)
+	status, latency, detail = checkSnapshots()
+	for i := range out {
+		if out[i].ID == "d-5" {
+			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			break
+		}
+	}
+
 	return out, nil
 }
 
