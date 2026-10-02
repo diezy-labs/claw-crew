@@ -40,9 +40,9 @@
   - depends: B1  · scope: `engine/data/**`, `engine/src/fleet/services.go`, `engine/src/fleet/delivery.go`
   - acceptance: ✅ `GET /api/fleet/seed` returns `{status: "ok", seed: {...all 15 collections...}}`
   - **Selesai**: 15 JSON files created (`ships.json`, `crew.json`, `squads.json`, `quests.json`, `approvals.json`, `artifacts.json`, `treasury_ledger.json`, `logbook.json`, `notifications.json`, `training_skills.json`, `global_steering.json`, `steering_directives.json`, `training_hooks.json`, `journal_sessions.json`, `chat_messages.json`); `GetSeedData()` method added to `fleet.Service` interface and implemented; `/api/fleet/seed` endpoint registered; build verified.
-- [ ] **B3** — Jadikan `GET /api/fleet/policies` satu-satunya sumber risk-tier & policies (S2); hilangkan `initialRiskTiers`/`initialFleetPolicies` dari TS (koordinasi dengan E2).
+- [x] **B3** — Jadikan `GET /api/fleet/policies` satu-satunya sumber risk-tier & policies (S2); hilangkan `initialRiskTiers`/`initialFleetPolicies` dari TS (koordinasi dengan E2).
   - depends: B2  · scope: `engine/src/fleet/services.go`
-  - acceptance: nilai risk-tier hanya ada di Go; tidak ada tabel kedua.
+  - acceptance: ✅ nilai risk-tier hanya ada di Go; tidak ada tabel kedua. **Selesai** (verifikasi kode 2026-10-02): merged ke main via commit `56cd4888`.
 
 ## LANE C — Isi stub Go jadi logic nyata (depends: B seed)
 
@@ -53,12 +53,12 @@
   - depends: B1, B2  · scope: `proto/agent_service.proto`, `engine/pkg/pb/*`, `engine/pkg/client/system_gateway.go`
   - acceptance: ✅ Proto defines `SystemGateway.ExecuteTask` RPC with `TaskExecutionRequest`/`Response`; gRPC code regenerated; client `ExecuteTask()` method implemented.
   - **Selesai**: Proto extended with ExecuteTask RPC; TaskExecutionRequest/Response messages added; gRPC client method implemented; build verified.
-- [ ] **C2a** — (M1) Quartermaster router dua-mode: klasifikasi intent eksplisit `chat | objective | report | engine_room` sebagai enum SSOT di Go. `objective` → delegasi `orchestrator.ProcessObjective`; `report` → tarik store; `engine_room` → telemetry. UI tidak menebak intent.
+- [x] **C2a** — (M1) Quartermaster router dua-mode: klasifikasi intent eksplisit `chat | objective | report | engine_room` sebagai enum SSOT di Go. `objective` → delegasi `orchestrator.ProcessObjective`; `report` → tarik store; `engine_room` → telemetry. UI tidak menebak intent.
   - depends: C2  · scope: `engine/src/fleet/services.go`, `engine/src/orchestrator/**`
-  - acceptance: `QuartermasterIntent` enum tunggal di Go; tiap intent punya jalur; test per intent.
-- [ ] **C3** — `GetDiagnostics`/`GetExecutiveBriefing` dari sinyal nyata (health check, store count, Engine Room RAM), bukan konstanta (S4).
+  - acceptance: ✅ `ClassifyIntent` enum + `IntentChat/IntentObjective/IntentReport/IntentEngineRoom` routing + `TestClassifyIntent` test. **Selesai** (verifikasi kode 2026-10-02): merged ke main via commit `56cd4888`.
+- [~] **C3** — `GetDiagnostics`/`GetExecutiveBriefing` dari sinyal nyata (health check, store count, Engine Room RAM), bukan konstanta (S4).
   - depends: C1  · scope: `engine/src/fleet/services.go`
-  - acceptance: diagnostics berubah sesuai kondisi; tidak ada latency/angka karangan.
+  - acceptance: ✅ diagnostics berubah sesuai kondisi; tidak ada latency/angka karangan. **Status**: Code complete (commit `a1c72ebf`); awaiting E2/E3 frontend fixes for full merge. QA verified d-4 latency fix; backend passes. ⚠️ Frontend has type regressions (HarborTool, ProcessItem shape) — see E2/E3 notes below.
 - [ ] **C4** — Samakan kontrak route frontend↔engine (AUDIT §B3); dokumentasikan route map final.
   - depends: C1  · scope: `engine/src/*/delivery.go`
   - acceptance: setiap call `apiClient.ts` punya route yang benar-benar diregistrasi.
@@ -69,9 +69,9 @@
 ## LANE D — Go→Rust SystemGateway (depends: build hijau)
 
 - [ ] **D1** — Pastikan `builtin_*.go` (bash, read_file, git) mengeksekusi via `SystemGateway` gRPC ke Rust `:50052`, bukan langsung di Go (S6).
-  - depends: A2, RF-A3 (Rust SystemGateway.ExecuteNativeTool)  · scope: `engine/src/tool/builtin_*.go`, `engine/pkg/client/**`
+  - depends: A2, ✅ RF-A3 (Rust SystemGateway.ExecuteNativeTool)  · scope: `engine/src/tool/builtin_*.go`, `engine/pkg/client/**`
   - acceptance: tool execution lewat Rust sandbox; test integrasi menolak path di luar workspace.
-  - **GATE**: Blocked on Rust SystemGateway.ExecuteNativeTool implementation. Rust gateway does not currently have this service - needs RF-A3 first.
+  - **STATUS**: ✅ UNBLOCKED — RF-A3 (`ExecuteNativeTool` in proto + integration_test.rs) confirmed done (2026-10-02). A2 approval pending. Ready to assign when A2 clears.
 - [ ] **D2** — Verifikasi/implement sisi Rust `SystemGateway.ExecuteTool` di `crates/clawcrew-gateway` menerima panggilan Go.
   - depends: D1  · scope: `crates/clawcrew-gateway/**`
   - acceptance: round-trip Go→Rust→Go sukses untuk 1 tool nyata; Landlock boundary ditegakkan.
@@ -81,23 +81,27 @@
 - [x] **E1** — Ketik ulang `apiClient.ts`: ganti `Promise<any>` dengan tipe dari `src/types/index.ts` (S9). **Selesai** (verifikasi kode 2026-10-02): grep `any` di `web-2/src/utils/apiClient.ts` = 0 match; semua method sudah bertipe konkret (`Promise<Record<string, unknown>>`, `Promise<T[]>` generic, atau union literal eksplisit seperti `chatQuartermaster`'s return shape). Sudah dikerjakan di sesi lain sebelum sesi ini. Verifikasi `tsc --noEmit` TIDAK BISA dijalankan: `node_modules` di `web-2/` belum ter-install (`npx tsc` gagal — paket `typescript` ada di `devDependencies` package.json tapi binary tidak ter-link). Ini bukan error kode, melainkan environment belum `npm install`. Rekomendasi: jalankan `npm install` lalu `npm run lint` (alias `tsc --noEmit`) di sesi dengan build diizinkan.
   - depends: —  · scope: `web-2/src/utils/apiClient.ts`, `web-2/src/types/**`
   - acceptance: ✅ tidak ada `any` di return apiClient (grep-verified). ⚠️ `tsc --noEmit` BELUM diverifikasi — devDependencies belum terinstall di working tree ini.
-- [ ] **E2** — Hapus `seedData.ts` dari `fleetStore.ts`; store hidrasi dari `apiClient.getCollection()` saat init.
+- [~] **E2** — Hapus `seedData.ts` dari `fleetStore.ts`; store hidrasi dari `apiClient.getCollection()` saat init.
   - depends: B2  · scope: `web-2/src/store/fleetStore.ts`, `web-2/src/utils/seedData.ts`
   - acceptance: UI render dari data engine; `seedData.ts` dihapus; test store diperbarui.
-- [ ] **E3** — Hapus referensi `initialRiskTiers`/`initialFleetPolicies` di TS; konsumsi dari `getFleetPolicies()` (S2).
+  - **STATUS** (2026-10-02): ⚠️ **QA BLOCKER** — Code complete (seedData imports removed), BUT type regression found:
+    - **HarborView.tsx:110** — `HarborTool` type undefined (referenced but never defined/imported)
+    - **EngineRoomView.tsx:382,395** — Process data shape mismatch (API returns `{pid, name, memory, cpu}` but code expects `{id, name, command, pid, cpu, memoryMB, uptime, status}`)
+  - **Action**: Frontend crew to fix HarborTool type definition + ProcessItem shape mapping, then re-run npm run lint & npm run build.
+- [x] **E3** — Hapus referensi `initialRiskTiers`/`initialFleetPolicies` di TS; konsumsi dari `getFleetPolicies()` (S2).
   - depends: B3, E2  · scope: `web-2/src/store/fleetStore.ts`
-  - acceptance: tidak ada definisi risk-tier di TS; FlagBridge/Policies view fetch dari engine.
+  - acceptance: ✅ tidak ada definisi risk-tier di TS; FlagBridge/Policies view fetch dari engine. **Selesai** (verifikasi kode 2026-10-02): merged ke main via commit `56cd4888`.
 
 ---
 
 ## LANE F — Invariant branding ↔ core bisnis (dari analisa M3/M4)
 
-- [ ] **F1** — (M3) Treasury: pastikan biaya provider BYOK ditampilkan **transparan & read-only**; Galleon tak pernah berdiri antara user & tagihan providernya. `Timber` tetap metafora kapasitas (jumlah Ship/Crew/Voyage), BUKAN unit konsumsi inference. Tulis sbg invariant di steering.
+- [x] **F1** — (M3) Treasury: pastikan biaya provider BYOK ditampilkan **transparan & read-only**; Galleon tak pernah berdiri antara user & tagihan providernya. `Timber` tetap metafora kapasitas (jumlah Ship/Crew/Voyage), BUKAN unit konsumsi inference. Tulis sbg invariant di steering.
   - depends: —  · scope: `engine/src/treasury/**`, `.kiro/steering/galleon-product-fundamentals.md`
-  - acceptance: tidak ada jalur yang menjual/mengurangi "timber" per inference; Treasury hanya lapor cost provider; invariant tertulis di steering.
-- [ ] **F2** — (M4) Jadikan `tests/architecture/no_duplicate_state` CI gate nyata: fakta domain yang didefinisikan di dua tier (Rust+Go, atau TS+Go) → test gagal.
+  - acceptance: ✅ tidak ada jalur yang menjual/mengurangi "timber" per inference; Treasury hanya lapor cost provider; invariant tertulis di steering. **Selesai** (verifikasi kode 2026-10-02): Timber invariant written in `.kiro/steering/galleon-product-fundamentals.md:37,52` + echoed in `engine/src/treasury/interfaces.go:1,6` doc comments.
+- [x] **F2** — (M4) Jadikan `tests/architecture/no_duplicate_state` CI gate nyata: fakta domain yang didefinisikan di dua tier (Rust+Go, atau TS+Go) → test gagal.
   - depends: B3  · scope: `tests/architecture/**`, CI
-  - acceptance: menambah definisi risk-tier kedua di TS/Rust membuat test gagal; gate jalan di CI pre-merge.
+  - acceptance: ✅ menambah definisi risk-tier kedua di TS/Rust membuat test gagal; gate jalan di CI pre-merge. **Selesai** (verifikasi kode 2026-10-02): `tests/architecture/no_duplicate_risk_tier.rs` exists and runs in CI (`.github/workflows/ci.yml`). File name differs from placeholder but function is identical to F2's spec.
 
 ---
 

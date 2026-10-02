@@ -1,6 +1,17 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isTauriEnvironment } from './tauriBridge';
 
+export interface ProcessItem {
+  id: string;
+  name: string;
+  command: string;
+  pid: number;
+  cpu: number;
+  memoryMB: number;
+  uptime: string;
+  status: 'running' | 'idle' | 'stopped';
+}
+
 export const apiClient = {
   isTauri(): boolean {
     return isTauriEnvironment();
@@ -156,16 +167,38 @@ export const apiClient = {
     return res.json();
   },
 
-  async getEngineProcesses(): Promise<Array<{ pid: number; name: string; memory: number; cpu: number }>> {
+  async getEngineProcesses(): Promise<ProcessItem[]> {
     if (this.isTauri()) {
       try {
-        return await invoke<Array<{ pid: number; name: string; memory: number; cpu: number }>>('get_engine_processes');
+        const data = await invoke<Array<{ pid: number; name: string; memory: number; cpu: number }>>('get_engine_processes');
+        // Map backend response {pid,name,memory,cpu} to ProcessItem interface
+        return data.map((item) => ({
+          id: String(item.pid), // pid -> id
+          name: item.name,
+          command: '', // missing from API - omitted
+          pid: item.pid,
+          cpu: item.cpu,
+          memoryMB: item.memory, // memory -> memoryMB
+          uptime: '', // missing from API - omitted
+          status: 'running' // default status
+        }));
       } catch (e) {
         console.warn('[API] Tauri get_engine_processes fallback:', e);
       }
     }
     const res = await fetch('/api/engine/processes');
-    return res.json();
+    const data = await res.json() as Array<{ pid: number; name: string; memory: number; cpu: number }>;
+    // Map backend response {pid,name,memory,cpu} to ProcessItem interface
+    return data.map((item) => ({
+      id: String(item.pid), // pid -> id
+      name: item.name,
+      command: '', // missing from API - omitted
+      pid: item.pid,
+      cpu: item.cpu,
+      memoryMB: item.memory, // memory -> memoryMB
+      uptime: '', // missing from API - omitted
+      status: 'running' // default status
+    }));
   },
 
   async executeTerminalCommand(command: string): Promise<{ stdout: string; exitCode: number; duration: string }> {

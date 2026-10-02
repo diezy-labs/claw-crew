@@ -378,9 +378,7 @@ export const EngineRoomView: React.FC = () => {
   // Load real backend processes and system metrics
   useEffect(() => {
     apiClient.getEngineProcesses().then((data) => {
-      if (data && data.length > 0) {
-        setProcesses(data);
-      }
+      if (data && data.length > 0) setProcesses(data);
     }).catch(console.error);
 
     apiClient.getSystemMetrics().then((metrics) => {

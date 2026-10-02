@@ -105,9 +105,9 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  // Harbor tools placeholder (engine-provided via /api/harbor/tools)
-  // ponytail: tools array is empty pending apiClient.getHarborTools() wiring; typed as HarborTool[] for now
-  const tools: HarborTool[] = [];
+  // ponytail: HarborTools shape pending API contract - backend /api/harbor/tools not yet implemented
+  // Using any[] placeholder until Phase 2c backend provides real contract
+  const tools: any[] = [];
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);
