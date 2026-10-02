@@ -55,6 +55,26 @@ func (t *ListFilesTool) Execute(ctx context.Context, args string, workspaceRoot 
 }
 
 func (t *ListFilesTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else fs walk
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Path          string `json:"path"`
 		MaxDepth      int    `json:"max_depth"`
@@ -205,6 +225,26 @@ func (t *ReadFileTool) Execute(ctx context.Context, args string, workspaceRoot s
 }
 
 func (t *ReadFileTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else fs read
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Path     string `json:"path"`
 		MaxBytes int64  `json:"max_bytes"`
@@ -314,6 +354,26 @@ func (t *SearchCodeTool) Execute(ctx context.Context, args string, workspaceRoot
 }
 
 func (t *SearchCodeTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else fs search
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Query         string `json:"query"`
 		Path          string `json:"path"`
@@ -469,6 +529,26 @@ func (t *CreateDraftTool) Execute(ctx context.Context, args string, workspaceRoo
 }
 
 func (t *CreateDraftTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else fs write
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Name    string `json:"name"`
 		Content string `json:"content"`
@@ -543,6 +623,26 @@ func (t *ApplyPatchTool) Execute(ctx context.Context, args string, workspaceRoot
 }
 
 func (t *ApplyPatchTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else fs patch
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Path             string `json:"path"`
 		Patch            string `json:"patch"`

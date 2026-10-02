@@ -45,6 +45,26 @@ func (t *GitStatusTool) Execute(ctx context.Context, args string, workspaceRoot 
 }
 
 func (t *GitStatusTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else exec.Command
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	workspaceRoot := getWorkspaceRoot(execCtx)
 
 	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain", "-b")
@@ -98,6 +118,26 @@ func (t *GitCreateBranchTool) Execute(ctx context.Context, args string, workspac
 }
 
 func (t *GitCreateBranchTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else exec.Command
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		BranchName string `json:"branch_name"`
 	}
@@ -168,6 +208,26 @@ func (t *GitCommitTool) Execute(ctx context.Context, args string, workspaceRoot 
 }
 
 func (t *GitCommitTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else exec.Command
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		Message string   `json:"message"`
 		Files   []string `json:"files"`

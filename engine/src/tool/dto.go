@@ -53,17 +53,18 @@ const (
 
 // ExecutionContext defines the security, audit, and scoping boundary (BUG-005 compliant)
 type ExecutionContext struct {
-	ActorID            string   `json:"actor_id"`
-	SessionID          string   `json:"session_id,omitempty"`
-	WorkspaceID        string   `json:"workspace_id,omitempty"`
-	CrewID             string   `json:"crew_id,omitempty"`
-	RunID              string   `json:"run_id,omitempty"`
-	TaskID             string   `json:"task_id,omitempty"`
-	RequestID          string   `json:"request_id,omitempty"`
-	ApprovalState      string   `json:"approval_state,omitempty"`
-	AllowedRoots       []string `json:"allowed_roots,omitempty"`
-	DataClassification string   `json:"data_classification,omitempty"`
-	Capabilities       []string `json:"capabilities,omitempty"`
+	ActorID            string       `json:"actor_id"`
+	SessionID          string       `json:"session_id,omitempty"`
+	WorkspaceID        string       `json:"workspace_id,omitempty"`
+	CrewID             string       `json:"crew_id,omitempty"`
+	RunID              string       `json:"run_id,omitempty"`
+	TaskID             string       `json:"task_id,omitempty"`
+	RequestID          string       `json:"request_id,omitempty"`
+	ApprovalState      string       `json:"approval_state,omitempty"`
+	AllowedRoots       []string     `json:"allowed_roots,omitempty"`
+	DataClassification string       `json:"data_classification,omitempty"`
+	Capabilities       []string     `json:"capabilities,omitempty"`
+	Gateway            SystemGateway `json:"-"` // Optional gRPC gateway for native builtin tool execution
 }
 
 // ToolDefinition describes a registered tool and its schema constraints

@@ -109,6 +109,26 @@ func (t *WebFetchTool) Execute(ctx context.Context, args string, workspaceRoot s
 }
 
 func (t *WebFetchTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
+	// Fallback: if gateway available, route through gRPC; else HTTP fetch
+	if execCtx != nil && execCtx.Gateway != nil {
+		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+		if err != nil {
+			return "", nil, err
+		}
+		var res struct {
+			Success bool   `json:"success"`
+			Output  string `json:"output"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal([]byte(resp), &res); err != nil {
+			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+		}
+		if !res.Success {
+			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+		}
+		return res.Output, nil, nil
+	}
+
 	var input struct {
 		URL      string `json:"url"`
 		MaxBytes int64  `json:"max_bytes"`
