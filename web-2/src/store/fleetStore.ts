@@ -15,7 +15,8 @@ import {
   initialSteeringDirectives,
   initialTrainingHooks,
   initialJournalSessions,
-  initialChatMessages
+  initialChatMessages,
+  seedData
 } from '../utils/seedData';
 import {
   ThemeMode,
@@ -147,6 +148,7 @@ interface FleetState {
   addNotification: (notification: Omit<NotificationItem, 'id' | 'createdAt' | 'read'>) => void;
   simulateVoyageTick: () => void;
   fetchRealData: () => Promise<void>;
+  hydrateSeedData: () => Promise<void>;
   ringDeckBell: () => Promise<string>;
 
   // Captain's Journal Actions
@@ -398,13 +400,13 @@ export const useFleetStore = create<FleetState>((set, get) => ({
         ]);
 
         set({
-          systemMetrics: sysMetrics,
-          executiveBriefing: briefing,
-          harborProviders: providers,
-          fleetMetrics: fleetMet,
-          diagnostics: diag,
-          snapshots: snaps,
-          engineProcesses: procs,
+          systemMetrics: sysMetrics as { gateway_latency_ms: number; active_threads: number; isolation_mode: string; memory_db_mb: number; } | undefined,
+          executiveBriefing: briefing as any[],
+          harborProviders: providers as any[],
+          fleetMetrics: fleetMet as { active_ships: number; assigned_crew: number; running_voyages: number; status: string; } | undefined,
+          diagnostics: diag as any[],
+          snapshots: snaps as any[],
+          engineProcesses: procs as any[],
           fleetPolicies: pols?.policies || [],
           riskTiers: pols?.riskTiers || []
         });
@@ -413,6 +415,80 @@ export const useFleetStore = create<FleetState>((set, get) => ({
       }
     } catch (e) {
       console.warn('[Store] fetchRealData unexpected error:', e);
+    }
+  },
+
+  hydrateSeedData: async () => {
+    try {
+      // API response type for /api/fleet/seed
+      interface SeedResponse {
+        seed: {
+          squads: any[];
+          ships: any[];
+          crew: any[];
+          quests: any[];
+          artifacts: any[];
+          approvals: any[];
+          logbook: any[];
+          treasuryLedger: any[];
+          notifications: any[];
+          journalSessions: any[];
+          chatMessages: any[];
+          trainingSkills: any[];
+          globalSteering: any[];
+          steeringDirectives: any[];
+          trainingHooks: any[];
+        };
+      }
+      const res = await apiClient.get<SeedResponse>('/api/fleet/seed');
+      if (res && res.seed) {
+        // Update collections with seed data
+        const seedMap: Record<string, any[]> = {
+          squads: res.seed.squads,
+          ships: res.seed.ships,
+          crew: res.seed.crew,
+          quests: res.seed.quests,
+          artifacts: res.seed.artifacts,
+          approvals: res.seed.approvals,
+          logbook: res.seed.logbook,
+          treasuryLedger: res.seed.treasuryLedger,
+          notifications: res.seed.notifications,
+          journalSessions: res.seed.journalSessions,
+          chatMessages: res.seed.chatMessages,
+          trainingSkills: res.seed.trainingSkills,
+          globalSteering: res.seed.globalSteering,
+          steeringDirectives: res.seed.steeringDirectives,
+          trainingHooks: res.seed.trainingHooks
+        };
+        for (const [col, data] of Object.entries(seedMap)) {
+          if (Array.isArray(data) && data.length > 0) {
+            set({ [col]: data } as any);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[Store] hydrateSeedData API error, using mock:', err);
+      // Fallback to mock data
+      const seedMap: Record<string, any[]> = {
+        squads: seedData.squads,
+        ships: seedData.ships,
+        crew: seedData.crew,
+        quests: seedData.quests,
+        artifacts: seedData.artifacts,
+        approvals: seedData.approvals,
+        logbook: seedData.logbook,
+        treasuryLedger: seedData.treasuryLedger,
+        notifications: seedData.notifications,
+        journalSessions: seedData.journalSessions,
+        chatMessages: seedData.chatMessages,
+        trainingSkills: seedData.trainingSkills,
+        globalSteering: seedData.globalSteering,
+        steeringDirectives: seedData.steeringDirectives,
+        trainingHooks: seedData.trainingHooks
+      };
+      for (const [col, data] of Object.entries(seedMap)) {
+        set({ [col]: data } as any);
+      }
     }
   },
 

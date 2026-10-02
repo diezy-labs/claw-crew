@@ -609,6 +609,25 @@ export const initialEngineProcesses = [
 // Re-adding them here duplicates domain state across tiers and will fail the
 // tests/architecture/no_duplicate_state gate (F2).
 
+// Seed data structure for /api/fleet/seed endpoint response
+export const seedData = {
+  ships: initialShips,
+  crew: initialCrew,
+  squads: initialSquads,
+  quests: initialQuests,
+  artifacts: initialArtifacts,
+  approvals: initialApprovals,
+  logbook: initialLogbook,
+  treasuryLedger: initialTreasuryLedger,
+  notifications: initialNotifications,
+  journalSessions: initialJournalSessions,
+  chatMessages: initialChatMessages,
+  trainingSkills: initialTrainingSkills,
+  globalSteering: initialGlobalSteering,
+  steeringDirectives: initialSteeringDirectives,
+  trainingHooks: initialTrainingHooks
+};
+
 export const initialHarborTools = [
   {
     name: 'GitHub Repository Connector',
