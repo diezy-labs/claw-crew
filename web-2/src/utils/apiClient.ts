@@ -1,6 +1,23 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isTauriEnvironment } from './tauriBridge';
 
+export interface ToolDefinition {
+  id: string;
+  version: string;
+  display_name: string;
+  description: string;
+  input_schema: Record<string, unknown>;
+  output_schema?: Record<string, unknown>;
+  risk_tier: 'READ' | 'WRITE' | 'EXECUTE';
+  risk_class: string;
+  capabilities: string[];
+  requires_approval: boolean;
+  timeout_seconds: number;
+  max_output_bytes: number;
+  idempotency_mode: string;
+  source: string;
+}
+
 export interface ProcessItem {
   id: string;
   name: string;

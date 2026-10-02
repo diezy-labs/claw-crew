@@ -105,8 +105,8 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  // ponytail: HarborTools shape pending API contract - backend /api/harbor/tools not yet implemented
-  // Using any[] placeholder until Phase 2c backend provides real contract
+  // ponytail: Harbor connector tools use backend ToolDefinition from /api/v1/tools
+  // Harbor tab uses `any[]` until /api/harbor/tools endpoint is added in Phase 2c
   const tools: any[] = [];
 
   const handleScanMdnsPeers = () => {
