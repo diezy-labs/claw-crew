@@ -55,3 +55,28 @@ jobs:
               repo: context.repo.repo,
               body: '🔍 **Principle Code Review Triggered**\n\nThis PR has been sent to the Principle crew for security gate review (7-gate framework: path validation, workspace containment, timeout enforcement, spawn safety, proto alignment, no secrets, RCE closure).\n\nExpected review time: 1-2 hours.\n\nStatus: ⏳ Awaiting Principle review...'
             })
+      
+      - name: Discord notification — PR submitted for review
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "📋 **New PR Submitted for Review**",
+              "embeds": [{
+                "title": "PR #${{ steps.pr-info.outputs.pr_number }} → Principle Crew",
+                "url": "${{ steps.pr-info.outputs.pr_url }}",
+                "color": 3447003,
+                "fields": [
+                  {"name": "Title", "value": "${{ steps.pr-info.outputs.pr_title }}", "inline": false},
+                  {"name": "Branch", "value": "${{ steps.pr-info.outputs.pr_head }}", "inline": true},
+                  {"name": "Target", "value": "testing", "inline": true},
+                  {"name": "Review Gates", "value": "7-gate security framework (path/workspace/timeout/spawn/proto/secrets/RCE)", "inline": false},
+                  {"name": "Timeline", "value": "1-2 hours for Principle analysis", "inline": false}
+                ],
+                "footer": {"text": "galleon-fleet Phase 3 Automation"}
+              }]
+            }' \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        continue-on-error: true

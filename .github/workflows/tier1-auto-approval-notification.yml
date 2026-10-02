@@ -1,0 +1,60 @@
+name: Tier 1 Auto-Approval Notifications
+
+# Trigger ketika Principle crew post-approve comment pada PR
+# Deteksi: "✅ Approved (auto)" atau "(auto-approved)" dalam comment
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  notify-tier1-approval:
+    # Only run for PRs dengan auto-approval comment
+    if: github.event.issue.pull_request != null && (contains(github.event.comment.body, '✅ Approved (auto)') || contains(github.event.comment.body, 'auto-approved') || contains(github.event.comment.body, 'auto-approve'))
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Extract PR info
+        id: extract
+        run: |
+          echo "pr_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          echo "pr_title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
+          echo "pr_url=${{ github.event.issue.html_url }}" >> $GITHUB_OUTPUT
+          
+          # Try to extract severity if mentioned in comment
+          COMMENT="${{ github.event.comment.body }}"
+          if [[ "$COMMENT" =~ severity[:=\ ]*([a-z]+) ]]; then
+            echo "severity=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          else
+            echo "severity=normal" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Discord notification — Tier 1 auto-approved
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "✅ **Tier 1 — Routine Auto-Approved & Merged**",
+              "embeds": [{
+                "title": "PR #${{ steps.extract.outputs.pr_number }} → testing branch",
+                "url": "${{ steps.extract.outputs.pr_url }}",
+                "color": 3066993,
+                "fields": [
+                  {"name": "Title", "value": "${{ steps.extract.outputs.pr_title }}", "inline": false},
+                  {"name": "Status", "value": "✅ Auto-approved (Principle gate pass)", "inline": true},
+                  {"name": "Severity", "value": "${{ steps.extract.outputs.severity }}", "inline": true},
+                  {"name": "Next", "value": "QA testing → auto-merge to testing (if tests pass)", "inline": false},
+                  {"name": "Timeline", "value": "No human review needed", "inline": false}
+                ],
+                "footer": {"text": "galleon-fleet Phase 3 Automation — Tier 1 routine"}
+              }]
+            }' \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        continue-on-error: true
