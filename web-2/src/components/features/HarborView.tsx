@@ -29,7 +29,6 @@ import { Button } from '../common/Button';
 import { ItemCard } from '../common/ItemCard';
 import { useFleetStore } from '../../store/fleetStore';
 import { apiClient } from '../../utils/apiClient';
-import { initialHarborTools } from '../../utils/seedData';
 
 export const HarborView: React.FC = () => {
   const { setRemoteAccessModalOpen, harborProviders } = useFleetStore();
@@ -106,7 +105,8 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  const tools = initialHarborTools;
+  // Harbor tools placeholder (engine-provided via /api/harbor/tools)
+  const tools: any[] = [];
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);

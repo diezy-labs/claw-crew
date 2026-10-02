@@ -379,7 +379,7 @@ export const EngineRoomView: React.FC = () => {
   useEffect(() => {
     apiClient.getEngineProcesses().then((data) => {
       if (data && data.length > 0) {
-        setProcesses(data);
+        setProcesses(data as unknown as ProcessItem[]);
       }
     }).catch(console.error);
 
@@ -392,7 +392,7 @@ export const EngineRoomView: React.FC = () => {
     setIsRefreshingProcs(true);
     try {
       const data = await apiClient.getEngineProcesses();
-      if (data && data.length > 0) setProcesses(data);
+      if (data && data.length > 0) setProcesses(data as unknown as ProcessItem[]);
       const metrics = await apiClient.getSystemMetrics();
       if (metrics) setSystemMetrics(metrics);
     } catch (err) {
