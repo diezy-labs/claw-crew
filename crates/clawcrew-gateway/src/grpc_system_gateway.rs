@@ -34,19 +34,25 @@ impl SystemGatewayService {
     }
 
     /// Validate that a path is within the workspace root (no path traversal).
+    /// Wrapper that uses the service's default workspace_root.
     fn validate_path(&self, path: &str) -> Result<PathBuf, String> {
-        let requested = PathBuf::from(path);
-        let root = self.workspace_root();
+        let workspace_root = self.workspace_root();
+        self.validate_path_with_workspace(path, &workspace_root)
+    }
 
-        // Canonicalize both to resolve symlinks and `..` references.
-        let canonical_root = root.canonicalize()
+    /// Validate that a path is within the specified workspace root (no path traversal).
+    /// Returns the canonicalized path if valid.
+    fn validate_path_with_workspace(&self, path: &str, workspace_root: &PathBuf) -> Result<PathBuf, String> {
+        let requested = PathBuf::from(path);
+
+        // Canonicalize the provided workspace root
+        let canonical_root = workspace_root.canonicalize()
             .map_err(|e| format!("failed to canonicalize workspace root: {}", e))?;
 
         // The path may not exist yet (e.g., a file we're about to write) or
         // may traverse through nonexistent ancestors (e.g. "../../../etc").
         // Walk up until we find an ancestor that does exist, canonicalize
-        // that, then re-attach the stripped suffix — resolving the real
-        // target location without requiring it to exist.
+        // that, then re-attach the stripped suffix.
         let mut existing_ancestor = requested.as_path();
         let mut suffix = PathBuf::new();
         loop {
@@ -141,16 +147,16 @@ impl SystemGatewayService {
     }
 
     /// Read a file from the workspace.
-    async fn read_file(&self, path: &str) -> Result<String, String> {
-        let validated_path = self.validate_path(path)?;
+    async fn read_file_with_workspace(&self, path: &str, workspace_root: &PathBuf) -> Result<String, String> {
+        let validated_path = self.validate_path_with_workspace(path, workspace_root)?;
         tokio::fs::read_to_string(&validated_path)
             .await
             .map_err(|e| format!("failed to read file '{}': {}", path, e))
     }
 
     /// Write a file to the workspace.
-    async fn write_file(&self, path: &str, contents: &str) -> Result<String, String> {
-        let validated_path = self.validate_path(path)?;
+    async fn write_file_with_workspace(&self, path: &str, contents: &str, workspace_root: &PathBuf) -> Result<String, String> {
+        let validated_path = self.validate_path_with_workspace(path, workspace_root)?;
 
         // Ensure parent directory exists.
         if let Some(parent) = validated_path.parent() {
@@ -186,6 +192,7 @@ impl SystemGateway for SystemGatewayService {
                     "tool '{}' is not in the allowlist {ALLOWED_TOOLS:?}",
                     req.tool_name
                 ),
+                exit_code: None,
             }));
         }
 
@@ -193,27 +200,50 @@ impl SystemGateway for SystemGatewayService {
         let args: serde_json::Value = serde_json::from_str(&req.arguments_json)
             .unwrap_or_else(|_| serde_json::json!({}));
 
+        // Determine workspace root based on request
+        let workspace_root = if let Some(ws_path) = &req.workspace_path {
+            // Validate the workspace path itself is within allowed roots
+            match self.validate_path_with_workspace(ws_path, &self.workspace_root()) {
+                Ok(root) => root,
+                Err(e) => {
+                    return Ok(Response::new(ToolCallResponse {
+                        success: false,
+                        output: String::new(),
+                        error: format!("workspace path validation failed: {}", e),
+                        exit_code: None,
+                    }));
+                }
+            }
+        } else {
+            self.workspace_root()
+        };
+
+        // Apply timeout if specified (default 60s, clamp 1-300s)
+        let timeout_seconds = req.timeout_seconds.unwrap_or(60);
+        let timeout_duration = std::time::Duration::from_secs(timeout_seconds.max(1).min(300) as u64);
+
+        // Execute based on tool type
         let result = match req.tool_name.as_str() {
             "bash" => {
                 let command = args
                     .get("command")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                self.execute_bash(command).await
+                tokio::time::timeout(timeout_duration, self.execute_bash(command)).await
             }
             "git" => {
                 let git_args = args
                     .get("args")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                self.execute_git(git_args).await
+                tokio::time::timeout(timeout_duration, self.execute_git(git_args)).await
             }
             "read_file" => {
                 let path = args
                     .get("path")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                self.read_file(path).await
+                tokio::time::timeout(timeout_duration, self.read_file_with_workspace(path, &workspace_root)).await
             }
             "write_file" => {
                 let path = args
@@ -224,21 +254,29 @@ impl SystemGateway for SystemGatewayService {
                     .get("contents")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                self.write_file(path, contents).await
+                tokio::time::timeout(timeout_duration, self.write_file_with_workspace(path, contents, &workspace_root)).await
             }
-            _ => Err(format!("unexpected tool '{}'", req.tool_name)),
+            _ => Ok(Err(format!("unexpected tool '{}'", req.tool_name))),
         };
 
         match result {
-            Ok(output) => Ok(Response::new(ToolCallResponse {
+            Ok(Ok(output)) => Ok(Response::new(ToolCallResponse {
                 success: true,
                 output,
                 error: String::new(),
+                exit_code: None,
             })),
-            Err(error) => Ok(Response::new(ToolCallResponse {
+            Ok(Err(error)) => Ok(Response::new(ToolCallResponse {
                 success: false,
                 output: String::new(),
                 error,
+                exit_code: None,
+            })),
+            Err(_) => Ok(Response::new(ToolCallResponse {
+                success: false,
+                output: String::new(),
+                error: format!("execution timed out after {} seconds", timeout_seconds),
+                exit_code: None,
             })),
         }
     }
@@ -329,14 +367,14 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn validate_path_rejects_traversal_attempts() {
+    async fn validate_path_with_workspace_rejects_traversal_attempts() {
         let workspace = std::env::current_dir().unwrap();
         let svc = SystemGatewayService::new(Some(workspace.clone()));
 
         // Try to escape the workspace with ../../../etc/passwd
         // Note: On Windows, paths may canonicalize safely within workspace;
         // on Unix, they should be rejected. Either way, path should be validated.
-        let result = svc.validate_path("../../../etc/passwd");
+        let result = svc.validate_path_with_workspace("../../../etc/passwd", &workspace);
         // Just verify the method works and returns a result (error handling is OS-dependent)
         let _ = result;
     }

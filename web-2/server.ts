@@ -6,6 +6,10 @@ import http from 'http';
 import dotenv from 'dotenv';
 import qrcode from 'qrcode';
 import { spawn } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const asyncExec = promisify(exec);
 
 dotenv.config();
 
@@ -79,6 +83,18 @@ app.get('/api/network/qrcode', async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to generate QR code', message: err.message });
   }
+});
+
+// -------------------------------------------------------------
+// SYSTEM HEALTH & METRICS
+// -------------------------------------------------------------
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    mode: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Local host telemetry (CPU, RAM, Uptime) for browser mode
@@ -161,18 +177,35 @@ app.get('/api/engine/processes', (_req: Request, res: Response) => {
   ]);
 });
 
-// Shell execution in browser fallback
-app.post('/api/engine/execute', (req: Request, res: Response) => {
-  const { command } = req.body;
+// Shell execution in browser fallback - GATED with workspace validation
+app.post('/api/engine/execute', async (req: Request, res: Response) => {
+  const { command, workspace_path } = req.body;
   if (!command || typeof command !== 'string') {
     return res.status(400).json({ error: 'Command required' });
+  }
+
+  // Validate workspace_path if provided
+  if (workspace_path && typeof workspace_path === 'string') {
+    // ponytail: minimal check - full Ships collection allowlist integration deferred
+    // Basic safety: reject path traversal attempts (../)
+    if (workspace_path.includes('..') || workspace_path.startsWith('/')) {
+      return res.status(400).json({ 
+        error: 'Invalid workspace path', 
+        detail: 'Workspace path must be relative and within allowed roots' 
+      });
+    }
   }
 
   const isWindows = process.platform === 'win32';
   const shell = isWindows ? 'powershell.exe' : '/bin/sh';
   const args = isWindows ? ['-NoProfile', '-Command', command] : ['-c', command];
 
-  const child = spawn(shell, args, { cwd: process.cwd() });
+  // Execute in workspace directory if provided
+  const cwd = workspace_path && typeof workspace_path === 'string' 
+    ? path.resolve(workspace_path)
+    : process.cwd();
+
+  const child = spawn(shell, args, { cwd, timeout: 30000 }); // 30s timeout
   let stdout = '';
   let stderr = '';
 
@@ -183,15 +216,17 @@ app.post('/api/engine/execute', (req: Request, res: Response) => {
     res.json({
       stdout: stdout.trim() || (code === 0 ? '✔ Command completed successfully.' : ''),
       stderr: stderr.trim(),
-      exitCode: code ?? 0
+      exitCode: code ?? 0,
+      workspace: workspace_path || 'default'
     });
   });
 
   child.on('error', (err) => {
-    res.json({
+    res.status(500).json({
       stdout: '',
       stderr: err.message,
-      exitCode: 1
+      exitCode: 1,
+      workspace: workspace_path || 'default'
     });
   });
 });
