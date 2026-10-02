@@ -105,10 +105,11 @@ export const HarborView: React.FC = () => {
     }
   ]);
 
-  // ponytail: HarborView connectors tab - using ToolDefinition from backend /api/v1/tools
-  // Note: HarborView UI expects additional fields (target, auth, status) not in ToolDefinition
-  // This is a schema mismatch that needs backend Phase 2c fix
-  const tools: ToolDefinition[] = [];
+  // ponytail: HarborView connector instances (git, auth, S3, etc.) use a different shape than backend ToolDefinition
+  // Backend /api/v1/tools = tool type definitions (id, version, display_name, capabilities, risk_tier)
+  // Harbor needs /api/harbor/tools = connection instances (name, target, status, auth)
+  // Until /api/harbor/tools endpoint exists (Phase 2c), array remains empty
+  const tools: any[] = [];
 
   const handleScanMdnsPeers = () => {
     setIsScanningPeers(true);
