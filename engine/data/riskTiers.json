@@ -1,0 +1,30 @@
+[
+  {
+    "tier": 1,
+    "name": "Read & Inspection",
+    "approvalRequired": false,
+    "autoRetry": true,
+    "maxBudgetUSD": 0.5
+  },
+  {
+    "tier": 2,
+    "name": "Code Staging & Local Branch",
+    "approvalRequired": false,
+    "autoRetry": true,
+    "maxBudgetUSD": 2.0
+  },
+  {
+    "tier": 3,
+    "name": "External Writes & PR Creation",
+    "approvalRequired": true,
+    "autoRetry": false,
+    "maxBudgetUSD": 5.0
+  },
+  {
+    "tier": 4,
+    "name": "Production Deploy & Secret Rotation",
+    "approvalRequired": true,
+    "autoRetry": false,
+    "maxBudgetUSD": 10.0
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "pol-1",
+    "name": "Human-in-the-Loop Gate for Outer Operations",
+    "scope": "Fleet-wide",
+    "enforcement": "strict",
+    "description": "Any task attempting external git push, production deployment, or financial transaction requires Captain's explicit digital signature."
+  },
+  {
+    "id": "pol-2",
+    "name": "Autonomous Reading and Scoped Staging",
+    "scope": "Specialist Ships",
+    "enforcement": "permissive",
+    "description": "Autonomous agents may freely read workspace context, analyze AST syntax, run tests, and propose non-destructive diffs."
+  },
+  {
+    "id": "pol-3",
+    "name": "Landlock OS Kernel Boundary",
+    "scope": "Host Sandbox",
+    "enforcement": "kernel-enforced",
+    "description": "Kernel-level filesystem confinement prevents file tampering outside the workspace root."
+  }
+]

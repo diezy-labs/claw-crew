@@ -335,37 +335,39 @@ func (s *fleetService) CreateSnapshot(ctx context.Context, label string) (*Snaps
 	return &snap, nil
 }
 
+// GetFleetPolicies returns fleet policies and risk tiers from persistent storage.
+// Data files: data/policies.json, data/riskTiers.json (seeded from seedData.ts).
 func (s *fleetService) GetFleetPolicies(ctx context.Context) (map[string]any, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	policiesPath := filepath.Join(s.dataDir, "policies.json")
+	riskTiersPath := filepath.Join(s.dataDir, "riskTiers.json")
+
+	policiesRaw, err := os.ReadFile(policiesPath)
+	if err != nil {
+		return nil, fmt.Errorf("read policies: %w", err)
+	}
+
+	riskTiersRaw, err := os.ReadFile(riskTiersPath)
+	if err != nil {
+		return nil, fmt.Errorf("read riskTiers: %w", err)
+	}
+
+	var policies []map[string]any
+	var riskTiers []map[string]any
+
+	if err := json.Unmarshal(policiesRaw, &policies); err != nil {
+		return nil, fmt.Errorf("parse policies: %w", err)
+	}
+
+	if err := json.Unmarshal(riskTiersRaw, &riskTiers); err != nil {
+		return nil, fmt.Errorf("parse riskTiers: %w", err)
+	}
+
 	return map[string]any{
-		"policies": []map[string]any{
-			{
-				"id":          "pol-1",
-				"name":        "Human-in-the-Loop Gate for Outer Operations",
-				"scope":       "Fleet-wide",
-				"enforcement": "strict",
-				"description": "Any task attempting external git push, production deployment, or financial transaction requires Captain's explicit digital signature.",
-			},
-			{
-				"id":          "pol-2",
-				"name":        "Autonomous Reading and Scoped Staging",
-				"scope":       "Specialist Ships",
-				"enforcement": "permissive",
-				"description": "Autonomous agents may freely read workspace context, analyze AST syntax, run tests, and propose non-destructive diffs.",
-			},
-			{
-				"id":          "pol-3",
-				"name":        "Landlock OS Kernel Boundary",
-				"scope":       "Host Sandbox",
-				"enforcement": "kernel-enforced",
-				"description": "Kernel-level filesystem confinement prevents file tampering outside the workspace root.",
-			},
-		},
-		"riskTiers": []map[string]any{
-			{"tier": 1, "name": "Read & Inspection", "approvalRequired": false, "autoRetry": true, "maxBudgetUSD": 0.50},
-			{"tier": 2, "name": "Code Staging & Local Branch", "approvalRequired": false, "autoRetry": true, "maxBudgetUSD": 2.00},
-			{"tier": 3, "name": "External Writes & PR Creation", "approvalRequired": true, "autoRetry": false, "maxBudgetUSD": 5.00},
-			{"tier": 4, "name": "Production Deploy & Secret Rotation", "approvalRequired": true, "autoRetry": false, "maxBudgetUSD": 10.00},
-		},
+		"policies": policies,
+		"riskTiers": riskTiers,
 	}, nil
 }
 
