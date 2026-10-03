@@ -56,14 +56,6 @@ function getNetworkInterfaces(): NetworkAddress[] {
 // -------------------------------------------------------------
 // HOST GATEWAY: Remote Access & Local Hardware Telemetry
 // -------------------------------------------------------------
-app.get('/api/network/interfaces', (_req: Request, res: Response) => {
-  res.json({
-    port,
-    host,
-    addresses: getNetworkInterfaces()
-  });
-});
-
 app.get('/api/network/qrcode', async (req: Request, res: Response) => {
   const targetUrl = (req.query.url as string) || `http://localhost:${port}`;
   try {
@@ -161,8 +153,41 @@ app.get('/api/engine/processes', (_req: Request, res: Response) => {
   ]);
 });
 
+// bearer token validation for /api/engine/execute
+function verifyExecuteToken(req: Request): { valid: boolean; error?: string } {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return { valid: false, error: 'Missing Authorization header' };
+  }
+  const token = authHeader.replace('Bearer ', '');
+  const expectedToken = process.env.EXECUTE_TOKEN;
+  if (!expectedToken) {
+    return { valid: false, error: 'Server not configured for execute token' };
+  }
+  if (token !== expectedToken) {
+    return { valid: false, error: 'Invalid authorization token' };
+  }
+  return { valid: true };
+}
+
+// execute gate middleware: checks Tauri or HTTP bearer token
+function executeGateMiddleware(req: Request, res: Response, next: () => void): void {
+  // In Tauri environment, allow execution (already verified by Tauri security)
+  if (req.headers['x-tauri-environment'] === 'true') {
+    next();
+    return;
+  }
+  // HTTP: require bearer token
+  const validation = verifyExecuteToken(req);
+  if (!validation.valid) {
+    res.status(401).json({ error: 'Unauthorized', message: validation.error });
+    return;
+  }
+  next();
+}
+
 // Shell execution in browser fallback
-app.post('/api/engine/execute', (req: Request, res: Response) => {
+app.post('/api/engine/execute', executeGateMiddleware, (req: Request, res: Response) => {
   const { command } = req.body;
   if (!command || typeof command !== 'string') {
     return res.status(400).json({ error: 'Command required' });

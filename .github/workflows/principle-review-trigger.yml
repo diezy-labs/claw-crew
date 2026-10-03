@@ -1,0 +1,82 @@
+name: Trigger Principle Code Review
+
+# Trigger ketika ada PR baru atau update ke testing branch
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - testing
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  trigger-principle-review:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Get PR details
+        id: pr-info
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+          echo "pr_head=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          echo "pr_url=${{ github.event.pull_request.html_url }}" >> $GITHUB_OUTPUT
+      
+      - name: Webhook notification to Kiro
+        if: ${{ secrets.KIRO_WEBHOOK_URL != '' }}
+        run: |
+          # Send webhook POST to Kiro crew session
+          # This will trigger Principle crew auto-spawn via registered webhook hook:github:principle-review:testing-pr
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.KIRO_WEBHOOK_TOKEN }}" \
+            -d '{
+              "sessionKey": "hook:github:principle-review:testing-pr",
+              "name": "github:principle-review:testing-pr",
+              "message": "New PR to testing branch:\n**PR #${{ steps.pr-info.outputs.pr_number }}**: ${{ steps.pr-info.outputs.pr_title }}\nBranch: ${{ steps.pr-info.outputs.pr_head }}\nURL: ${{ steps.pr-info.outputs.pr_url }}\n\nReview against 7 security gates + quality checklist."
+            }' \
+            "${{ secrets.KIRO_WEBHOOK_URL }}"
+        env:
+          KIRO_WEBHOOK_URL: ${{ secrets.KIRO_WEBHOOK_URL }}
+          KIRO_WEBHOOK_TOKEN: ${{ secrets.KIRO_WEBHOOK_TOKEN }}
+      
+      - name: Add comment to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🔍 **Principle Code Review Triggered**\n\nThis PR has been sent to the Principle crew for security gate review (7-gate framework: path validation, workspace containment, timeout enforcement, spawn safety, proto alignment, no secrets, RCE closure).\n\nExpected review time: 1-2 hours.\n\nStatus: ⏳ Awaiting Principle review...'
+            })
+      
+      - name: Discord notification — PR submitted for review
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "📋 **New PR Submitted for Review**",
+              "embeds": [{
+                "title": "PR #${{ steps.pr-info.outputs.pr_number }} → Principle Crew",
+                "url": "${{ steps.pr-info.outputs.pr_url }}",
+                "color": 3447003,
+                "fields": [
+                  {"name": "Title", "value": "${{ steps.pr-info.outputs.pr_title }}", "inline": false},
+                  {"name": "Branch", "value": "${{ steps.pr-info.outputs.pr_head }}", "inline": true},
+                  {"name": "Target", "value": "testing", "inline": true},
+                  {"name": "Review Gates", "value": "7-gate security framework (path/workspace/timeout/spawn/proto/secrets/RCE)", "inline": false},
+                  {"name": "Timeline", "value": "1-2 hours for Principle analysis", "inline": false}
+                ],
+                "footer": {"text": "galleon-fleet Phase 3 Automation"}
+              }]
+            }' \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        continue-on-error: true
