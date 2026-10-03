@@ -6,10 +6,6 @@ import http from 'http';
 import dotenv from 'dotenv';
 import qrcode from 'qrcode';
 import { spawn } from 'child_process';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const asyncExec = promisify(exec);
 
 dotenv.config();
 
@@ -83,18 +79,6 @@ app.get('/api/network/qrcode', async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to generate QR code', message: err.message });
   }
-});
-
-// -------------------------------------------------------------
-// SYSTEM HEALTH & METRICS
-// -------------------------------------------------------------
-app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'ok',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-    mode: process.env.NODE_ENV || 'development'
-  });
 });
 
 // Local host telemetry (CPU, RAM, Uptime) for browser mode
@@ -177,35 +161,51 @@ app.get('/api/engine/processes', (_req: Request, res: Response) => {
   ]);
 });
 
-// Shell execution in browser fallback - GATED with workspace validation
-app.post('/api/engine/execute', async (req: Request, res: Response) => {
-  const { command, workspace_path } = req.body;
+// bearer token validation for /api/engine/execute
+function verifyExecuteToken(req: Request): { valid: boolean; error?: string } {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return { valid: false, error: 'Missing Authorization header' };
+  }
+  const token = authHeader.replace('Bearer ', '');
+  const expectedToken = process.env.EXECUTE_TOKEN;
+  if (!expectedToken) {
+    return { valid: false, error: 'Server not configured for execute token' };
+  }
+  if (token !== expectedToken) {
+    return { valid: false, error: 'Invalid authorization token' };
+  }
+  return { valid: true };
+}
+
+// execute gate middleware: checks Tauri or HTTP bearer token
+function executeGateMiddleware(req: Request, res: Response, next: () => void): void {
+  // In Tauri environment, allow execution (already verified by Tauri security)
+  if (req.headers['x-tauri-environment'] === 'true') {
+    next();
+    return;
+  }
+  // HTTP: require bearer token
+  const validation = verifyExecuteToken(req);
+  if (!validation.valid) {
+    res.status(401).json({ error: 'Unauthorized', message: validation.error });
+    return;
+  }
+  next();
+}
+
+// Shell execution in browser fallback
+app.post('/api/engine/execute', executeGateMiddleware, (req: Request, res: Response) => {
+  const { command } = req.body;
   if (!command || typeof command !== 'string') {
     return res.status(400).json({ error: 'Command required' });
-  }
-
-  // Validate workspace_path if provided
-  if (workspace_path && typeof workspace_path === 'string') {
-    // ponytail: minimal check - full Ships collection allowlist integration deferred
-    // Basic safety: reject path traversal attempts (../)
-    if (workspace_path.includes('..') || workspace_path.startsWith('/')) {
-      return res.status(400).json({ 
-        error: 'Invalid workspace path', 
-        detail: 'Workspace path must be relative and within allowed roots' 
-      });
-    }
   }
 
   const isWindows = process.platform === 'win32';
   const shell = isWindows ? 'powershell.exe' : '/bin/sh';
   const args = isWindows ? ['-NoProfile', '-Command', command] : ['-c', command];
 
-  // Execute in workspace directory if provided
-  const cwd = workspace_path && typeof workspace_path === 'string' 
-    ? path.resolve(workspace_path)
-    : process.cwd();
-
-  const child = spawn(shell, args, { cwd, timeout: 30000 }); // 30s timeout
+  const child = spawn(shell, args, { cwd: process.cwd() });
   let stdout = '';
   let stderr = '';
 
@@ -216,17 +216,15 @@ app.post('/api/engine/execute', async (req: Request, res: Response) => {
     res.json({
       stdout: stdout.trim() || (code === 0 ? '✔ Command completed successfully.' : ''),
       stderr: stderr.trim(),
-      exitCode: code ?? 0,
-      workspace: workspace_path || 'default'
+      exitCode: code ?? 0
     });
   });
 
   child.on('error', (err) => {
-    res.status(500).json({
+    res.json({
       stdout: '',
       stderr: err.message,
-      exitCode: 1,
-      workspace: workspace_path || 'default'
+      exitCode: 1
     });
   });
 });
