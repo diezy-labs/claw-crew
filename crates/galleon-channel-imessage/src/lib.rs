@@ -1,3 +1,23 @@
+//! `galleon-channel-imessage` — RF-C1 iMessage channel feature-crate.
+//!
+//! Ported verbatim from `clawcrew-channels::imessage` (RF-C1, pure-move):
+//! AppleScript bridge for sending, Messages.app SQLite polling for receiving,
+//! and the `typedstream`/attributedBody fallback parser. Zero coupling to
+//! other channels' shared state (unlike matrix/slack/telegram, which share a
+//! governance-level approval queue and stayed in Tier A — see
+//! `docs/refactoring-phase2/ADR-001-channel-plugin-distribution.md`).
+//!
+//! ## Seam closed by `galleon-channel-core`
+//!
+//! * **Allowlist policy.** [`IMessageChannel::is_contact_allowed`] calls
+//!   [`galleon_channel_core::allowlist::is_user_allowed`], the same
+//!   `clawcrew_config::schema` peer-policy SSOT upstream uses — reused, not
+//!   reimplemented.
+//!
+//! No production path uses `unwrap`/`expect` on fallible IO; errors propagate
+//! via `anyhow::Result` + `?`. Test-only `unwrap()` in the SQLite fixture
+//! helpers below is unchanged from upstream.
+
 use async_trait::async_trait;
 use directories::UserDirs;
 use rusqlite::{Connection, OpenFlags};
@@ -83,7 +103,11 @@ impl IMessageChannel {
 
     fn is_contact_allowed(&self, sender: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, sender, crate::allowlist::Match::CaseInsensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            sender,
+            galleon_channel_core::allowlist::Match::CaseInsensitive,
+        )
     }
 }
 
