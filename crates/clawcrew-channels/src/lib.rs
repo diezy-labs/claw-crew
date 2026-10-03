@@ -56,7 +56,7 @@ pub mod git;
 #[cfg(feature = "channel-email")]
 pub mod gmail_push;
 #[cfg(feature = "channel-imessage")]
-pub mod imessage;
+pub use galleon_channel_imessage as imessage;
 #[cfg(feature = "channel-irc")]
 pub mod irc;
 #[cfg(feature = "channel-lark")]
