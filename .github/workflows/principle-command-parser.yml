@@ -1,0 +1,211 @@
+name: Principle Crew Command Parser
+
+# Trigger ketika ada comment baru di PR (dari Principle crew atau reviewers)
+on:
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  parse-principle-command:
+    # Only run for PRs (not issues)
+    if: github.event.issue.pull_request != null && contains(github.event.comment.body, '@') && (contains(github.event.comment.user.login, 'principle') || contains(github.event.comment.body, '@squad-backend') || contains(github.event.comment.body, '@squad-frontend'))
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Parse command from comment
+        id: parse-cmd
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+          
+          # Extract crew name: @squad-backend, @squad-frontend, etc
+          if [[ "$COMMENT" =~ @squad-backend ]]; then
+            CREW="backend"
+            echo "crew=Backend" >> $GITHUB_OUTPUT
+          elif [[ "$COMMENT" =~ @squad-frontend ]]; then
+            CREW="frontend"
+            echo "crew=Frontend" >> $GITHUB_OUTPUT
+          else
+            echo "crew=" >> $GITHUB_OUTPUT
+          fi
+          
+          # Extract task command (everything after first colon or command word)
+          # Pattern: @squad-backend fix: <task> OR @squad-backend <task>
+          if [[ "$COMMENT" =~ fix:[[:space:]]*(.+)$ ]]; then
+            TASK="${BASH_REMATCH[1]}"
+          elif [[ "$COMMENT" =~ feat:[[:space:]]*(.+)$ ]]; then
+            TASK="${BASH_REMATCH[1]}"
+          else
+            # Fallback: take everything after crew mention
+            TASK=$(echo "$COMMENT" | sed 's/@squad-[a-z]*[[:space:]]*//g' | head -c 500)
+          fi
+          
+          echo "task=$TASK" >> $GITHUB_OUTPUT
+          echo "pr_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+      
+      - name: Detect critical keywords
+        id: critical-check
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+          TASK="${{ steps.parse-cmd.outputs.task }}"
+          FULL_TEXT="$COMMENT $TASK"
+          
+          # Check for critical/high severity keywords
+          if [[ "$FULL_TEXT" =~ (CRITICAL|HIGH|architecture|security|breaking|RCE) ]]; then
+            echo "is_critical=true" >> $GITHUB_OUTPUT
+            echo "reason=$(echo "$BASH_REMATCH" | head -1)" >> $GITHUB_OUTPUT
+          else
+            echo "is_critical=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Validate command
+        id: validate
+        run: |
+          CREW="${{ steps.parse-cmd.outputs.crew }}"
+          TASK="${{ steps.parse-cmd.outputs.task }}"
+          IS_CRITICAL="${{ steps.critical-check.outputs.is_critical }}"
+          
+          if [ -z "$CREW" ] && [ "$IS_CRITICAL" != "true" ]; then
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "reason=No crew mentioned"
+          elif [ -z "$TASK" ] || [ ${#TASK} -lt 10 ]; then
+            echo "status=invalid" >> $GITHUB_OUTPUT
+            echo "reason=Task too short or empty"
+          else
+            if [ "$IS_CRITICAL" = "true" ]; then
+              echo "status=critical" >> $GITHUB_OUTPUT
+            else
+              echo "status=valid" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Add acknowledging comment (normal command)
+        if: steps.validate.outputs.status == 'valid'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const crew = "${{ steps.parse-cmd.outputs.crew }}";
+            const task = "${{ steps.parse-cmd.outputs.task }}";
+            const prNum = "${{ steps.parse-cmd.outputs.pr_number }}";
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Principle Command Received**\n\n🔄 Spawning ${crew} crew to execute:\n\`${task}\`\n\nExpected: Fix commit within 15-30 min, PR auto-update.`
+            })
+      
+      - name: Add acknowledging comment (critical escalation)
+        if: steps.validate.outputs.status == 'critical'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const task = "${{ steps.parse-cmd.outputs.task }}";
+            const reason = "${{ steps.critical-check.outputs.reason }}";
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `⚠️ **Critical Issue Escalation**\n\nKeyword detected: **${reason}**\n\n🔄 Routing to Lead crew for analysis:\n\`${task}\`\n\nLead will assess severity, decide fix strategy, and coordinate with dev teams.\n\nExpected response: 2-5 min (Lead analysis)`
+            })
+      
+      - name: Webhook to Kiro — spawn crew (normal command)
+        if: steps.validate.outputs.status == 'valid'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.KIRO_WEBHOOK_TOKEN }}" \
+            -d '{
+              "sessionKey": "hook:github:principle-command:exec",
+              "name": "github:principle-command:exec",
+              "message": "Principle crew command received:\n**Crew**: ${{ steps.parse-cmd.outputs.crew }}\n**Task**: ${{ steps.parse-cmd.outputs.task }}\n**PR**: ${{ steps.parse-cmd.outputs.pr_number }}\n**Repo**: diezy-realm/galleon-fleet\n\nExecute task, commit to PR branch, push (auto-update PR)."
+            }' \
+            "${{ secrets.KIRO_WEBHOOK_URL }}"
+        env:
+          KIRO_WEBHOOK_URL: ${{ secrets.KIRO_WEBHOOK_URL }}
+          KIRO_WEBHOOK_TOKEN: ${{ secrets.KIRO_WEBHOOK_TOKEN }}
+      
+      - name: Webhook to Kiro — escalate to Lead (critical)
+        if: steps.validate.outputs.status == 'critical'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.KIRO_WEBHOOK_TOKEN }}" \
+            -d '{
+              "sessionKey": "hook:github:lead-escalation:critical-issues",
+              "name": "github:lead-escalation:critical-issues",
+              "message": "Critical issue escalation from Principle crew:\n**PR**: #${{ steps.parse-cmd.outputs.pr_number }}\n**Keyword**: ${{ steps.critical-check.outputs.reason }}\n**Issue**: ${{ steps.parse-cmd.outputs.task }}\n**Repo**: diezy-realm/galleon-fleet\n\nAnalyze severity, decide fix strategy (remove/gate/approve-as-known-risk), coordinate with Principle + dev crews."
+            }' \
+            "${{ secrets.KIRO_WEBHOOK_URL }}"
+        env:
+          KIRO_WEBHOOK_URL: ${{ secrets.KIRO_WEBHOOK_URL }}
+          KIRO_WEBHOOK_TOKEN: ${{ secrets.KIRO_WEBHOOK_TOKEN }}
+      
+      - name: Discord notification — Tier 1 (Normal command)
+        if: steps.validate.outputs.status == 'valid'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "✅ **Tier 1 — Routine Command**",
+              "embeds": [{
+                "title": "PR #${{ steps.parse-cmd.outputs.pr_number }} — Crew Spawned",
+                "color": 3066993,
+                "fields": [
+                  {"name": "Crew", "value": "${{ steps.parse-cmd.outputs.crew }}", "inline": true},
+                  {"name": "Status", "value": "Executing task", "inline": true},
+                  {"name": "Task", "value": "${{ steps.parse-cmd.outputs.task }}", "inline": false},
+                  {"name": "Timeline", "value": "15-30 min (auto-update PR)", "inline": false}
+                ],
+                "footer": {"text": "galleon-fleet Phase 3 Automation"}
+              }]
+            }' \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        continue-on-error: true
+      
+      - name: Discord notification — Tier 2 (Critical escalation)
+        if: steps.validate.outputs.status == 'critical'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d '{
+              "content": "🔴 **Tier 2 — Critical Issue Escalated**",
+              "embeds": [{
+                "title": "PR #${{ steps.parse-cmd.outputs.pr_number }} — Lead Crew Analyzing",
+                "color": 15158332,
+                "fields": [
+                  {"name": "Severity", "value": "CRITICAL", "inline": true},
+                  {"name": "Trigger", "value": "${{ steps.critical-check.outputs.reason }}", "inline": true},
+                  {"name": "Issue", "value": "${{ steps.parse-cmd.outputs.task }}", "inline": false},
+                  {"name": "Next", "value": "Lead analysis + Achmad approval", "inline": false}
+                ],
+                "footer": {"text": "galleon-fleet Phase 3 Automation — awaiting decision"}
+              }]
+            }' \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}"
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        continue-on-error: true
+      
+      - name: Log invalid command
+        if: steps.validate.outputs.status == 'invalid'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `⚠️ **Invalid Principle Command**\n\nReason: ${{ steps.validate.outputs.reason }}\n\nCorrect format:\n\`\`\`\n@squad-backend fix: <detailed task description (min 10 chars)>\n@squad-frontend feat: <feature implementation task>\n\`\`\``
+            })
