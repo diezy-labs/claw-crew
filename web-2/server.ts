@@ -59,15 +59,8 @@ function getNetworkInterfaces(): NetworkAddress[] {
 
 // -------------------------------------------------------------
 // HOST GATEWAY: Remote Access & Local Hardware Telemetry
+// QR-code pairing for local-first multi-device connect (token-based + QR method)
 // -------------------------------------------------------------
-app.get('/api/network/interfaces', (_req: Request, res: Response) => {
-  res.json({
-    port,
-    host,
-    addresses: getNetworkInterfaces()
-  });
-});
-
 app.get('/api/network/qrcode', async (req: Request, res: Response) => {
   const targetUrl = (req.query.url as string) || `http://localhost:${port}`;
   try {
