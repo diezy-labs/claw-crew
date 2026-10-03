@@ -1,0 +1,17 @@
+[package]
+name = "clawcrew-routing"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+axum = "0.8"
+tokio = "1.50"
+tower = "0.5"
+tracing = "0.1"
+anyhow = "1.0"
+futures = "0.3"
+async-trait = "0.1"

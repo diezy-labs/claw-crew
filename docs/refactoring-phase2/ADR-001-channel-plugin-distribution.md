@@ -26,7 +26,8 @@ Keluhan nyata Owner: build lambat + aplikasi besar + sulit maintain.
 
 Terapkan model **3 tier distribusi channel**:
 
-- **Tier A — Embed (first-party default, selalu ikut):** `telegram`, `discord`, `slack` + primitif transport (`webhook`, `email`, `cli`, `acp`, `filesystem`). Identity produk inti.
+- **Tier A — Embed (first-party default, selalu ikut):** `telegram`, `discord`, `slack`, `matrix` + primitif transport (`webhook`, `email`, `cli`, `acp`, `filesystem`). Identity produk inti.
+  - **Matrix ditambahkan ke Tier A (2026-10-03, RF-C investigation):** `matrix` berbagi governance primitive `PendingApproval`/`resolve_pending_approval`/`build_approve_deny_approval_prompt` dengan `slack`+`telegram` di `clawcrew-channels/src/util.rs` — ini approval-queue CORE (preseden: KiroCrew's `PreToolUse Gate` di `hooks.py` dipanggil semua channel, bukan diduplikasi/dipinjam antar-channel). Channel yang share governance primitive dengan Tier A lain BUKAN kandidat crate-split; sharing itu sendiri adalah sinyal keanggotaan Tier A, bukan kebetulan teknis yang perlu "diselesaikan" lewat promote-to-core.
 - **Tier B — Feature-crate opsional (compiled-in, user pilih saat install):** channel yang butuh long-lived WebSocket native / native crypto / SDK berat → **tidak cocok WASI**. Pecah bertahap jadi `galleon-channel-<name>` + Cargo feature flag.
   `matrix`, `signal`, `whatsapp`/`whatsapp-web`, `wechat`, `qq`, `imessage`, `irc`, `amqp`, `nextcloud`, `mattermost`, voice stack (`voice`, `tts`, `transcription`, `voice_call`, `voice_wake`).
 - **Tier C — WASI plugin / marketplace (hot-load, signed):** channel inbound-first (webhook/polling), regional/niche → runtime `clawcrew-plugins` yang sudah ada.
@@ -42,7 +43,7 @@ Penentu garis **B↔C** (teknis, dari kode): butuh socket native dua-arah / nati
 | discord | A | inti global |
 | slack | A | inti global |
 | webhook, email, cli, acp, filesystem | A | primitif transport, bukan 3rd-party |
-| matrix | B | matrix-sdk besar + long-lived sync |
+| matrix | **A** (direvisi 2026-10-03) | share governance primitive (approval-queue) dengan slack+telegram — lihat catatan Tier A di atas |
 | signal | B | libsignal native crypto |
 | whatsapp / whatsapp-web | B | web reverse-eng + session storage native |
 | wechat | B | protokol kompleks, regional CN |
